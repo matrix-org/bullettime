@@ -1,4 +1,4 @@
-# ganglion
+# bullettime
 
 An experimental Matrix homeserver written in Go.
 
@@ -8,7 +8,7 @@ https://github.com/matrix-org/synapse/blob/master/CONTRIBUTING.rst
 Patches welcome :)
 
 ## Building
-To build ganglion, you need a working go installation.
+To build bullettime, you need a working go installation.
 
 To build, run:
  `go build`
