@@ -4,18 +4,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/Rugvip/bullettime/api"
 )
 
-type testHandler struct{}
-
-func (t testHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	rw.Write([]byte("Hello World"))
-}
-
 func main() {
-	handler := testHandler{}
 	mux := http.NewServeMux()
-	mux.Handle("/", handler)
+	mux.Handle("/api/", http.StripPrefix("/api", api.Root))
 
 	port := "4080"
 	if len(os.Args) > 1 {
