@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Rugvip/bullettime/service"
+	"github.com/julienschmidt/httprouter"
 
 	"net/http"
 )
@@ -80,22 +81,26 @@ func registerWithPassword(hostname string, body *authRequest) interface{} {
 	}
 }
 
-var registerResource = Resource{
-	Get: NewJsonHandler(func(req *http.Request) interface{} {
-		return &defaultRegisterFlows
-	}),
-	Post: NewJsonHandler(func(req *http.Request, body *authRequest) interface{} {
-		switch body.Type {
-		case LoginTypePassword:
-			hostname := strings.Split(req.Host, ":")[0]
-			return registerWithPassword(hostname, body)
-		}
-		return BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
-	}),
+func postRegister(req *http.Request, params httprouter.Params, body *authRequest) interface{} {
+	switch body.Type {
+	case LoginTypePassword:
+		hostname := strings.Split(req.Host, ":")[0]
+		return registerWithPassword(hostname, body)
+	}
+	return BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
 }
 
-var loginResource = Resource{
-	Get: NewJsonHandler(func(req *http.Request) interface{} {
+func postLogin() interface{} {
+	return "login"
+}
+
+func registerAuthResources(mux *httprouter.Router) {
+	mux.GET("/register", jsonHandler(func() interface{} {
+		return &defaultRegisterFlows
+	}))
+	mux.GET("/login", jsonHandler(func() interface{} {
 		return &defaultLoginFlows
-	}),
+	}))
+	mux.POST("/register", jsonHandler(postRegister))
+	mux.POST("/login", jsonHandler(postLogin))
 }

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+
+	"github.com/Rugvip/bullettime/vendor/github.com/julienschmidt/httprouter"
 )
 
 type WithStatus interface {
@@ -18,62 +20,84 @@ func (s *OkStatus) Status() int {
 	return 200
 }
 
-type JsonRequestHandler func(req *http.Request) WithStatus
-type JsonBodyRequestHandler func(req *http.Request, body interface{}) WithStatus
+type JsonHandler func(req *http.Request, params httprouter.Params) interface{}
+type JsonBodyHandler func(req *http.Request, params httprouter.Params, body interface{}) interface{}
 
-type JsonHandler struct {
-	typ reflect.Type
-	fun reflect.Value
-}
-
-func NewJsonHandler(i interface{}) http.Handler {
+func jsonHandler(i interface{}) httprouter.Handle {
 	t := reflect.TypeOf(i)
 	if reflect.Func != t.Kind() {
-		panic("JSON handler: must be a func")
+		panic("jsonHandler: must be a function")
 	}
 	if t.NumOut() != 1 {
-		panic("JSON handler: must return a single value")
+		panic("jsonHandler: must return a single value")
 	}
-	if t.NumIn() != 1 && t.NumIn() != 2 {
-		panic("JSON handler: arity must be 1 or 2")
-	}
-	if t.In(0).String() != "*http.Request" {
-		panic("JSON handler: first argument must be a *http.Request, was " + t.In(0).String())
-	}
-	if t.NumIn() == 2 && t.In(1).Kind() != reflect.Ptr {
-		panic("JSON handler: second argument must be a pointer type, was " + t.In(1).String())
-	}
+	argCount := t.NumIn()
+
 	var jsonType reflect.Type
-	if t.NumIn() == 2 {
-		jsonType = t.In(1).Elem()
+	firstParamIsParams := false
+	if argCount > 0 {
+		firstParamIsParams = t.In(0).String() == "httprouter.Params"
+		lastParamIsParams := t.In(argCount-1).String() == "httprouter.Params"
+		lastParamIsRequest := t.In(argCount-1).String() == "*http.Request"
+		if !lastParamIsParams && !lastParamIsRequest {
+			if t.In(argCount-1).Kind() != reflect.Ptr {
+				panic("jsonHandler: body argument must be a pointer type, was " + t.In(2).String())
+			}
+			jsonType = t.In(argCount - 1).Elem()
+		}
 	}
-	return JsonHandler{
-		typ: jsonType,
-		fun: reflect.ValueOf(i),
-	}
-}
-
-func (h JsonHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	var returnValue reflect.Value
-	if h.typ == nil {
-		returnValue = h.fun.Call([]reflect.Value{
-			reflect.ValueOf(req),
-		})[0]
+	if jsonType == nil {
+		if t.NumIn() > 2 {
+			panic("jsonHandler: arity must be at most 2 if no body argument is preset")
+		}
 	} else {
-		body := reflect.New(h.typ)
-		json.NewDecoder(req.Body).Decode(body.Interface())
-		returnValue = h.fun.Call([]reflect.Value{
-			reflect.ValueOf(req),
-			body,
-		})[0]
+		if t.NumIn() > 3 {
+			panic("jsonHandler: arity must be at most 3 if body argument is preset")
+		}
 	}
-	res := returnValue.Interface()
+	handlerFunc := reflect.ValueOf(i)
 
-	withStatus, ok := res.(WithStatus)
-	if ok {
-		writeJsonResponseWithStatus(rw, withStatus)
-	} else {
-		writeJsonResponse(rw, 200, res)
+	return func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		var returnValue reflect.Value
+		var args []reflect.Value
+		if jsonType == nil {
+			switch argCount {
+			case 0:
+				args = []reflect.Value{}
+			case 1:
+				if firstParamIsParams {
+					args = []reflect.Value{reflect.ValueOf(params)}
+				} else {
+					args = []reflect.Value{reflect.ValueOf(req)}
+				}
+			case 2:
+				args = []reflect.Value{reflect.ValueOf(req), reflect.ValueOf(params)}
+			}
+		} else {
+			body := reflect.New(jsonType)
+			json.NewDecoder(req.Body).Decode(body.Interface())
+			switch argCount {
+			case 1:
+				args = []reflect.Value{body}
+			case 2:
+				if firstParamIsParams {
+					args = []reflect.Value{reflect.ValueOf(params), body}
+				} else {
+					args = []reflect.Value{reflect.ValueOf(req), body}
+				}
+			case 3:
+				args = []reflect.Value{reflect.ValueOf(req), reflect.ValueOf(params), body}
+			}
+		}
+		returnValue = handlerFunc.Call(args)[0]
+		res := returnValue.Interface()
+
+		withStatus, ok := res.(WithStatus)
+		if ok {
+			writeJsonResponseWithStatus(rw, withStatus)
+		} else {
+			writeJsonResponse(rw, 200, res)
+		}
 	}
 }
 
@@ -92,38 +116,4 @@ func writeJsonResponse(rw http.ResponseWriter, status int, body interface{}) {
 
 func writeJsonResponseWithStatus(rw http.ResponseWriter, body WithStatus) {
 	writeJsonResponse(rw, body.Status(), body)
-}
-
-type Resource struct {
-	Get    http.Handler
-	Post   http.Handler
-	Put    http.Handler
-	Delete http.Handler
-}
-
-func (r Resource) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	log.Println("req: " + req.Method)
-	switch req.Method {
-	case "GET":
-		if r.Get != nil {
-			r.Get.ServeHTTP(rw, req)
-			return
-		}
-	case "POST":
-		if r.Post != nil {
-			r.Post.ServeHTTP(rw, req)
-			return
-		}
-	case "PUT":
-		if r.Put != nil {
-			r.Put.ServeHTTP(rw, req)
-			return
-		}
-	case "DELETE":
-		if r.Delete != nil {
-			r.Delete.ServeHTTP(rw, req)
-			return
-		}
-	}
-	writeJsonResponseWithStatus(rw, defaultUnrecognizedError)
 }
