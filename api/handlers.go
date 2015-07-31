@@ -43,9 +43,6 @@ func NewJsonHandler(i interface{}) http.Handler {
 	if t.NumIn() == 2 && t.In(1).Kind() != reflect.Ptr {
 		panic("JSON handler: second argument must be a pointer type, was " + t.In(1).String())
 	}
-	if t.Out(0).String() != "api.WithStatus" {
-		panic("JSON handler: return value must implement WithStatus, was " + t.Out(0).String())
-	}
 	var jsonType reflect.Type
 	if t.NumIn() == 2 {
 		jsonType = t.In(1).Elem()
@@ -70,15 +67,13 @@ func (h JsonHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			body,
 		})[0]
 	}
-	withStatus, ok := returnValue.Interface().(WithStatus)
-	if !ok {
-		log.Println("failed to cast to WithStatus: ", returnValue)
-		writeJsonResponse(rw, 500, map[string]string{
-			"errcode": "M_SERVER_ERROR",
-			"error":   "failed to read response status",
-		})
-	} else {
+	res := returnValue.Interface()
+
+	withStatus, ok := res.(WithStatus)
+	if ok {
 		writeJsonResponseWithStatus(rw, withStatus)
+	} else {
+		writeJsonResponse(rw, 200, res)
 	}
 }
 
