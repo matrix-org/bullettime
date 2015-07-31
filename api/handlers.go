@@ -78,7 +78,7 @@ func (h JsonHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			"error":   "failed to read response status",
 		})
 	} else {
-		writeJsonResponse(rw, withStatus.Status(), withStatus)
+		writeJsonResponseWithStatus(rw, withStatus)
 	}
 }
 
@@ -93,4 +93,42 @@ func writeJsonResponse(rw http.ResponseWriter, status int, body interface{}) {
 		rw.WriteHeader(status)
 		rw.Write(res)
 	}
+}
+
+func writeJsonResponseWithStatus(rw http.ResponseWriter, body WithStatus) {
+	writeJsonResponse(rw, body.Status(), body)
+}
+
+type Resource struct {
+	Get    http.Handler
+	Post   http.Handler
+	Put    http.Handler
+	Delete http.Handler
+}
+
+func (r Resource) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	log.Println("req: " + req.Method)
+	switch req.Method {
+	case "GET":
+		if r.Get != nil {
+			r.Get.ServeHTTP(rw, req)
+			return
+		}
+	case "POST":
+		if r.Post != nil {
+			r.Post.ServeHTTP(rw, req)
+			return
+		}
+	case "PUT":
+		if r.Put != nil {
+			r.Put.ServeHTTP(rw, req)
+			return
+		}
+	case "DELETE":
+		if r.Delete != nil {
+			r.Delete.ServeHTTP(rw, req)
+			return
+		}
+	}
+	writeJsonResponseWithStatus(rw, defaultUnrecognizedError)
 }

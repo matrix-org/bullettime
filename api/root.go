@@ -17,6 +17,13 @@ type TestResponse struct {
 	Message string `json:"message"`
 }
 
+func handleGet(req *http.Request) WithStatus {
+	log.Println("got get", req.URL)
+	return &TestResponse{
+		Message: "i got get",
+	}
+}
+
 func handlePost(req *http.Request, body *TestRequest) WithStatus {
 	log.Println("got body", body.Code, body.Message)
 	return &TestResponse{
@@ -29,5 +36,8 @@ func init() {
 	Root.Handle("/", NewJsonHandler(func(req *http.Request) WithStatus {
 		return defaultUnrecognizedError
 	}))
-	Root.Handle("/test", NewJsonHandler(handlePost))
+	Root.Handle("/test", Resource{
+		Get:  NewJsonHandler(handleGet),
+		Post: NewJsonHandler(handlePost),
+	})
 }
