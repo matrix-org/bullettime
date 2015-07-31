@@ -81,3 +81,5 @@ func ServerError(message string) *Error {
 		status:  500,
 	}
 }
+
+var defaultUnrecognizedError = UnrecognizedError("unrecognized request")

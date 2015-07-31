@@ -27,7 +27,7 @@ func handlePost(req *http.Request, body *TestRequest) WithStatus {
 func init() {
 	Root = http.NewServeMux()
 	Root.Handle("/", NewJsonHandler(func(req *http.Request) WithStatus {
-		return UnrecognizedError("unrecognized request")
+		return defaultUnrecognizedError
 	}))
 	Root.Handle("/test", NewJsonHandler(handlePost))
 }
