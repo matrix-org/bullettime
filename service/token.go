@@ -15,7 +15,7 @@ type TokenInfo struct {
 
 func NewAccessToken(userId string) (string, error) {
 	encodedUserId := base64.URLEncoding.EncodeToString([]byte(userId))
-	// encodedUserId = strings.TrimRight(encodedUserId, "=")
+	encodedUserId = strings.TrimRight(encodedUserId, "=")
 	return fmt.Sprintf("%s..%s", encodedUserId, utils.RandomString(16)), nil
 }
 
