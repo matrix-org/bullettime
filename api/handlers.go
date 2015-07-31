@@ -75,7 +75,10 @@ func jsonHandler(i interface{}) httprouter.Handle {
 			}
 		} else {
 			body := reflect.New(jsonType)
-			json.NewDecoder(req.Body).Decode(body.Interface())
+			if err := json.NewDecoder(req.Body).Decode(body.Interface()); err != nil {
+				writeJsonResponseWithStatus(rw, BadJsonError(err.Error()))
+				return
+			}
 			switch argCount {
 			case 1:
 				args = []reflect.Value{body}
