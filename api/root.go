@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-var Root *http.ServeMux
-
 type TestRequest struct {
 	Code    int    `json:"code"`
 	Message string `json:"msg"`
@@ -31,15 +29,16 @@ func handlePost(req *http.Request, body *TestRequest) WithStatus {
 	}
 }
 
-func init() {
-	Root = http.NewServeMux()
-	Root.Handle("/", NewJsonHandler(func(req *http.Request) WithStatus {
+func NewRootMux() http.Handler {
+	mux := http.NewServeMux()
+	mux.Handle("/", NewJsonHandler(func(req *http.Request) WithStatus {
 		return defaultUnrecognizedError
 	}))
-	Root.Handle("/test", Resource{
+	mux.Handle("/test", Resource{
 		Get:  NewJsonHandler(handleGet),
 		Post: NewJsonHandler(handlePost),
 	})
-	Root.Handle("/login", loginResource)
-	Root.Handle("/register", registerResource)
+	mux.Handle("/login", loginResource)
+	mux.Handle("/register", registerResource)
+	return mux
 }

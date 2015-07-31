@@ -10,7 +10,7 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	mux.Handle("/api/", http.StripPrefix("/api", api.Root))
+	mux.Handle("/api/", http.StripPrefix("/api", api.NewRootMux()))
 
 	port := "4080"
 	if len(os.Args) > 1 {
