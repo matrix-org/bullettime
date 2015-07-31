@@ -9,10 +9,16 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type avatarUrlBody struct {
+type avatarUrlRequest struct {
+	AvatarUrl *string `json:"avatar_url"`
+}
+type avatarUrlResponse struct {
 	AvatarUrl string `json:"avatar_url"`
 }
-type displayNameBody struct {
+type displayNameRequest struct {
+	DisplayName *string `json:"displayname"`
+}
+type displayNameResponse struct {
 	DisplayName string `json:"displayname"`
 }
 
@@ -25,10 +31,10 @@ func getDisplayName(params httprouter.Params) interface{} {
 	if err != nil {
 		return ServerError(err.Error())
 	}
-	return displayNameBody{name}
+	return displayNameResponse{name}
 }
 
-func setDisplayName(req *http.Request, params httprouter.Params, body *displayNameBody) interface{} {
+func setDisplayName(req *http.Request, params httprouter.Params, body *displayNameRequest) interface{} {
 	log.Println("set display name", body)
 	authedUser, apiErr := readAccessToken(req)
 	if apiErr != nil {
@@ -41,7 +47,10 @@ func setDisplayName(req *http.Request, params httprouter.Params, body *displayNa
 	if authedUser.Id() != user.Id() {
 		return ForbiddenError("can't change the display name of other users")
 	}
-	if err := user.SetDisplayName(body.DisplayName); err != nil {
+	if body.DisplayName == nil {
+		return BadJsonError("missing 'displayname'")
+	}
+	if err := user.SetDisplayName(*body.DisplayName); err != nil {
 		return ServerError(err.Error())
 	}
 	return struct{}{}
@@ -56,10 +65,10 @@ func getAvatarUrl(params httprouter.Params) interface{} {
 	if err != nil {
 		return ServerError(err.Error())
 	}
-	return avatarUrlBody{url}
+	return avatarUrlResponse{url}
 }
 
-func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlBody) interface{} {
+func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRequest) interface{} {
 	authedUser, err := readAccessToken(req)
 	if err != nil {
 		return err
@@ -71,7 +80,10 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlBo
 	if authedUser.Id() != user.Id() {
 		return ForbiddenError("can't change the avatar url of other users")
 	}
-	if err := user.SetAvatarUrl(body.AvatarUrl); err != nil {
+	if body.AvatarUrl == nil {
+		return BadJsonError("missing 'avatar_url'")
+	}
+	if err := user.SetAvatarUrl(*body.AvatarUrl); err != nil {
 		return ServerError(err.Error())
 	}
 	return struct{}{}
