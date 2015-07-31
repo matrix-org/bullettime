@@ -18,5 +18,6 @@ func NewRootMux() http.Handler {
 		writeJsonResponseWithStatus(rw, ServerError("internal server error"))
 	}
 	registerAuthResources(mux)
+	registerProfileResources(mux)
 	return mux
 }

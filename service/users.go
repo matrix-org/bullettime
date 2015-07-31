@@ -45,3 +45,19 @@ func (u User) SetPassword(password string) error {
 	}
 	return nil
 }
+
+func (u User) GetDisplayName() (string, error) {
+	return db.GetUserDisplayName(u.id)
+}
+
+func (u User) GetAvatarUrl() (string, error) {
+	return db.GetUserAvatarUrl(u.id)
+}
+
+func (u User) SetDisplayName(displayName string) error {
+	return db.SetUserDisplayName(u.id, displayName)
+}
+
+func (u User) SetAvatarUrl(avatarUrl string) error {
+	return db.SetUserAvatarUrl(u.id, avatarUrl)
+}
