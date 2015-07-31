@@ -9,7 +9,7 @@ import (
 
 	"github.com/Rugvip/bullettime/service"
 
-	"github.com/Rugvip/bullettime/vendor/github.com/julienschmidt/httprouter"
+	"github.com/julienschmidt/httprouter"
 )
 
 type WithStatus interface {
