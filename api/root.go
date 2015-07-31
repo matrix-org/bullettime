@@ -40,4 +40,6 @@ func init() {
 		Get:  NewJsonHandler(handleGet),
 		Post: NewJsonHandler(handlePost),
 	})
+	Root.Handle("/login", loginResource)
+	Root.Handle("/register", registerResource)
 }
