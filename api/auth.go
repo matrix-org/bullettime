@@ -1,6 +1,13 @@
 package api
 
-import "net/http"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/Rugvip/bullettime/service"
+
+	"net/http"
+)
 
 type LoginType string
 
@@ -18,7 +25,7 @@ type AuthFlows struct {
 	Flows []AuthFlow `json:"flows"`
 }
 
-type loginBody struct {
+type authRequest struct {
 	Type     LoginType `json:"type"`
 	Username string    `json:"user"`
 	Password string    `json:"password"`
@@ -48,9 +55,42 @@ var defaultLoginFlows = AuthFlows{
 	},
 }
 
+func registerWithPassword(hostname string, body *authRequest) interface{} {
+	if body.Username == "" {
+		return BadJsonError("Missing or invalid user")
+	}
+	if body.Password == "" {
+		return BadJsonError("Missing or invalid password")
+	}
+	userId := fmt.Sprintf("@%s:%s", body.Username, hostname)
+	user, err := service.CreateUser(userId)
+	if err != nil {
+		return UserInUseError(err.Error())
+	}
+	if err := user.SetPassword(body.Password); err != nil {
+		return ServerError(err.Error())
+	}
+	accessToken, err := service.NewAccessToken(userId)
+	if err != nil {
+		return ServerError(err.Error())
+	}
+	return authResponse{
+		UserId:      userId,
+		AccessToken: accessToken,
+	}
+}
+
 var registerResource = Resource{
 	Get: NewJsonHandler(func(req *http.Request) interface{} {
 		return &defaultRegisterFlows
+	}),
+	Post: NewJsonHandler(func(req *http.Request, body *authRequest) interface{} {
+		switch body.Type {
+		case LoginTypePassword:
+			hostname := strings.Split(req.Host, ":")[0]
+			return registerWithPassword(hostname, body)
+		}
+		return BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
 	}),
 }
 
