@@ -10,6 +10,10 @@ func (e *Error) Status() int {
 	return e.status
 }
 
+func (e *Error) Error() string {
+	return e.Message
+}
+
 func UnrecognizedError(message string) *Error {
 	return &Error{
 		Code:    "M_UNRECOGNIZED",

@@ -60,9 +60,9 @@ func getAvatarUrl(params httprouter.Params) interface{} {
 }
 
 func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlBody) interface{} {
-	authedUser, apiErr := readAccessToken(req)
-	if apiErr != nil {
-		return apiErr
+	authedUser, err := readAccessToken(req)
+	if err != nil {
+		return err
 	}
 	user, err := service.GetUser(params[0].Value)
 	if err != nil {

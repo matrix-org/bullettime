@@ -123,7 +123,7 @@ func writeJsonResponseWithStatus(rw http.ResponseWriter, body WithStatus) {
 	writeJsonResponse(rw, body.Status(), body)
 }
 
-func readAccessToken(req *http.Request) (service.User, *Error) {
+func readAccessToken(req *http.Request) (service.User, error) {
 	token := req.URL.Query().Get("access_token")
 	if token == "" {
 		return service.User{}, defaultMissingTokenError
