@@ -70,27 +70,27 @@ func (h JsonHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			body,
 		})[0]
 	}
-	errorString := ""
 	withStatus, ok := returnValue.Interface().(WithStatus)
-	var res []byte
-	if ok {
-		var err error
-		res, err = json.MarshalIndent(returnValue.Interface(), "", "    ")
-		if err != nil {
-			log.Println("marshaling error: ", err)
-			errorString = "failed to marshal response"
-		}
-	} else {
+	if !ok {
 		log.Println("failed to cast to WithStatus: ", returnValue)
-		errorString = "failed to read response status"
-	}
-	if errorString != "" {
-		rw.WriteHeader(500)
-		rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		fmt.Fprintf(rw, "failed to marshal response")
+		writeJsonResponse(rw, 500, map[string]string{
+			"errcode": "M_SERVER_ERROR",
+			"error":   "failed to read response status",
+		})
 	} else {
-		rw.WriteHeader(withStatus.Status())
-		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+		writeJsonResponse(rw, withStatus.Status(), withStatus)
+	}
+}
+
+func writeJsonResponse(rw http.ResponseWriter, status int, body interface{}) {
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	res, err := json.Marshal(body)
+	if err != nil {
+		rw.WriteHeader(500)
+		log.Println("marshaling error: ", err)
+		fmt.Fprintf(rw, "{\"errcode\":\"M_SERVER_ERROR\",\"error\":\"failed to marshal response\"}")
+	} else {
+		rw.WriteHeader(status)
 		rw.Write(res)
 	}
 }
