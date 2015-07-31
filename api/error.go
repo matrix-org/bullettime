@@ -42,7 +42,7 @@ func ForbiddenError(message string) *Error {
 	}
 }
 
-func UnkownTokenError(message string) *Error {
+func UnknownTokenError(message string) *Error {
 	return &Error{
 		Code:    "M_UNKNOWN_TOKEN",
 		Message: message,
@@ -83,3 +83,5 @@ func ServerError(message string) *Error {
 }
 
 var defaultUnrecognizedError = UnrecognizedError("unrecognized request")
+var defaultMissingTokenError = MissingTokenError("Missing access token")
+var defaultUnknownTokenError = UnknownTokenError("Unrecognised access token")

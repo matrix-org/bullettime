@@ -10,7 +10,7 @@ import (
 )
 
 type TokenInfo struct {
-	userId string
+	UserId string
 }
 
 func NewAccessToken(userId string) (string, error) {
@@ -29,6 +29,6 @@ func ParseAccessToken(token string) (TokenInfo, error) {
 	if err != nil {
 		return info, err
 	}
-	info.userId = string(userId)
+	info.UserId = string(userId)
 	return info, nil
 }

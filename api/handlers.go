@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/Rugvip/bullettime/service"
+
 	"github.com/Rugvip/bullettime/vendor/github.com/julienschmidt/httprouter"
 )
 
@@ -119,4 +121,20 @@ func writeJsonResponse(rw http.ResponseWriter, status int, body interface{}) {
 
 func writeJsonResponseWithStatus(rw http.ResponseWriter, body WithStatus) {
 	writeJsonResponse(rw, body.Status(), body)
+}
+
+func readAccessToken(req *http.Request) (service.User, *Error) {
+	token := req.URL.Query().Get("access_token")
+	if token == "" {
+		return service.User{}, defaultMissingTokenError
+	}
+	info, err := service.ParseAccessToken(token)
+	if err != nil {
+		return service.User{}, defaultUnknownTokenError
+	}
+	user, err := service.GetUser(info.UserId)
+	if err != nil {
+		return service.User{}, defaultUnknownTokenError
+	}
+	return user, nil
 }
