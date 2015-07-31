@@ -1,15 +1,33 @@
 package api
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 var Root *http.ServeMux
 
+type TestRequest struct {
+	Code    int    `json:"code"`
+	Message string `json:"msg"`
+}
+
+type TestResponse struct {
+	OkStatus
+	Message string `json:"message"`
+}
+
+func handlePost(req *http.Request, body *TestRequest) WithStatus {
+	log.Println("got body", body.Code, body.Message)
+	return &TestResponse{
+		Message: "hello",
+	}
+}
+
 func init() {
 	Root = http.NewServeMux()
-	Root.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("ROOT"))
-	})
-	Root.HandleFunc("/test", func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("TEST"))
-	})
+	Root.Handle("/", NewJsonHandler(func(req *http.Request) WithStatus {
+		return UnrecognizedError("unrecognized request")
+	}))
+	Root.Handle("/test", NewJsonHandler(handlePost))
 }
