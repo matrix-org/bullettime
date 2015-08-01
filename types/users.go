@@ -66,3 +66,7 @@ func (l LastActive) MarshalJSON() ([]byte, error) {
 	duration := time.Since(time.Time(l)).Nanoseconds() / time.Millisecond.Nanoseconds()
 	return []byte(strconv.FormatInt(duration, 10)), nil
 }
+
+func (l *LastActive) UnmarshalJSON(data []byte) error {
+	return (*time.Time)(l).UnmarshalJSON(data)
+}
