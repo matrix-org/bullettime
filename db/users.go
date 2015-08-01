@@ -3,38 +3,30 @@ package db
 import (
 	"errors"
 	"time"
-)
 
-type Presence string
-
-const (
-	PresenceOnline      Presence = "online"
-	PresenceOffline              = "offline"
-	PresenceAvailable            = "free_for_chat"
-	PresenceUnavailable          = "unavailable"
+	"github.com/Rugvip/bullettime/types"
 )
 
 type User struct {
-	id            string
-	passwordHash  string
-	displayName   string
-	avatarUrl     string
-	presence      Presence
-	statusMessage string
-	lastActive    time.Time
+	types.UserInfo
+	types.UserPresence
+	PasswordHash string
 }
 
 var userTable = map[string]*User{}
+
+func GetUser(id string) *User {
+	return userTable[id]
+}
 
 func CreateUser(id string) error {
 	if userTable[id] != nil {
 		return errors.New("user already exists")
 	}
-	userTable[id] = &User{
-		id:         id,
-		presence:   "offline",
-		lastActive: time.Now(),
-	}
+	user := new(User)
+	user.Id = id
+	user.LastActive = types.LastActive(time.Now())
+	userTable[id] = user
 	return nil
 }
 
@@ -50,7 +42,7 @@ func SetUserPasswordHash(id, hash string) error {
 	if user == nil {
 		return errors.New("user not found")
 	}
-	user.passwordHash = hash
+	user.PasswordHash = hash
 	return nil
 }
 
@@ -59,7 +51,7 @@ func GetUserPasswordHash(id string) (string, error) {
 	if user == nil {
 		return "", errors.New("user not found")
 	}
-	return user.passwordHash, nil
+	return user.PasswordHash, nil
 }
 
 func SetUserDisplayName(id string, displayName string) error {
@@ -67,16 +59,8 @@ func SetUserDisplayName(id string, displayName string) error {
 	if user == nil {
 		return errors.New("user not found")
 	}
-	user.displayName = displayName
+	user.DisplayName = displayName
 	return nil
-}
-
-func GetUserDisplayName(id string) (string, error) {
-	user := userTable[id]
-	if user == nil {
-		return "", errors.New("user not found")
-	}
-	return user.displayName, nil
 }
 
 func SetUserAvatarUrl(id string, avatarUrl string) error {
@@ -84,14 +68,14 @@ func SetUserAvatarUrl(id string, avatarUrl string) error {
 	if user == nil {
 		return errors.New("user not found")
 	}
-	user.avatarUrl = avatarUrl
+	user.AvatarUrl = avatarUrl
 	return nil
 }
 
-func GetUserAvatarUrl(id string) (string, error) {
+func GetUserInfo(id string) (types.UserInfo, error) {
 	user := userTable[id]
 	if user == nil {
-		return "", errors.New("user not found")
+		return types.UserInfo{}, errors.New("user not found")
 	}
-	return user.avatarUrl, nil
+	return user.UserInfo, nil
 }

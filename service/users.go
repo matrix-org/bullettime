@@ -47,11 +47,19 @@ func (u User) SetPassword(password string) error {
 }
 
 func (u User) GetDisplayName() (string, error) {
-	return db.GetUserDisplayName(u.id)
+	info, err := db.GetUserInfo(u.id)
+	if err != nil {
+		return "", err
+	}
+	return info.DisplayName, nil
 }
 
 func (u User) GetAvatarUrl() (string, error) {
-	return db.GetUserAvatarUrl(u.id)
+	info, err := db.GetUserInfo(u.id)
+	if err != nil {
+		return "", err
+	}
+	return info.AvatarUrl, nil
 }
 
 func (u User) SetDisplayName(displayName string) error {
