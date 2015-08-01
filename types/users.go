@@ -6,8 +6,7 @@ import (
 	"time"
 )
 
-type UserInfo struct {
-	Id          string `json:"user_id"`
+type UserProfile struct {
 	DisplayName string `json:"displayname"`
 	AvatarUrl   string `json:"avatar_url"`
 }

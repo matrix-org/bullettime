@@ -8,7 +8,8 @@ import (
 )
 
 type User struct {
-	types.UserInfo
+	Id string
+	types.UserProfile
 	types.UserPresence
 	PasswordHash string `json:"-"`
 }
@@ -72,10 +73,10 @@ func SetUserAvatarUrl(id string, avatarUrl string) error {
 	return nil
 }
 
-func GetUserInfo(id string) (types.UserInfo, error) {
+func GetUserProfile(id string) (types.UserProfile, error) {
 	user := userTable[id]
 	if user == nil {
-		return types.UserInfo{}, errors.New("user not found")
+		return types.UserProfile{}, errors.New("user not found")
 	}
-	return user.UserInfo, nil
+	return user.UserProfile, nil
 }

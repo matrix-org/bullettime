@@ -47,7 +47,7 @@ func (u User) SetPassword(password string) error {
 }
 
 func (u User) GetDisplayName() (string, error) {
-	info, err := db.GetUserInfo(u.id)
+	info, err := db.GetUserProfile(u.id)
 	if err != nil {
 		return "", err
 	}
@@ -55,7 +55,7 @@ func (u User) GetDisplayName() (string, error) {
 }
 
 func (u User) GetAvatarUrl() (string, error) {
-	info, err := db.GetUserInfo(u.id)
+	info, err := db.GetUserProfile(u.id)
 	if err != nil {
 		return "", err
 	}
