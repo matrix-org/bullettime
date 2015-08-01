@@ -35,7 +35,6 @@ func getDisplayName(params httprouter.Params) interface{} {
 }
 
 func setDisplayName(req *http.Request, params httprouter.Params, body *displayNameRequest) interface{} {
-	log.Println("set display name", body)
 	authedUser, apiErr := readAccessToken(req)
 	if apiErr != nil {
 		return apiErr
