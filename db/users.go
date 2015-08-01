@@ -10,7 +10,7 @@ import (
 type User struct {
 	types.UserInfo
 	types.UserPresence
-	PasswordHash string
+	PasswordHash string `json:"-"`
 }
 
 var userTable = map[string]*User{}
