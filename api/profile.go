@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Rugvip/bullettime/service"
+	"github.com/Rugvip/bullettime/types"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -23,9 +24,9 @@ type displayNameResponse struct {
 }
 
 func getDisplayName(params httprouter.Params) interface{} {
-	user, err := service.GetUser(params[0].Value)
+	user, err := userFromParams(params)
 	if err != nil {
-		return NotFoundError(err.Error())
+		return err
 	}
 	name, err := user.GetDisplayName()
 	if err != nil {
@@ -39,9 +40,9 @@ func setDisplayName(req *http.Request, params httprouter.Params, body *displayNa
 	if apiErr != nil {
 		return apiErr
 	}
-	user, err := service.GetUser(params[0].Value)
+	user, err := userFromParams(params)
 	if err != nil {
-		return NotFoundError(err.Error())
+		return err
 	}
 	if authedUser.Id() != user.Id() {
 		return ForbiddenError("can't change the display name of other users")
@@ -56,9 +57,9 @@ func setDisplayName(req *http.Request, params httprouter.Params, body *displayNa
 }
 
 func getAvatarUrl(params httprouter.Params) interface{} {
-	user, err := service.GetUser(params[0].Value)
+	user, err := userFromParams(params)
 	if err != nil {
-		return NotFoundError(err.Error())
+		return err
 	}
 	url, err := user.GetAvatarUrl()
 	if err != nil {
@@ -72,9 +73,9 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRe
 	if err != nil {
 		return err
 	}
-	user, err := service.GetUser(params[0].Value)
+	user, err := userFromParams(params)
 	if err != nil {
-		return NotFoundError(err.Error())
+		return err
 	}
 	if authedUser.Id() != user.Id() {
 		return ForbiddenError("can't change the avatar url of other users")
@@ -86,6 +87,18 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRe
 		return ServerError(err.Error())
 	}
 	return struct{}{}
+}
+
+func userFromParams(params httprouter.Params) (service.User, error) {
+	userId, err := types.ParseUserId(params[0].Value)
+	if err != nil {
+		return service.User{}, BadJsonError(err.Error())
+	}
+	user, err := service.GetUser(userId)
+	if err != nil {
+		return service.User{}, NotFoundError(err.Error())
+	}
+	return user, nil
 }
 
 func registerProfileResources(mux *httprouter.Router) {

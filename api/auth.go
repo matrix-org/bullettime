@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Rugvip/bullettime/service"
+	"github.com/Rugvip/bullettime/types"
 	"github.com/julienschmidt/httprouter"
 
 	"net/http"
@@ -33,8 +34,8 @@ type authRequest struct {
 }
 
 type authResponse struct {
-	UserId      string `json:"user_id"`
-	AccessToken string `json:"access_token"`
+	UserId      types.UserId `json:"user_id"`
+	AccessToken string       `json:"access_token"`
 }
 
 var defaultRegisterFlows = AuthFlows{
@@ -63,7 +64,7 @@ func registerWithPassword(hostname string, body *authRequest) interface{} {
 	if body.Password == "" {
 		return BadJsonError("Missing or invalid password")
 	}
-	userId := fmt.Sprintf("@%s:%s", body.Username, hostname)
+	userId := types.NewUserId(body.Username, hostname)
 	user, err := service.CreateUser(userId)
 	if err != nil {
 		return UserInUseError(err.Error())

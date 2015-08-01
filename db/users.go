@@ -8,19 +8,19 @@ import (
 )
 
 type User struct {
-	Id string
+	Id types.UserId
 	types.UserProfile
 	types.UserPresence
 	PasswordHash string `json:"-"`
 }
 
-var userTable = map[string]*User{}
+var userTable = map[types.UserId]*User{}
 
-func GetUser(id string) *User {
+func GetUser(id types.UserId) *User {
 	return userTable[id]
 }
 
-func CreateUser(id string) error {
+func CreateUser(id types.UserId) error {
 	if userTable[id] != nil {
 		return errors.New("user already exists")
 	}
@@ -31,14 +31,14 @@ func CreateUser(id string) error {
 	return nil
 }
 
-func UserExists(id string) error {
+func UserExists(id types.UserId) error {
 	if userTable[id] == nil {
 		return errors.New("user not found")
 	}
 	return nil
 }
 
-func SetUserPasswordHash(id, hash string) error {
+func SetUserPasswordHash(id types.UserId, hash string) error {
 	user := userTable[id]
 	if user == nil {
 		return errors.New("user not found")
@@ -47,7 +47,7 @@ func SetUserPasswordHash(id, hash string) error {
 	return nil
 }
 
-func GetUserPasswordHash(id string) (string, error) {
+func GetUserPasswordHash(id types.UserId) (string, error) {
 	user := userTable[id]
 	if user == nil {
 		return "", errors.New("user not found")
@@ -55,7 +55,7 @@ func GetUserPasswordHash(id string) (string, error) {
 	return user.PasswordHash, nil
 }
 
-func SetUserDisplayName(id string, displayName string) error {
+func SetUserDisplayName(id types.UserId, displayName string) error {
 	user := userTable[id]
 	if user == nil {
 		return errors.New("user not found")
@@ -64,7 +64,7 @@ func SetUserDisplayName(id string, displayName string) error {
 	return nil
 }
 
-func SetUserAvatarUrl(id string, avatarUrl string) error {
+func SetUserAvatarUrl(id types.UserId, avatarUrl string) error {
 	user := userTable[id]
 	if user == nil {
 		return errors.New("user not found")
@@ -73,7 +73,7 @@ func SetUserAvatarUrl(id string, avatarUrl string) error {
 	return nil
 }
 
-func GetUserProfile(id string) (types.UserProfile, error) {
+func GetUserProfile(id types.UserId) (types.UserProfile, error) {
 	user := userTable[id]
 	if user == nil {
 		return types.UserProfile{}, errors.New("user not found")

@@ -2,28 +2,29 @@ package service
 
 import (
 	"github.com/Rugvip/bullettime/db"
+	"github.com/Rugvip/bullettime/types"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	id string
+	id types.UserId
 }
 
-func GetUser(id string) (User, error) {
+func GetUser(id types.UserId) (User, error) {
 	if err := db.UserExists(id); err != nil {
 		return User{}, err
 	}
 	return User{id: id}, nil
 }
 
-func CreateUser(id string) (User, error) {
+func CreateUser(id types.UserId) (User, error) {
 	if err := db.CreateUser(id); err != nil {
 		return User{}, err
 	}
 	return User{id: id}, nil
 }
 
-func (u User) Id() string {
+func (u User) Id() types.UserId {
 	return u.id
 }
 

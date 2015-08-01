@@ -20,3 +20,10 @@ func RandomString(length int) string {
 	}
 	return string(result)
 }
+
+func StripQuotes(str string) string {
+	if len(str) > 1 && str[0] == '"' && str[len(str)-1] == '"' {
+		return str[1 : len(str)-1]
+	}
+	return str
+}
