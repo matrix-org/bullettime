@@ -32,16 +32,16 @@ type UserPresence struct {
 func (p *Presence) UnmarshalJSON(bytes []byte) error {
 	str := string(bytes)
 	switch str {
-	case "offline":
+	case "\"offline\"":
 		*p = PresenceOffline
 		return nil
-	case "online":
+	case "\"online\"":
 		*p = PresenceOnline
 		return nil
-	case "free_for_chat":
+	case "\"free_for_chat\"":
 		*p = PresenceAvailable
 		return nil
-	case "unavailable":
+	case "\"unavailable\"":
 		*p = PresenceUnavailable
 		return nil
 	}
