@@ -108,14 +108,6 @@ func registerProfileResources(mux *httprouter.Router) {
 	mux.PUT("/profile/:userId/displayname", jsonHandler(setDisplayName))
 	mux.GET("/profile/:userId/avatar_url", jsonHandler(getAvatarUrl))
 	mux.PUT("/profile/:userId/avatar_url", jsonHandler(setAvatarUrl))
-	mux.GET("/user/:userId", jsonHandler(func(params httprouter.Params) interface{} {
-		userId, err := types.ParseUserId(params[0].Value)
-		if err != nil {
-			return BadJsonError(err.Error())
-		}
-		log.Printf("get user %s", userId)
-		return db.GetUser(userId)
-	}))
 	mux.GET("/user", jsonHandler(func() interface{} {
 		return &db.User{
 			Id: types.NewUserId("test", "localhost"),

@@ -16,10 +16,6 @@ type User struct {
 
 var userTable = map[types.UserId]*User{}
 
-func GetUser(id types.UserId) *User {
-	return userTable[id]
-}
-
 func CreateUser(id types.UserId) error {
 	if userTable[id] != nil {
 		return errors.New("user already exists")
