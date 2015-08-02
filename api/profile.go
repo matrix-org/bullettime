@@ -3,7 +3,9 @@ package api
 import (
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/Rugvip/bullettime/db"
 	"github.com/Rugvip/bullettime/service"
 	"github.com/Rugvip/bullettime/types"
 
@@ -106,4 +108,79 @@ func registerProfileResources(mux *httprouter.Router) {
 	mux.PUT("/profile/:userId/displayname", jsonHandler(setDisplayName))
 	mux.GET("/profile/:userId/avatar_url", jsonHandler(getAvatarUrl))
 	mux.PUT("/profile/:userId/avatar_url", jsonHandler(setAvatarUrl))
+	mux.GET("/user/:userId", jsonHandler(func(params httprouter.Params) interface{} {
+		userId, err := types.ParseUserId(params[0].Value)
+		if err != nil {
+			return BadJsonError(err.Error())
+		}
+		log.Printf("get user %s", userId)
+		return db.GetUser(userId)
+	}))
+	mux.GET("/user", jsonHandler(func() interface{} {
+		return &db.User{
+			Id: types.NewUserId("test", "localhost"),
+			UserProfile: types.UserProfile{
+				DisplayName: "Testan",
+				AvatarUrl:   "http://avatar.com",
+			},
+			UserPresence: types.UserPresence{
+				Presence:   types.PresenceOnline,
+				LastActive: types.LastActive(time.Now()),
+			},
+		}
+	}))
+	mux.POST("/user", jsonHandler(func(user *db.User) interface{} {
+		log.Println("got user:", user)
+		return user
+	}))
+	mux.GET("/event", jsonHandler(func() interface{} {
+		return &types.Event{
+			Id:        types.NewEventId("dkjfhg", "localhost"),
+			RoomId:    types.NewRoomId("dkfghu", "localhost"),
+			EventType: "m.test",
+			TimeStamp: types.TimeStamp{time.Now()},
+			Content: types.TestContent{
+				Name: "test",
+			},
+		}
+	}))
+	mux.POST("/event/:eventType/:stateKey", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
+		event := types.State{
+			Event: types.Event{
+				Id:        types.NewEventId("123", "localhost"),
+				RoomId:    types.NewRoomId("abc", "localhost"),
+				EventType: types.EventType(params[0].Value),
+				TimeStamp: types.TimeStamp{time.Now()},
+				Content:   content,
+			},
+			StateKey: params[1].Value,
+		}
+		log.Println("got state: ", event)
+		return &event
+	}))
+	mux.POST("/event/:eventType/", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
+		event := types.State{
+			Event: types.Event{
+				Id:        types.NewEventId("123", "localhost"),
+				RoomId:    types.NewRoomId("abc", "localhost"),
+				EventType: types.EventType(params[0].Value),
+				TimeStamp: types.TimeStamp{time.Now()},
+				Content:   content,
+			},
+			StateKey: "",
+		}
+		log.Println("got state: ", event)
+		return &event
+	}))
+	mux.POST("/event/:eventType", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
+		event := types.Event{
+			Id:        types.NewEventId("123", "localhost"),
+			RoomId:    types.NewRoomId("abc", "localhost"),
+			Content:   content,
+			EventType: types.EventType(params[0].Value),
+			TimeStamp: types.TimeStamp{time.Now()},
+		}
+		log.Println("got event: ", event)
+		return &event
+	}))
 }
