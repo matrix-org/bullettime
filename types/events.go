@@ -24,7 +24,7 @@ type TypedContent interface {
 
 type Content interface{}
 
-type TimeStamp struct {
+type Timestamp struct {
 	time.Time
 }
 
@@ -33,7 +33,7 @@ type Event struct {
 	RoomId    RoomId    `json:"room_id"`
 	UserId    UserId    `json:"user_od"`
 	EventType EventType `json:"type"`
-	TimeStamp TimeStamp `json:"origin_server_ts"`
+	Timestamp Timestamp `json:"origin_server_ts"`
 	Content   Content   `json:"content"`
 }
 
@@ -43,12 +43,12 @@ type State struct {
 	OldContent Content `json:"prev_content"`
 }
 
-func (ts TimeStamp) MarshalJSON() ([]byte, error) {
+func (ts Timestamp) MarshalJSON() ([]byte, error) {
 	ms := ts.UnixNano() / int64(time.Millisecond)
 	return []byte(strconv.FormatInt(ms, 10)), nil
 }
 
-func (ts *TimeStamp) UnmarshalJSON(data []byte) error {
+func (ts *Timestamp) UnmarshalJSON(data []byte) error {
 	ms, err := strconv.ParseInt(string(data), 10, 64)
 	if err != nil {
 		return err

@@ -138,7 +138,7 @@ func registerProfileResources(mux *httprouter.Router) {
 			Id:        types.NewEventId("dkjfhg", "localhost"),
 			RoomId:    types.NewRoomId("dkfghu", "localhost"),
 			EventType: "m.test",
-			TimeStamp: types.TimeStamp{time.Now()},
+			Timestamp: types.Timestamp{time.Now()},
 			Content: types.TestContent{
 				Name: "test",
 			},
@@ -150,7 +150,7 @@ func registerProfileResources(mux *httprouter.Router) {
 				Id:        types.NewEventId("123", "localhost"),
 				RoomId:    types.NewRoomId("abc", "localhost"),
 				EventType: types.EventType(params[0].Value),
-				TimeStamp: types.TimeStamp{time.Now()},
+				Timestamp: types.Timestamp{time.Now()},
 				Content:   content,
 			},
 			StateKey: params[1].Value,
@@ -164,7 +164,7 @@ func registerProfileResources(mux *httprouter.Router) {
 				Id:        types.NewEventId("123", "localhost"),
 				RoomId:    types.NewRoomId("abc", "localhost"),
 				EventType: types.EventType(params[0].Value),
-				TimeStamp: types.TimeStamp{time.Now()},
+				Timestamp: types.Timestamp{time.Now()},
 				Content:   content,
 			},
 			StateKey: "",
@@ -178,7 +178,7 @@ func registerProfileResources(mux *httprouter.Router) {
 			RoomId:    types.NewRoomId("abc", "localhost"),
 			Content:   content,
 			EventType: types.EventType(params[0].Value),
-			TimeStamp: types.TimeStamp{time.Now()},
+			Timestamp: types.Timestamp{time.Now()},
 		}
 		log.Println("got event: ", event)
 		return &event
