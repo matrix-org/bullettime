@@ -11,100 +11,114 @@ import (
 
 type IdPrefix rune
 
+type idInterface interface {
+	prefix() IdPrefix
+	tag() string
+	setTag(string)
+	hostname() string
+	setHostname(string)
+}
+
 const (
-	RoomIdPrefix  IdPrefix = '!'
-	AliasPrefix            = '#'
+	UserIdPrefix  IdPrefix = '@'
+	RoomIdPrefix           = '!'
 	EventIdPrefix          = '$'
-	UserIdPrefix           = '@'
+	AliasPrefix            = '#'
 )
 
 type Id struct {
-	prefix   IdPrefix
 	Tag      string
 	Hostname string
 }
 
-func NewRoomId(tag, hostname string) RoomId {
-	return RoomId{Id{RoomIdPrefix, tag, hostname}}
+func (id *Id) tag() string {
+	return id.Tag
+}
+func (id *Id) setTag(tag string) {
+	id.Tag = tag
+}
+func (id *Id) hostname() string {
+	return id.Hostname
+}
+func (id *Id) setHostname(hostname string) {
+	id.Hostname = hostname
 }
 
-func NewAlias(tag, hostname string) Alias {
-	return Alias{Id{AliasPrefix, tag, hostname}}
-}
-
-func NewEventId(tag, hostname string) EventId {
-	return EventId{Id{EventIdPrefix, tag, hostname}}
-}
-
-func NewUserId(tag, hostname string) UserId {
-	return UserId{Id{UserIdPrefix, tag, hostname}}
-}
-
-func parseIdWithPrefix(str string, prefix IdPrefix) (id Id, err error) {
+func parseId(id idInterface, str string) (err error) {
 	if len(str) < 2 {
-		return id, errors.New("invalid id, too short, '" + str + "'")
+		return errors.New("invalid id, too short, '" + str + "'")
 	}
 	parsedPrefix, prefixSize := utf8.DecodeRuneInString(str)
-	if parsedPrefix != rune(prefix) {
+	prefix := rune(id.prefix())
+	if parsedPrefix != prefix {
 		msg := fmt.Sprintf("invalid id prefix, was '%c', should be '%c'", parsedPrefix, prefix)
-		return id, errors.New(msg)
+		return errors.New(msg)
 	}
 	rest := str[prefixSize:]
 	split := strings.Split(rest, ":")
 	if len(split) != 2 {
 		msg := fmt.Sprintf("invalid id, should contain exactly one ':', contained %d", len(split)-1)
-		return id, errors.New(msg)
+		return errors.New(msg)
 	}
-	id.prefix = prefix
-	id.Tag = split[0]
-	id.Hostname = split[1]
-	return
+	id.setTag(split[0])
+	id.setHostname(split[1])
+	return nil
 }
 
-func ParseUserId(str string) (UserId, error) {
-	id, err := parseIdWithPrefix(str, UserIdPrefix)
-	if err != nil {
-		return UserId{}, err
-	}
-	return UserId{id}, nil
-}
-
-func ParseRoomId(str string) (RoomId, error) {
-	id, err := parseIdWithPrefix(str, RoomIdPrefix)
-	if err != nil {
-		return RoomId{}, err
-	}
-	return RoomId{id}, nil
-}
-
-func ParseEventId(str string) (EventId, error) {
-	id, err := parseIdWithPrefix(str, EventIdPrefix)
-	if err != nil {
-		return EventId{}, err
-	}
-	return EventId{id}, nil
-}
-
-func ParseAlias(str string) (Alias, error) {
-	id, err := parseIdWithPrefix(str, AliasPrefix)
-	if err != nil {
-		return Alias{}, err
-	}
-	return Alias{id}, nil
-}
-
-func (id *Id) String() string {
-	return fmt.Sprintf("%c%s:%s", id.prefix, id.Tag, id.Hostname)
-}
-
-func (id *Id) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+func stringifyId(id idInterface) string {
+	return fmt.Sprintf("%c%s:%s", id.prefix(), id.tag(), id.hostname())
 }
 
 type UserId struct{ Id }
 type RoomId struct{ Id }
 type EventId struct{ Id }
 type Alias struct{ Id }
+
+func NewRoomId(tag, hostname string) RoomId {
+	return RoomId{Id{tag, hostname}}
+}
+
+func NewAlias(tag, hostname string) Alias {
+	return Alias{Id{tag, hostname}}
+}
+
+func NewEventId(tag, hostname string) EventId {
+	return EventId{Id{tag, hostname}}
+}
+
+func NewUserId(tag, hostname string) UserId {
+	return UserId{Id{tag, hostname}}
+}
+
+func ParseUserId(str string) (id UserId, err error) {
+	err = parseId(&id, str)
+	return id, err
+}
+
+func ParseRoomId(str string) (id RoomId, err error) {
+	err = parseId(&id, str)
+	return id, err
+}
+
+func ParseEventId(str string) (id EventId, err error) {
+	err = parseId(&id, str)
+	return id, err
+}
+
+func ParseAlias(str string) (id Alias, err error) {
+	err = parseId(&id, str)
+	return id, err
+}
+
+func (id *UserId) prefix() IdPrefix  { return '@' }
+func (id *RoomId) prefix() IdPrefix  { return '!' }
+func (id *EventId) prefix() IdPrefix { return '$' }
+func (id *Alias) prefix() IdPrefix   { return '#' }
+
+func (id *UserId) String() string  { return stringifyId(id) }
+func (id *RoomId) String() string  { return stringifyId(id) }
+func (id *EventId) String() string { return stringifyId(id) }
+func (id *Alias) String() string   { return stringifyId(id) }
 
 func (id *UserId) UnmarshalJSON(bytes []byte) (err error) {
 	*id, err = ParseUserId(utils.StripQuotes(string(bytes)))
@@ -124,4 +138,17 @@ func (id *EventId) UnmarshalJSON(bytes []byte) (err error) {
 func (id *Alias) UnmarshalJSON(bytes []byte) (err error) {
 	*id, err = ParseAlias(utils.StripQuotes(string(bytes)))
 	return
+}
+
+func (id *UserId) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+}
+func (id *RoomId) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+}
+func (id *EventId) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+}
+func (id *Alias) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", id)), nil
 }
