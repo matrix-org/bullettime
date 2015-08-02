@@ -13,10 +13,10 @@ type IdPrefix rune
 
 type idInterface interface {
 	prefix() IdPrefix
-	tag() string
-	setTag(string)
-	hostname() string
-	setHostname(string)
+	id() string
+	setId(string)
+	domain() string
+	setDomain(string)
 }
 
 const (
@@ -27,29 +27,29 @@ const (
 )
 
 type Id struct {
-	Tag      string
-	Hostname string
+	Id     string
+	Domain string
 }
 
-func (id *Id) tag() string {
-	return id.Tag
+func (i *Id) id() string {
+	return i.Id
 }
-func (id *Id) setTag(tag string) {
-	id.Tag = tag
+func (i *Id) setId(id string) {
+	i.Id = id
 }
-func (id *Id) hostname() string {
-	return id.Hostname
+func (i *Id) domain() string {
+	return i.Domain
 }
-func (id *Id) setHostname(hostname string) {
-	id.Hostname = hostname
+func (i *Id) setDomain(domain string) {
+	i.Domain = domain
 }
 
-func parseId(id idInterface, str string) (err error) {
+func parseId(i idInterface, str string) (err error) {
 	if len(str) < 2 {
 		return errors.New("invalid id, too short, '" + str + "'")
 	}
 	parsedPrefix, prefixSize := utf8.DecodeRuneInString(str)
-	prefix := rune(id.prefix())
+	prefix := rune(i.prefix())
 	if parsedPrefix != prefix {
 		msg := fmt.Sprintf("invalid id prefix, was '%c', should be '%c'", parsedPrefix, prefix)
 		return errors.New(msg)
@@ -60,13 +60,19 @@ func parseId(id idInterface, str string) (err error) {
 		msg := fmt.Sprintf("invalid id, should contain exactly one ':', contained %d", len(split)-1)
 		return errors.New(msg)
 	}
-	id.setTag(split[0])
-	id.setHostname(split[1])
+	if split[0] == "" {
+		return errors.New("invalid id: missing id part: " + str)
+	}
+	if split[1] == "" {
+		return errors.New("invalid id: missing domain part: " + str)
+	}
+	i.setId(split[0])
+	i.setDomain(split[1])
 	return nil
 }
 
 func stringifyId(id idInterface) string {
-	return fmt.Sprintf("%c%s:%s", id.prefix(), id.tag(), id.hostname())
+	return fmt.Sprintf("%c%s:%s", id.prefix(), id.id(), id.domain())
 }
 
 type UserId struct{ Id }
@@ -74,20 +80,20 @@ type RoomId struct{ Id }
 type EventId struct{ Id }
 type Alias struct{ Id }
 
-func NewRoomId(tag, hostname string) RoomId {
-	return RoomId{Id{tag, hostname}}
+func NewRoomId(id, domain string) RoomId {
+	return RoomId{Id{id, domain}}
 }
 
-func NewAlias(tag, hostname string) Alias {
-	return Alias{Id{tag, hostname}}
+func NewAlias(id, domain string) Alias {
+	return Alias{Id{id, domain}}
 }
 
-func NewEventId(tag, hostname string) EventId {
-	return EventId{Id{tag, hostname}}
+func NewEventId(id, domain string) EventId {
+	return EventId{Id{id, domain}}
 }
 
-func NewUserId(tag, hostname string) UserId {
-	return UserId{Id{tag, hostname}}
+func NewUserId(id, domain string) UserId {
+	return UserId{Id{id, domain}}
 }
 
 func ParseUserId(str string) (id UserId, err error) {
@@ -110,45 +116,45 @@ func ParseAlias(str string) (id Alias, err error) {
 	return id, err
 }
 
-func (id *UserId) prefix() IdPrefix  { return '@' }
-func (id *RoomId) prefix() IdPrefix  { return '!' }
-func (id *EventId) prefix() IdPrefix { return '$' }
-func (id *Alias) prefix() IdPrefix   { return '#' }
+func (i *UserId) prefix() IdPrefix  { return '@' }
+func (i *RoomId) prefix() IdPrefix  { return '!' }
+func (i *EventId) prefix() IdPrefix { return '$' }
+func (i *Alias) prefix() IdPrefix   { return '#' }
 
-func (id *UserId) String() string  { return stringifyId(id) }
-func (id *RoomId) String() string  { return stringifyId(id) }
-func (id *EventId) String() string { return stringifyId(id) }
-func (id *Alias) String() string   { return stringifyId(id) }
+func (i *UserId) String() string  { return stringifyId(i) }
+func (i *RoomId) String() string  { return stringifyId(i) }
+func (i *EventId) String() string { return stringifyId(i) }
+func (i *Alias) String() string   { return stringifyId(i) }
 
-func (id *UserId) UnmarshalJSON(bytes []byte) (err error) {
-	*id, err = ParseUserId(utils.StripQuotes(string(bytes)))
+func (i *UserId) UnmarshalJSON(bytes []byte) (err error) {
+	*i, err = ParseUserId(utils.StripQuotes(string(bytes)))
 	return
 }
 
-func (id *RoomId) UnmarshalJSON(bytes []byte) (err error) {
-	*id, err = ParseRoomId(utils.StripQuotes(string(bytes)))
+func (i *RoomId) UnmarshalJSON(bytes []byte) (err error) {
+	*i, err = ParseRoomId(utils.StripQuotes(string(bytes)))
 	return
 }
 
-func (id *EventId) UnmarshalJSON(bytes []byte) (err error) {
-	*id, err = ParseEventId(utils.StripQuotes(string(bytes)))
+func (i *EventId) UnmarshalJSON(bytes []byte) (err error) {
+	*i, err = ParseEventId(utils.StripQuotes(string(bytes)))
 	return
 }
 
-func (id *Alias) UnmarshalJSON(bytes []byte) (err error) {
-	*id, err = ParseAlias(utils.StripQuotes(string(bytes)))
+func (i *Alias) UnmarshalJSON(bytes []byte) (err error) {
+	*i, err = ParseAlias(utils.StripQuotes(string(bytes)))
 	return
 }
 
-func (id *UserId) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+func (i *UserId) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
-func (id *RoomId) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+func (i *RoomId) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
-func (id *EventId) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+func (i *EventId) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
-func (id *Alias) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", id)), nil
+func (i *Alias) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
