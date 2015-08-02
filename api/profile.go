@@ -135,7 +135,7 @@ func registerProfileResources(mux *httprouter.Router) {
 	}))
 	mux.GET("/event", jsonHandler(func() interface{} {
 		return &types.Event{
-			Id:        types.NewEventId("dkjfhg", "localhost"),
+			EventId:   types.NewEventId("dkjfhg", "localhost"),
 			RoomId:    types.NewRoomId("dkfghu", "localhost"),
 			EventType: "m.test",
 			Timestamp: types.Timestamp{time.Now()},
@@ -147,13 +147,13 @@ func registerProfileResources(mux *httprouter.Router) {
 	mux.POST("/event/:eventType/:stateKey", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
 		event := types.State{
 			Event: types.Event{
-				Id:        types.NewEventId("123", "localhost"),
+				EventId:   types.NewEventId("123", "localhost"),
 				RoomId:    types.NewRoomId("abc", "localhost"),
 				EventType: types.EventType(params[0].Value),
 				Timestamp: types.Timestamp{time.Now()},
 				Content:   content,
 			},
-			StateKey: params[1].Value,
+			StateKey: types.StateKey(params[1].Value),
 		}
 		log.Println("got state: ", event)
 		return &event
@@ -161,20 +161,20 @@ func registerProfileResources(mux *httprouter.Router) {
 	mux.POST("/event/:eventType/", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
 		event := types.State{
 			Event: types.Event{
-				Id:        types.NewEventId("123", "localhost"),
+				EventId:   types.NewEventId("123", "localhost"),
 				RoomId:    types.NewRoomId("abc", "localhost"),
 				EventType: types.EventType(params[0].Value),
 				Timestamp: types.Timestamp{time.Now()},
 				Content:   content,
 			},
-			StateKey: "",
+			StateKey: types.StateKey(""),
 		}
 		log.Println("got state: ", event)
 		return &event
 	}))
 	mux.POST("/event/:eventType", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
 		event := types.Event{
-			Id:        types.NewEventId("123", "localhost"),
+			EventId:   types.NewEventId("123", "localhost"),
 			RoomId:    types.NewRoomId("abc", "localhost"),
 			Content:   content,
 			EventType: types.EventType(params[0].Value),

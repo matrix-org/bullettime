@@ -7,6 +7,7 @@ import (
 )
 
 type EventType string
+type StateKey string
 
 const (
 	EventTypeCreate      EventType = "m.room.create"
@@ -29,33 +30,32 @@ type Timestamp struct {
 }
 
 type Event struct {
-	Id        EventId   `json:"event_id"`
+	EventId   EventId   `json:"event_id"`
 	RoomId    RoomId    `json:"room_id"`
-	UserId    UserId    `json:"user_od"`
+	UserId    UserId    `json:"user_id"`
 	EventType EventType `json:"type"`
 	Timestamp Timestamp `json:"origin_server_ts"`
 	Content   Content   `json:"content"`
 }
 
+type OldState State
+
 type State struct {
 	Event
-	StateKey   string  `json:"state_key"`
-	OldContent Content `json:"prev_content"`
+	StateKey StateKey  `json:"state_key"`
+	OldState *OldState `json:"prev_content"`
+}
+
+func (e *OldState) MarshalJSON() ([]byte, error) {
+	if e == nil {
+		return []byte("null"), nil
+	}
+	return json.Marshal(e.Content)
 }
 
 func (ts Timestamp) MarshalJSON() ([]byte, error) {
 	ms := ts.UnixNano() / int64(time.Millisecond)
 	return []byte(strconv.FormatInt(ms, 10)), nil
-}
-
-func (ts *Timestamp) UnmarshalJSON(data []byte) error {
-	ms, err := strconv.ParseInt(string(data), 10, 64)
-	if err != nil {
-		return err
-	}
-
-	ts.Time = time.Unix(0, ms*int64(time.Millisecond))
-	return nil
 }
 
 type GenericContent struct {
