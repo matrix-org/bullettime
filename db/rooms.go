@@ -37,7 +37,10 @@ func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err error
 			break
 		}
 	}
-	roomTable[id] = &room{id: id}
+	roomTable[id] = &room{
+		id:     id,
+		states: make(map[StateId]*types.State),
+	}
 	if alias != nil {
 		aliasTable[*alias] = roomTable[id]
 	}
