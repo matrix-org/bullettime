@@ -21,9 +21,9 @@ type idInterface interface {
 
 const (
 	UserIdPrefix  IdPrefix = '@'
-	RoomIdPrefix           = '!'
-	EventIdPrefix          = '$'
-	AliasPrefix            = '#'
+	RoomIdPrefix  IdPrefix = '!'
+	EventIdPrefix IdPrefix = '$'
+	AliasPrefix   IdPrefix = '#'
 )
 
 type Id struct {

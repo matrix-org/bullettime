@@ -17,28 +17,28 @@ type Visibility int
 
 const (
 	VisibilityPrivate Visibility = 0
-	VisibilityPublic             = 1
+	VisibilityPublic  Visibility = 1
 )
 
 type JoinRule int
 
 const (
 	JoinRuleNone    JoinRule = 0
-	JoinRulePublic           = 1
-	JoinRuleInvite           = 2
-	JoinRulePrivate          = 3
-	JoinRuleKnock            = 4
+	JoinRulePublic  JoinRule = 1
+	JoinRuleInvite  JoinRule = 2
+	JoinRulePrivate JoinRule = 3
+	JoinRuleKnock   JoinRule = 4
 )
 
 type Membership int
 
 const (
 	MembershipNone     Membership = 0
-	MembershipInvited             = 1
-	MembershipMember              = 2
-	MembershipKnocking            = 3
-	MembershipLeaving             = 4
-	MembershipBanned              = 5
+	MembershipInvited  Membership = 1
+	MembershipMember   Membership = 2
+	MembershipKnocking Membership = 3
+	MembershipLeaving  Membership = 4
+	MembershipBanned   Membership = 5
 )
 
 func (v Visibility) ToJoinRule() JoinRule {

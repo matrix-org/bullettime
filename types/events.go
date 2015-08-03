@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	EventTypeCreate      string = "m.room.create"
-	EventTypeName               = "m.room.name"
-	EventTypeTopic              = "m.room.topic"
-	EventTypeAliases            = "m.room.aliases"
-	EventTypeJoinRules          = "m.room.join_rules"
-	EventTypeMembership         = "m.room.member"
-	EventTypePowerLevels        = "m.room.power_levels"
+	EventTypeCreate      = "m.room.create"
+	EventTypeName        = "m.room.name"
+	EventTypeTopic       = "m.room.topic"
+	EventTypeAliases     = "m.room.aliases"
+	EventTypeJoinRules   = "m.room.join_rules"
+	EventTypeMembership  = "m.room.member"
+	EventTypePowerLevels = "m.room.power_levels"
 )
 
 type TypedContent interface {

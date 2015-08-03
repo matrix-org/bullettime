@@ -15,9 +15,9 @@ type Presence int
 
 const (
 	PresenceOffline     Presence = 0
-	PresenceOnline               = 1
-	PresenceAvailable            = 2
-	PresenceUnavailable          = 3
+	PresenceOnline      Presence = 1
+	PresenceAvailable   Presence = 2
+	PresenceUnavailable Presence = 3
 )
 
 type LastActive time.Time
