@@ -1,6 +1,9 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type RoomDescription struct {
 	Visibility Visibility `json:"visibility"`
@@ -69,83 +72,95 @@ func (v Visibility) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("invalid visibility value: '" + string(v) + "'")
 }
 
-func (v *JoinRule) UnmarshalJSON(bytes []byte) error {
+func (j *JoinRule) UnmarshalJSON(bytes []byte) error {
 	str := string(bytes)
 	switch str {
 	case "null":
-		*v = JoinRuleNone
+		*j = JoinRuleNone
 		return nil
 	case "\"public\"":
-		*v = JoinRulePublic
+		*j = JoinRulePublic
 		return nil
 	case "\"invite\"":
-		*v = JoinRuleInvite
+		*j = JoinRuleInvite
 		return nil
 	case "\"private\"":
-		*v = JoinRulePrivate
+		*j = JoinRulePrivate
 		return nil
 	case "\"knock\"":
-		*v = JoinRuleKnock
+		*j = JoinRuleKnock
 		return nil
 	}
 	return errors.New("invalid join rule identifier: '" + str + "'")
 }
 
-func (v JoinRule) MarshalJSON() ([]byte, error) {
-	switch v {
-	case JoinRuleNone:
-		return []byte("null"), nil
+func (j JoinRule) String() string {
+	switch j {
 	case JoinRulePublic:
-		return []byte("\"public\""), nil
+		return "public"
 	case JoinRuleInvite:
-		return []byte("\"invite\""), nil
+		return "invite"
 	case JoinRulePrivate:
-		return []byte("\"private\""), nil
+		return "private"
 	case JoinRuleKnock:
-		return []byte("\"knock\""), nil
+		return "knock"
 	}
-	return nil, errors.New("invalid join rule value: '" + string(v) + "'")
+	return ""
 }
 
-func (v *Membership) UnmarshalJSON(bytes []byte) error {
+func (j JoinRule) MarshalJSON() ([]byte, error) {
+	str := j.String()
+	if str == "" {
+		return []byte("null"), nil
+	}
+	return []byte(fmt.Sprintf("\"%s\"", str)), nil
+}
+
+func (m *Membership) UnmarshalJSON(bytes []byte) error {
 	str := string(bytes)
 	switch str {
 	case "null":
-		*v = MembershipNone
+		*m = MembershipNone
 		return nil
 	case "\"invite\"":
-		*v = MembershipInvited
+		*m = MembershipInvited
 		return nil
 	case "\"join\"":
-		*v = MembershipMember
+		*m = MembershipMember
 		return nil
 	case "\"knock\"":
-		*v = MembershipKnocking
+		*m = MembershipKnocking
 		return nil
 	case "\"leave\"":
-		*v = MembershipLeaving
+		*m = MembershipLeaving
 		return nil
 	case "\"ban\"":
-		*v = MembershipBanned
+		*m = MembershipBanned
 		return nil
 	}
 	return errors.New("invalid membership identifier: '" + str + "'")
 }
 
-func (v Membership) MarshalJSON() ([]byte, error) {
-	switch v {
-	case MembershipNone:
-		return []byte("null"), nil
+func (m Membership) String() string {
+	switch m {
 	case MembershipInvited:
-		return []byte("\"invite\""), nil
+		return "invite"
 	case MembershipMember:
-		return []byte("\"join\""), nil
+		return "join"
 	case MembershipKnocking:
-		return []byte("\"knock\""), nil
+		return "knock"
 	case MembershipLeaving:
-		return []byte("\"leave\""), nil
+		return "leave"
 	case MembershipBanned:
-		return []byte("\"ban\""), nil
+		return "ban"
 	}
-	return nil, errors.New("invalid membership value: '" + string(v) + "'")
+	return ""
+}
+
+func (m Membership) MarshalJSON() ([]byte, error) {
+	str := m.String()
+	if str == "" {
+		return []byte("null"), nil
+	}
+	return []byte(fmt.Sprintf("\"%s\"", str)), nil
 }
