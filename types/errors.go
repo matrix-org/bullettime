@@ -70,6 +70,14 @@ func BadJsonError(message string) *Error {
 	}
 }
 
+func NotJsonError(message string) *Error {
+	return &Error{
+		Code:    "M_NOT_JSON",
+		Message: message,
+		status:  400,
+	}
+}
+
 func MissingTokenError(message string) *Error {
 	return &Error{
 		Code:    "M_MISSING_TOKEN",
