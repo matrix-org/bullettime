@@ -66,7 +66,7 @@ func (v *JoinRule) UnmarshalJSON(bytes []byte) error {
 		*v = JoinRuleInvite
 		return nil
 	}
-	return errors.New("invalid visibility identifier: '" + str + "'")
+	return errors.New("invalid join rule identifier: '" + str + "'")
 }
 
 func (v JoinRule) MarshalJSON() ([]byte, error) {
@@ -78,5 +78,5 @@ func (v JoinRule) MarshalJSON() ([]byte, error) {
 	case JoinRuleInvite:
 		return []byte("\"invite\""), nil
 	}
-	return nil, errors.New("invalid visibility value: '" + string(v) + "'")
+	return nil, errors.New("invalid join rule value: '" + string(v) + "'")
 }
