@@ -30,11 +30,11 @@ func getDisplayName(params httprouter.Params) interface{} {
 	if err != nil {
 		return err
 	}
-	name, err := user.GetDisplayName()
+	profile, err := user.GetProfile()
 	if err != nil {
 		return ServerError(err.Error())
 	}
-	return displayNameResponse{name}
+	return displayNameResponse{profile.DisplayName}
 }
 
 func setDisplayName(req *http.Request, params httprouter.Params, body *displayNameRequest) interface{} {
@@ -63,11 +63,11 @@ func getAvatarUrl(params httprouter.Params) interface{} {
 	if err != nil {
 		return err
 	}
-	url, err := user.GetAvatarUrl()
+	profile, err := user.GetProfile()
 	if err != nil {
 		return ServerError(err.Error())
 	}
-	return avatarUrlResponse{url}
+	return avatarUrlResponse{profile.AvatarUrl}
 }
 
 func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRequest) interface{} {
