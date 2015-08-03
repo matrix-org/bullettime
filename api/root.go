@@ -18,5 +18,6 @@ func NewRootMux() http.Handler {
 	// }
 	registerAuthResources(mux)
 	registerProfileResources(mux)
+	registerRoomResources(mux)
 	return mux
 }
