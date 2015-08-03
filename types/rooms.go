@@ -4,7 +4,7 @@ import "errors"
 
 type RoomDescription struct {
 	Visibility Visibility `json:"visibility"`
-	Alias      *Alias     `json:"room_alias_name"`
+	Alias      *string    `json:"room_alias_name"`
 	Name       *string    `json:"name"`
 	Topic      *string    `json:"topic"`
 	Invited    []UserId   `json:"invite"`
