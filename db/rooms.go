@@ -1,7 +1,6 @@
 package db
 
 import (
-	"errors"
 	"time"
 
 	"github.com/Rugvip/bullettime/types"
@@ -27,7 +26,7 @@ var aliasTable = make(map[types.Alias]*room)
 
 func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err error) {
 	if alias != nil && aliasTable[*alias] != nil {
-		err = errors.New("room alias '" + alias.String() + "' is in use")
+		err = types.RoomInUseError("room alias '" + alias.String() + "' already exists")
 		return
 	}
 	id.Domain = hostname
@@ -49,7 +48,7 @@ func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err error
 
 func RoomExists(id types.RoomId) error {
 	if roomTable[id] == nil {
-		return errors.New("room not found")
+		return types.NotFoundError("room '" + id.String() + "' doesn't exist")
 	}
 	return nil
 }
@@ -57,7 +56,7 @@ func RoomExists(id types.RoomId) error {
 func AddRoomEvent(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Event, error) {
 	room := roomTable[roomId]
 	if room == nil {
-		return nil, errors.New("room doesn't exist")
+		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
 	var eventId = types.EventId{types.Id{Domain: userId.Domain}}
 	for {
@@ -82,7 +81,7 @@ func AddRoomEvent(roomId types.RoomId, userId types.UserId, content types.TypedC
 func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, error) {
 	room := roomTable[roomId]
 	if room == nil {
-		return nil, errors.New("room doesn't exist")
+		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
 	var eventId = types.EventId{types.Id{Domain: userId.Domain}}
 	for {
@@ -112,7 +111,7 @@ func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedC
 func GetRoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, error) {
 	room := roomTable[roomId]
 	if room == nil {
-		return nil, errors.New("room doesn't exist")
+		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
 	state := room.states[StateId{eventType, stateKey}]
 	return state, nil
