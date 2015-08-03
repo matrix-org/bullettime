@@ -117,15 +117,32 @@ func (c *AliasesEventContent) EventType() EventType {
 	return EventTypeAliases
 }
 
+func DefaultPowerLevels(creator UserId) *PowerLevelsEventContent {
+	powerLevels := new(PowerLevelsEventContent)
+	powerLevels.Ban = 50
+	powerLevels.Kick = 50
+	powerLevels.Redact = 50
+	powerLevels.CreateState = 50
+	powerLevels.EventDefault = 0
+	powerLevels.Users = map[UserId]int{
+		creator: 100,
+	}
+	powerLevels.Events = map[EventType]int{
+		"m.room.name":         100,
+		"m.room.power_levels": 100,
+	}
+	return powerLevels
+}
+
 type PowerLevelsEventContent struct {
-	Ban          int             `json:"ban"`
-	Kick         int             `json:"kick"`
-	Redact       int             `json:"redact"`
-	UserDefault  int             `json:"users_default"`
-	CreateState  int             `json:"state_default"`
-	EventDefault int             `json:"events_default"`
-	Users        map[UserId]int  `json:"users"`
-	Events       map[EventId]int `json:"events"`
+	Ban          int               `json:"ban"`
+	Kick         int               `json:"kick"`
+	Redact       int               `json:"redact"`
+	UserDefault  int               `json:"users_default"`
+	CreateState  int               `json:"state_default"`
+	EventDefault int               `json:"events_default"`
+	Users        map[UserId]int    `json:"users"`
+	Events       map[EventType]int `json:"events"`
 }
 
 func (c *PowerLevelsEventContent) EventType() EventType {
