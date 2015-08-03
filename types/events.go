@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-type EventType string
-
 const (
 	EventTypeCreate      string = "m.room.create"
 	EventTypeName               = "m.room.name"
@@ -125,7 +123,7 @@ func DefaultPowerLevels(creator UserId) *PowerLevelsEventContent {
 	powerLevels.Users = map[UserId]int{
 		creator: 100,
 	}
-	powerLevels.Events = map[EventType]int{
+	powerLevels.Events = map[string]int{
 		"m.room.name":         100,
 		"m.room.power_levels": 100,
 	}
@@ -133,14 +131,14 @@ func DefaultPowerLevels(creator UserId) *PowerLevelsEventContent {
 }
 
 type PowerLevelsEventContent struct {
-	Ban          int               `json:"ban"`
-	Kick         int               `json:"kick"`
-	Redact       int               `json:"redact"`
-	UserDefault  int               `json:"users_default"`
-	CreateState  int               `json:"state_default"`
-	EventDefault int               `json:"events_default"`
-	Users        map[UserId]int    `json:"users"`
-	Events       map[EventType]int `json:"events"`
+	Ban          int            `json:"ban"`
+	Kick         int            `json:"kick"`
+	Redact       int            `json:"redact"`
+	UserDefault  int            `json:"users_default"`
+	CreateState  int            `json:"state_default"`
+	EventDefault int            `json:"events_default"`
+	Users        map[UserId]int `json:"users"`
+	Events       map[string]int `json:"events"`
 }
 
 func (c *PowerLevelsEventContent) EventType() string {
