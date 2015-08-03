@@ -117,6 +117,7 @@ func DefaultPowerLevels(creator UserId) *PowerLevelsEventContent {
 	powerLevels := new(PowerLevelsEventContent)
 	powerLevels.Ban = 50
 	powerLevels.Kick = 50
+	powerLevels.Invite = 0
 	powerLevels.Redact = 50
 	powerLevels.CreateState = 50
 	powerLevels.EventDefault = 0
@@ -133,6 +134,7 @@ func DefaultPowerLevels(creator UserId) *PowerLevelsEventContent {
 type PowerLevelsEventContent struct {
 	Ban          int            `json:"ban"`
 	Kick         int            `json:"kick"`
+	Invite       int            `json:"invite"`
 	Redact       int            `json:"redact"`
 	UserDefault  int            `json:"users_default"`
 	CreateState  int            `json:"state_default"`
