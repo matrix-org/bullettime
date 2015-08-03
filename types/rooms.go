@@ -20,9 +20,11 @@ const (
 type JoinRule int
 
 const (
-	JoinRuleNone   JoinRule = 0
-	JoinRulePublic          = 1
-	JoinRuleInvite          = 2
+	JoinRuleNone    JoinRule = 0
+	JoinRulePublic           = 1
+	JoinRuleInvite           = 2
+	JoinRulePrivate          = 3
+	JoinRuleKnock            = 4
 )
 
 type Membership int
@@ -70,11 +72,20 @@ func (v Visibility) MarshalJSON() ([]byte, error) {
 func (v *JoinRule) UnmarshalJSON(bytes []byte) error {
 	str := string(bytes)
 	switch str {
+	case "null":
+		*v = JoinRuleNone
+		return nil
 	case "\"public\"":
 		*v = JoinRulePublic
 		return nil
 	case "\"invite\"":
 		*v = JoinRuleInvite
+		return nil
+	case "\"private\"":
+		*v = JoinRulePrivate
+		return nil
+	case "\"knock\"":
+		*v = JoinRuleKnock
 		return nil
 	}
 	return errors.New("invalid join rule identifier: '" + str + "'")
@@ -88,6 +99,10 @@ func (v JoinRule) MarshalJSON() ([]byte, error) {
 		return []byte("\"public\""), nil
 	case JoinRuleInvite:
 		return []byte("\"invite\""), nil
+	case JoinRulePrivate:
+		return []byte("\"private\""), nil
+	case JoinRuleKnock:
+		return []byte("\"knock\""), nil
 	}
 	return nil, errors.New("invalid join rule value: '" + string(v) + "'")
 }
