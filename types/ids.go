@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -21,26 +20,32 @@ type Id struct {
 	Domain string
 }
 
+type IdParseError string
+
+func (e IdParseError) Error() string {
+	return "failed to parse id: " + string(e)
+}
+
 func parseId(id *Id, str string, prefix rune) error {
 	if len(str) < 2 {
-		return errors.New("invalid id, too short, '" + str + "'")
+		return IdParseError("too short")
 	}
 	parsedPrefix, prefixSize := utf8.DecodeRuneInString(str)
 	if parsedPrefix != prefix {
-		msg := fmt.Sprintf("invalid id prefix, was '%c', should be '%c'", parsedPrefix, prefix)
-		return errors.New(msg)
+		msg := fmt.Sprintf("prefix was '%c', should have been '%c'", parsedPrefix, prefix)
+		return IdParseError(msg)
 	}
 	rest := str[prefixSize:]
 	split := strings.Split(rest, ":")
 	if len(split) != 2 {
-		msg := fmt.Sprintf("invalid id, should contain exactly one ':', contained %d", len(split)-1)
-		return errors.New(msg)
+		msg := fmt.Sprintf("should contain exactly one ':', contained %d", len(split)-1)
+		return IdParseError(msg)
 	}
 	if split[0] == "" {
-		return errors.New("invalid id: missing id part: " + str)
+		return IdParseError("missing id part")
 	}
 	if split[1] == "" {
-		return errors.New("invalid id: missing domain part: " + str)
+		return IdParseError("missing domain part")
 	}
 	id.Id = split[0]
 	id.Domain = split[1]
