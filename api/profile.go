@@ -32,7 +32,7 @@ func getDisplayName(params httprouter.Params) interface{} {
 	}
 	profile, err := user.GetProfile()
 	if err != nil {
-		return ServerError(err.Error())
+		return types.ServerError(err.Error())
 	}
 	return displayNameResponse{profile.DisplayName}
 }
@@ -47,13 +47,13 @@ func setDisplayName(req *http.Request, params httprouter.Params, body *displayNa
 		return err
 	}
 	if authedUser.Id() != user.Id() {
-		return ForbiddenError("can't change the display name of other users")
+		return types.ForbiddenError("can't change the display name of other users")
 	}
 	if body.DisplayName == nil {
-		return BadJsonError("missing 'displayname'")
+		return types.BadJsonError("missing 'displayname'")
 	}
 	if err := user.SetDisplayName(*body.DisplayName); err != nil {
-		return ServerError(err.Error())
+		return types.ServerError(err.Error())
 	}
 	return struct{}{}
 }
@@ -65,7 +65,7 @@ func getAvatarUrl(params httprouter.Params) interface{} {
 	}
 	profile, err := user.GetProfile()
 	if err != nil {
-		return ServerError(err.Error())
+		return types.ServerError(err.Error())
 	}
 	return avatarUrlResponse{profile.AvatarUrl}
 }
@@ -80,13 +80,13 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRe
 		return err
 	}
 	if authedUser.Id() != user.Id() {
-		return ForbiddenError("can't change the avatar url of other users")
+		return types.ForbiddenError("can't change the avatar url of other users")
 	}
 	if body.AvatarUrl == nil {
-		return BadJsonError("missing 'avatar_url'")
+		return types.BadJsonError("missing 'avatar_url'")
 	}
 	if err := user.SetAvatarUrl(*body.AvatarUrl); err != nil {
-		return ServerError(err.Error())
+		return types.ServerError(err.Error())
 	}
 	return struct{}{}
 }
@@ -94,11 +94,11 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRe
 func userFromParams(params httprouter.Params) (service.User, error) {
 	userId, err := types.ParseUserId(params[0].Value)
 	if err != nil {
-		return service.User{}, BadJsonError(err.Error())
+		return service.User{}, types.BadJsonError(err.Error())
 	}
 	user, err := service.GetUser(userId)
 	if err != nil {
-		return service.User{}, NotFoundError(err.Error())
+		return service.User{}, types.NotFoundError(err.Error())
 	}
 	return user, nil
 }

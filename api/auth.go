@@ -59,22 +59,22 @@ var defaultLoginFlows = AuthFlows{
 
 func registerWithPassword(hostname string, body *authRequest) interface{} {
 	if body.Username == "" {
-		return BadJsonError("Missing or invalid user")
+		return types.BadJsonError("Missing or invalid user")
 	}
 	if body.Password == "" {
-		return BadJsonError("Missing or invalid password")
+		return types.BadJsonError("Missing or invalid password")
 	}
 	userId := types.NewUserId(body.Username, hostname)
 	user, err := service.CreateUser(userId)
 	if err != nil {
-		return UserInUseError(err.Error())
+		return types.UserInUseError(err.Error())
 	}
 	if err := user.SetPassword(body.Password); err != nil {
-		return ServerError(err.Error())
+		return types.ServerError(err.Error())
 	}
 	accessToken, err := service.NewAccessToken(userId)
 	if err != nil {
-		return ServerError(err.Error())
+		return types.ServerError(err.Error())
 	}
 	return authResponse{
 		UserId:      userId,
@@ -88,7 +88,7 @@ func postRegister(req *http.Request, params httprouter.Params, body *authRequest
 		hostname := strings.Split(req.Host, ":")[0]
 		return registerWithPassword(hostname, body)
 	}
-	return BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
+	return types.BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
 }
 
 func postLogin() interface{} {

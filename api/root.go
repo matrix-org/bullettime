@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/Rugvip/bullettime/types"
 	"github.com/julienschmidt/httprouter"
 
 	"net/http"
@@ -9,11 +10,11 @@ import (
 func NewRootMux() http.Handler {
 	mux := httprouter.New()
 	mux.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		writeJsonResponseWithStatus(rw, defaultUnrecognizedError)
+		writeJsonResponseWithStatus(rw, types.DefaultUnrecognizedError)
 	})
 	// mux.PanicHandler = func(rw http.ResponseWriter, req *http.Request, object interface{}) {
 	// 	log.Println("Request to "+req.URL.Path+" ended in panic:", object, reflect.TypeOf(object))
-	// 	writeJsonResponseWithStatus(rw, ServerError("internal server error"))
+	// 	writeJsonResponseWithStatus(rw, types.ServerError("internal server error"))
 	// }
 	registerAuthResources(mux)
 	registerProfileResources(mux)

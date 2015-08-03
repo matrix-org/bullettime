@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/Rugvip/bullettime/service"
+	"github.com/Rugvip/bullettime/types"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -78,7 +79,7 @@ func jsonHandler(i interface{}) httprouter.Handle {
 		} else {
 			body := reflect.New(jsonType)
 			if err := json.NewDecoder(req.Body).Decode(body.Interface()); err != nil {
-				writeJsonResponseWithStatus(rw, BadJsonError(err.Error()))
+				writeJsonResponseWithStatus(rw, types.BadJsonError(err.Error()))
 				return
 			}
 			switch argCount {
@@ -126,15 +127,15 @@ func writeJsonResponseWithStatus(rw http.ResponseWriter, body WithStatus) {
 func readAccessToken(req *http.Request) (service.User, error) {
 	token := req.URL.Query().Get("access_token")
 	if token == "" {
-		return service.User{}, defaultMissingTokenError
+		return service.User{}, types.DefaultMissingTokenError
 	}
 	info, err := service.ParseAccessToken(token)
 	if err != nil {
-		return service.User{}, defaultUnknownTokenError
+		return service.User{}, types.DefaultUnknownTokenError
 	}
 	user, err := service.GetUser(info.UserId)
 	if err != nil {
-		return service.User{}, defaultUnknownTokenError
+		return service.User{}, types.DefaultUnknownTokenError
 	}
 	return user, nil
 }

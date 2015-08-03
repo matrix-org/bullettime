@@ -1,4 +1,4 @@
-package api
+package types
 
 type Error struct {
 	Code    string `json:"errcode"`
@@ -86,6 +86,6 @@ func ServerError(message string) *Error {
 	}
 }
 
-var defaultUnrecognizedError = UnrecognizedError("unrecognized request")
-var defaultMissingTokenError = MissingTokenError("Missing access token")
-var defaultUnknownTokenError = UnknownTokenError("Unrecognised access token")
+var DefaultUnrecognizedError = UnrecognizedError("unrecognized request")
+var DefaultMissingTokenError = MissingTokenError("Missing access token")
+var DefaultUnknownTokenError = UnknownTokenError("Unrecognised access token")
