@@ -105,3 +105,12 @@ func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedC
 
 	return state, nil
 }
+
+func GetRoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, error) {
+	room := roomTable[roomId]
+	if room == nil {
+		return nil, errors.New("room doesn't exist")
+	}
+	state := room.states[StateId{eventType, stateKey}]
+	return state, nil
+}
