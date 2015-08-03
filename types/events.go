@@ -7,20 +7,19 @@ import (
 )
 
 type EventType string
-type StateKey string
 
 const (
-	EventTypeCreate      EventType = "m.room.create"
-	EventTypeName                  = "m.room.name"
-	EventTypeTopic                 = "m.room.topic"
-	EventTypeAliases               = "m.room.aliases"
-	EventTypeJoinRules             = "m.room.join_rules"
-	EventTypeMembership            = "m.room.member"
-	EventTypePowerLevels           = "m.room.power_levels"
+	EventTypeCreate      string = "m.room.create"
+	EventTypeName               = "m.room.name"
+	EventTypeTopic              = "m.room.topic"
+	EventTypeAliases            = "m.room.aliases"
+	EventTypeJoinRules          = "m.room.join_rules"
+	EventTypeMembership         = "m.room.member"
+	EventTypePowerLevels        = "m.room.power_levels"
 )
 
 type TypedContent interface {
-	EventType() EventType
+	EventType() string
 }
 
 type Content interface{}
@@ -33,7 +32,7 @@ type Event struct {
 	EventId   EventId   `json:"event_id"`
 	RoomId    RoomId    `json:"room_id"`
 	UserId    UserId    `json:"user_id"`
-	EventType EventType `json:"type"`
+	EventType string    `json:"type"`
 	Timestamp Timestamp `json:"origin_server_ts"`
 	Content   Content   `json:"content"`
 }
@@ -42,7 +41,7 @@ type OldState State
 
 type State struct {
 	Event
-	StateKey StateKey  `json:"state_key"`
+	StateKey string    `json:"state_key"`
 	OldState *OldState `json:"prev_content"`
 }
 
@@ -60,10 +59,10 @@ func (ts Timestamp) MarshalJSON() ([]byte, error) {
 
 type GenericContent struct {
 	Content   map[string]interface{}
-	eventType EventType
+	eventType string
 }
 
-func (c *GenericContent) EventType() EventType {
+func (c *GenericContent) EventType() string {
 	return c.eventType
 }
 
@@ -76,12 +75,11 @@ type TestContent struct {
 }
 
 type MembershipEventContent struct {
-	Membership  string `json:"membership"`
-	DisplayName string `json:"displayname"`
-	AvatarUrl   string `json:"avatar_url"`
+	*UserProfile
+	Membership Membership `json:"membership"`
 }
 
-func (c *MembershipEventContent) EventType() EventType {
+func (c *MembershipEventContent) EventType() string {
 	return EventTypeMembership
 }
 
@@ -89,7 +87,7 @@ type CreateEventContent struct {
 	Creator UserId `json:"creator"`
 }
 
-func (c *CreateEventContent) EventType() EventType {
+func (c *CreateEventContent) EventType() string {
 	return EventTypeCreate
 }
 
@@ -97,7 +95,7 @@ type NameEventContent struct {
 	Name string `json:"name"`
 }
 
-func (c *NameEventContent) EventType() EventType {
+func (c *NameEventContent) EventType() string {
 	return EventTypeName
 }
 
@@ -105,15 +103,15 @@ type TopicEventContent struct {
 	Topic string `json:"topic"`
 }
 
-func (c *TopicEventContent) EventType() EventType {
+func (c *TopicEventContent) EventType() string {
 	return EventTypeTopic
 }
 
 type AliasesEventContent struct {
-	Aliases string `json:"aliases"`
+	Aliases []Alias `json:"aliases"`
 }
 
-func (c *AliasesEventContent) EventType() EventType {
+func (c *AliasesEventContent) EventType() string {
 	return EventTypeAliases
 }
 
@@ -145,7 +143,7 @@ type PowerLevelsEventContent struct {
 	Events       map[EventType]int `json:"events"`
 }
 
-func (c *PowerLevelsEventContent) EventType() EventType {
+func (c *PowerLevelsEventContent) EventType() string {
 	return EventTypePowerLevels
 }
 
@@ -153,6 +151,6 @@ type JoinRulesEventContent struct {
 	JoinRule JoinRule `json:"join_rule"`
 }
 
-func (c *JoinRulesEventContent) EventType() EventType {
+func (c *JoinRulesEventContent) EventType() string {
 	return EventTypeJoinRules
 }

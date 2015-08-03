@@ -9,8 +9,8 @@ import (
 )
 
 type StateId struct {
-	types.EventType
-	types.StateKey
+	EventType string
+	StateKey  string
 }
 
 type room struct {
@@ -76,7 +76,7 @@ func AddRoomEvent(roomId types.RoomId, userId types.UserId, content types.TypedC
 	return event, nil
 }
 
-func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey types.StateKey) (*types.State, error) {
+func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, error) {
 	room := roomTable[roomId]
 	if room == nil {
 		return nil, errors.New("room doesn't exist")
