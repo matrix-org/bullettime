@@ -25,6 +25,17 @@ const (
 	JoinRuleInvite          = 2
 )
 
+type Membership int
+
+const (
+	MembershipNone     Membership = 0
+	MembershipInvited             = 1
+	MembershipMember              = 2
+	MembershipKnocking            = 3
+	MembershipLeaving             = 4
+	MembershipBanned              = 5
+)
+
 func (v Visibility) ToJoinRule() JoinRule {
 	if v == VisibilityPublic {
 		return JoinRulePublic
@@ -79,4 +90,47 @@ func (v JoinRule) MarshalJSON() ([]byte, error) {
 		return []byte("\"invite\""), nil
 	}
 	return nil, errors.New("invalid join rule value: '" + string(v) + "'")
+}
+
+func (v *Membership) UnmarshalJSON(bytes []byte) error {
+	str := string(bytes)
+	switch str {
+	case "null":
+		*v = MembershipNone
+		return nil
+	case "\"invite\"":
+		*v = MembershipInvited
+		return nil
+	case "\"join\"":
+		*v = MembershipMember
+		return nil
+	case "\"knock\"":
+		*v = MembershipKnocking
+		return nil
+	case "\"leave\"":
+		*v = MembershipLeaving
+		return nil
+	case "\"ban\"":
+		*v = MembershipBanned
+		return nil
+	}
+	return errors.New("invalid membership identifier: '" + str + "'")
+}
+
+func (v Membership) MarshalJSON() ([]byte, error) {
+	switch v {
+	case MembershipNone:
+		return []byte("null"), nil
+	case MembershipInvited:
+		return []byte("\"invite\""), nil
+	case MembershipMember:
+		return []byte("\"join\""), nil
+	case MembershipKnocking:
+		return []byte("\"knock\""), nil
+	case MembershipLeaving:
+		return []byte("\"leave\""), nil
+	case MembershipBanned:
+		return []byte("\"ban\""), nil
+	}
+	return nil, errors.New("invalid membership value: '" + string(v) + "'")
 }
