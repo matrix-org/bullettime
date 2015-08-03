@@ -9,21 +9,11 @@ import (
 	"github.com/Rugvip/bullettime/utils"
 )
 
-type IdPrefix rune
-
-type idInterface interface {
-	prefix() IdPrefix
-	id() string
-	setId(string)
-	domain() string
-	setDomain(string)
-}
-
 const (
-	UserIdPrefix  IdPrefix = '@'
-	RoomIdPrefix  IdPrefix = '!'
-	EventIdPrefix IdPrefix = '$'
-	AliasPrefix   IdPrefix = '#'
+	UserIdPrefix  = '@'
+	RoomIdPrefix  = '!'
+	EventIdPrefix = '$'
+	AliasPrefix   = '#'
 )
 
 type Id struct {
@@ -31,25 +21,11 @@ type Id struct {
 	Domain string
 }
 
-func (i *Id) id() string {
-	return i.Id
-}
-func (i *Id) setId(id string) {
-	i.Id = id
-}
-func (i *Id) domain() string {
-	return i.Domain
-}
-func (i *Id) setDomain(domain string) {
-	i.Domain = domain
-}
-
-func parseId(i idInterface, str string) (err error) {
+func parseId(id *Id, str string, prefix rune) error {
 	if len(str) < 2 {
 		return errors.New("invalid id, too short, '" + str + "'")
 	}
 	parsedPrefix, prefixSize := utf8.DecodeRuneInString(str)
-	prefix := rune(i.prefix())
 	if parsedPrefix != prefix {
 		msg := fmt.Sprintf("invalid id prefix, was '%c', should be '%c'", parsedPrefix, prefix)
 		return errors.New(msg)
@@ -66,13 +42,13 @@ func parseId(i idInterface, str string) (err error) {
 	if split[1] == "" {
 		return errors.New("invalid id: missing domain part: " + str)
 	}
-	i.setId(split[0])
-	i.setDomain(split[1])
+	id.Id = split[0]
+	id.Domain = split[1]
 	return nil
 }
 
-func stringifyId(id idInterface) string {
-	return fmt.Sprintf("%c%s:%s", id.prefix(), id.id(), id.domain())
+func stringifyId(id Id, prefix rune) string {
+	return fmt.Sprintf("%c%s:%s", prefix, id.Id, id.Domain)
 }
 
 type UserId struct{ Id }
@@ -97,34 +73,29 @@ func NewUserId(id, domain string) UserId {
 }
 
 func ParseUserId(str string) (id UserId, err error) {
-	err = parseId(&id, str)
+	err = parseId(&id.Id, str, UserIdPrefix)
 	return id, err
 }
 
 func ParseRoomId(str string) (id RoomId, err error) {
-	err = parseId(&id, str)
+	err = parseId(&id.Id, str, RoomIdPrefix)
 	return id, err
 }
 
 func ParseEventId(str string) (id EventId, err error) {
-	err = parseId(&id, str)
+	err = parseId(&id.Id, str, EventIdPrefix)
 	return id, err
 }
 
 func ParseAlias(str string) (id Alias, err error) {
-	err = parseId(&id, str)
+	err = parseId(&id.Id, str, AliasPrefix)
 	return id, err
 }
 
-func (i *UserId) prefix() IdPrefix  { return '@' }
-func (i *RoomId) prefix() IdPrefix  { return '!' }
-func (i *EventId) prefix() IdPrefix { return '$' }
-func (i *Alias) prefix() IdPrefix   { return '#' }
-
-func (i *UserId) String() string  { return stringifyId(i) }
-func (i *RoomId) String() string  { return stringifyId(i) }
-func (i *EventId) String() string { return stringifyId(i) }
-func (i *Alias) String() string   { return stringifyId(i) }
+func (i UserId) String() string  { return stringifyId(i.Id, UserIdPrefix) }
+func (i RoomId) String() string  { return stringifyId(i.Id, RoomIdPrefix) }
+func (i EventId) String() string { return stringifyId(i.Id, EventIdPrefix) }
+func (i Alias) String() string   { return stringifyId(i.Id, AliasPrefix) }
 
 func (i *UserId) UnmarshalJSON(bytes []byte) (err error) {
 	*i, err = ParseUserId(utils.StripQuotes(string(bytes)))
@@ -146,15 +117,15 @@ func (i *Alias) UnmarshalJSON(bytes []byte) (err error) {
 	return
 }
 
-func (i *UserId) MarshalJSON() ([]byte, error) {
+func (i UserId) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
-func (i *RoomId) MarshalJSON() ([]byte, error) {
+func (i RoomId) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
-func (i *EventId) MarshalJSON() ([]byte, error) {
+func (i EventId) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
-func (i *Alias) MarshalJSON() ([]byte, error) {
+func (i Alias) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", i)), nil
 }
