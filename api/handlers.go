@@ -79,7 +79,16 @@ func jsonHandler(i interface{}) httprouter.Handle {
 		} else {
 			body := reflect.New(jsonType)
 			if err := json.NewDecoder(req.Body).Decode(body.Interface()); err != nil {
-				writeJsonResponseWithStatus(rw, types.BadJsonError(err.Error()))
+				switch err := err.(type) {
+				case *json.SyntaxError:
+					msg := fmt.Sprintf("error at [%d]: %s", err.Offset, err.Error())
+					writeJsonResponseWithStatus(rw, types.NotJsonError(msg))
+				case *json.UnmarshalTypeError:
+					msg := fmt.Sprintf("error at [%d]: expected type %s but got %s", err.Offset, err.Type, err.Value)
+					writeJsonResponseWithStatus(rw, types.BadJsonError(msg))
+				default:
+					writeJsonResponseWithStatus(rw, types.BadJsonError(err.Error()))
+				}
 				return
 			}
 			switch argCount {
