@@ -38,6 +38,14 @@ func UserInUseError(message string) *Error {
 	}
 }
 
+func RoomInUseError(message string) *Error {
+	return &Error{
+		Code:    "M_ROOM_IN_USE",
+		Message: message,
+		status:  400,
+	}
+}
+
 func ForbiddenError(message string) *Error {
 	return &Error{
 		Code:    "M_FORBIDDEN",
