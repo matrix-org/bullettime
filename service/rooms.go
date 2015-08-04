@@ -4,26 +4,28 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/Rugvip/bullettime/db"
 	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 )
 
-func CreateRoomService() (interfaces.RoomService, types.Error) {
-	return roomService{}, nil
+func CreateRoomService(roomStore interfaces.RoomStore) (interfaces.RoomService, types.Error) {
+	return roomService{roomStore}, nil
 }
 
-type roomService struct{}
+type roomService struct {
+	db interfaces.RoomStore
+}
 
 type Room struct {
-	id types.RoomId
+	id      types.RoomId
+	service roomService
 }
 
 func (r roomService) Room(id types.RoomId) (interfaces.Room, types.Error) {
-	if err := db.RoomExists(id); err != nil {
+	if err := r.db.RoomExists(id); err != nil {
 		return Room{}, err
 	}
-	return Room{id: id}, nil
+	return Room{id, r}, nil
 }
 
 func (r roomService) CreateRoom(hostname string, creator interfaces.User, desc *types.RoomDescription) (interfaces.Room, *types.Alias, types.Error) {
@@ -32,12 +34,12 @@ func (r roomService) CreateRoom(hostname string, creator interfaces.User, desc *
 		a := types.NewAlias(*desc.Alias, hostname)
 		alias = &a
 	}
-	id, err := db.CreateRoom(hostname, alias)
+	id, err := r.db.CreateRoom(hostname, alias)
 	if err != nil {
 		return nil, nil, err
 	}
 	userId := creator.Id()
-	_, err = db.SetRoomState(id, userId, &types.CreateEventContent{userId}, "")
+	_, err = r.db.SetRoomState(id, userId, &types.CreateEventContent{userId}, "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -46,45 +48,45 @@ func (r roomService) CreateRoom(hostname string, creator interfaces.User, desc *
 		return nil, nil, err
 	}
 	membership := &types.MembershipEventContent{&profile, types.MembershipMember}
-	_, err = db.SetRoomState(id, userId, membership, userId.String())
+	_, err = r.db.SetRoomState(id, userId, membership, userId.String())
 	if err != nil {
 		return nil, nil, err
 	}
-	_, err = db.SetRoomState(id, userId, types.DefaultPowerLevels(userId), "")
+	_, err = r.db.SetRoomState(id, userId, types.DefaultPowerLevels(userId), "")
 	if err != nil {
 		return nil, nil, err
 	}
 	joinRuleContent := types.JoinRulesEventContent{desc.Visibility.ToJoinRule()}
-	_, err = db.SetRoomState(id, userId, &joinRuleContent, "")
+	_, err = r.db.SetRoomState(id, userId, &joinRuleContent, "")
 	if err != nil {
 		return nil, nil, err
 	}
 	if alias != nil {
-		_, err = db.SetRoomState(id, userId, &types.AliasesEventContent{[]types.Alias{*alias}}, "")
+		_, err = r.db.SetRoomState(id, userId, &types.AliasesEventContent{[]types.Alias{*alias}}, "")
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 	if desc.Name != nil {
-		_, err = db.SetRoomState(id, userId, &types.NameEventContent{*desc.Name}, "")
+		_, err = r.db.SetRoomState(id, userId, &types.NameEventContent{*desc.Name}, "")
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 	if desc.Topic != nil {
-		_, err = db.SetRoomState(id, userId, &types.TopicEventContent{*desc.Topic}, "")
+		_, err = r.db.SetRoomState(id, userId, &types.TopicEventContent{*desc.Topic}, "")
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 	for _, invited := range desc.Invited {
 		membership := types.MembershipEventContent{nil, types.MembershipInvited}
-		_, err = db.SetRoomState(id, userId, &membership, invited.String())
+		_, err = r.db.SetRoomState(id, userId, &membership, invited.String())
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-	return Room{id}, alias, nil
+	return Room{id, r}, alias, nil
 }
 
 func (r Room) Id() types.RoomId {
@@ -103,7 +105,7 @@ func (r Room) State(user interfaces.User, eventType, stateKey string) (*types.St
 	if membership != types.MembershipMember {
 		return nil, types.ForbiddenError("cannot read room state, not a member")
 	}
-	return db.RoomState(r.Id(), eventType, stateKey)
+	return r.service.db.RoomState(r.Id(), eventType, stateKey)
 }
 
 func (r Room) SetState(user interfaces.User, content types.TypedContent, stateKey string) (*types.State, types.Error) {
@@ -245,7 +247,7 @@ func (r Room) doMembershipChange(by interfaces.User, userId types.UserId, member
 			return nil, err
 		}
 	}
-	return db.SetRoomState(r.Id(), by.Id(), membership, userId.String())
+	return r.service.db.SetRoomState(r.Id(), by.Id(), membership, userId.String())
 }
 
 func (r Room) testPowerLevel(userId types.UserId, powerLevelFunc func(*types.PowerLevelsEventContent) int) types.Error {
@@ -266,7 +268,7 @@ func (r Room) testPowerLevel(userId types.UserId, powerLevelFunc func(*types.Pow
 }
 
 func (r Room) userMembership(userId types.UserId) (types.Membership, types.Error) {
-	state, err := db.RoomState(r.Id(), types.EventTypeMembership, userId.String())
+	state, err := r.service.db.RoomState(r.Id(), types.EventTypeMembership, userId.String())
 	if err != nil {
 		return types.MembershipNone, err
 	}
@@ -281,7 +283,7 @@ func (r Room) userMembership(userId types.UserId) (types.Membership, types.Error
 }
 
 func (r Room) allowsJoinRule(joinRule types.JoinRule) (bool, types.Error) {
-	state, err := db.RoomState(r.Id(), types.EventTypeJoinRules, "")
+	state, err := r.service.db.RoomState(r.Id(), types.EventTypeJoinRules, "")
 	if err != nil {
 		return false, err
 	}
@@ -299,7 +301,7 @@ func (r Room) allowsJoinRule(joinRule types.JoinRule) (bool, types.Error) {
 }
 
 func (r Room) powerLevels() (*types.PowerLevelsEventContent, types.Error) {
-	state, err := db.RoomState(r.Id(), types.EventTypePowerLevels, "")
+	state, err := r.service.db.RoomState(r.Id(), types.EventTypePowerLevels, "")
 	if err != nil {
 		return nil, err
 	}
