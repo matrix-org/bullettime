@@ -41,3 +41,21 @@ type Token interface {
 	fmt.Stringer
 	UserId() types.UserId
 }
+
+type UserStore interface {
+	CreateUser(types.UserId) types.Error
+	UserExists(types.UserId) types.Error
+	SetUserPasswordHash(id types.UserId, hash string) types.Error
+	UserPasswordHash(types.UserId) (string, types.Error)
+	SetUserDisplayName(id types.UserId, displayName string) types.Error
+	SetUserAvatarUrl(id types.UserId, avatarUrl string) types.Error
+	UserProfile(types.UserId) (types.UserProfile, types.Error)
+}
+
+type RoomStore interface {
+	CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error)
+	RoomExists(types.RoomId) types.Error
+	AddRoomMessage(types.RoomId, types.UserId, types.TypedContent) (*types.Message, types.Error)
+	SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error)
+	RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error)
+}
