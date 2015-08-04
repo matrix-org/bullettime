@@ -59,17 +59,7 @@ func (v *Visibility) UnmarshalJSON(bytes []byte) error {
 		*v = VisibilityPublic
 		return nil
 	}
-	return errors.New("invalid visibility identifier: '" + str + "'")
-}
-
-func (v Visibility) MarshalJSON() ([]byte, error) {
-	switch v {
-	case VisibilityPrivate:
-		return []byte("\"private\""), nil
-	case VisibilityPublic:
-		return []byte("\"public\""), nil
-	}
-	return nil, errors.New("invalid visibility value: '" + string(v) + "'")
+	return errors.New("invalid visibility: " + str)
 }
 
 func (j *JoinRule) UnmarshalJSON(bytes []byte) error {
@@ -91,7 +81,7 @@ func (j *JoinRule) UnmarshalJSON(bytes []byte) error {
 		*j = JoinRuleKnock
 		return nil
 	}
-	return errors.New("invalid join rule identifier: '" + str + "'")
+	return errors.New("invalid join rule: " + str)
 }
 
 func (j JoinRule) String() string {
@@ -138,7 +128,7 @@ func (m *Membership) UnmarshalJSON(bytes []byte) error {
 		*m = MembershipBanned
 		return nil
 	}
-	return errors.New("invalid membership identifier: '" + str + "'")
+	return errors.New("invalid membership: " + str)
 }
 
 func (m Membership) String() string {
