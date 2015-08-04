@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Rugvip/bullettime/service"
+	"github.com/Rugvip/bullettime/interfaces"
 
 	"github.com/Rugvip/bullettime/types"
 
@@ -20,21 +20,20 @@ type CreateRoomResponse struct {
 	RoomAlias *types.Alias `json:"room_alias,omitempty"`
 }
 
-func createRoom(req *http.Request, body *types.RoomDescription) interface{} {
+func (e roomsEndpoint) createRoom(req *http.Request, body *types.RoomDescription) interface{} {
 	creator, err := readAccessToken(req)
 	if err != nil {
 		return err
 	}
 	hostname := strings.Split(req.Host, ":")[0]
-	service, _ := service.CreateRoomService()
-	room, alias, err := service.CreateRoom(hostname, creator, body)
+	room, alias, err := e.service.CreateRoom(hostname, creator, body)
 	if err != nil {
 		return err
 	}
-	return CreateRoomResponse{roomId, alias}
+	return CreateRoomResponse{room.Id(), alias}
 }
 
-func registerRoomResources(mux *httprouter.Router) {
+func (e roomsEndpoint) register(mux *httprouter.Router) {
 	mux.POST("/rooms/:roomId/send/:eventType", jsonHandler(dummy))
 	mux.GET("/rooms/:roomId/state/:eventType", jsonHandler(dummy))
 	mux.PUT("/rooms/:roomId/state/:eventType", jsonHandler(dummy))
@@ -50,5 +49,13 @@ func registerRoomResources(mux *httprouter.Router) {
 	mux.PUT("/rooms/:roomId/typing/:userId", jsonHandler(dummy))
 	mux.GET("/rooms/:roomId/initialSync", jsonHandler(dummy))
 	mux.POST("/join/:roomAliasOrId", jsonHandler(dummy))
-	mux.POST("/createRoom", jsonHandler(createRoom))
+	mux.POST("/createRoom", jsonHandler(e.createRoom))
+}
+
+type roomsEndpoint struct {
+	service interfaces.RoomService
+}
+
+func NewRoomsEndpoint(service interfaces.RoomService) roomsEndpoint {
+	return roomsEndpoint{service}
 }

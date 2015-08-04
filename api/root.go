@@ -1,13 +1,14 @@
 package api
 
 import (
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 	"github.com/julienschmidt/httprouter"
 
 	"net/http"
 )
 
-func NewRootMux() http.Handler {
+func NewRootMux(roomService interfaces.RoomService) http.Handler {
 	mux := httprouter.New()
 	mux.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		writeJsonResponseWithStatus(rw, types.DefaultUnrecognizedError)
@@ -18,6 +19,6 @@ func NewRootMux() http.Handler {
 	// }
 	registerAuthResources(mux)
 	registerProfileResources(mux)
-	registerRoomResources(mux)
+	NewRoomsEndpoint(roomService).register(mux)
 	return mux
 }

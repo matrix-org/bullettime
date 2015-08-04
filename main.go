@@ -5,12 +5,18 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Rugvip/bullettime/service"
+
 	"github.com/Rugvip/bullettime/api"
 )
 
 func main() {
+	roomService, err := service.CreateRoomService()
+	if err != nil {
+		panic(err)
+	}
 	mux := http.NewServeMux()
-	mux.Handle("/api/", http.StripPrefix("/api", api.NewRootMux()))
+	mux.Handle("/api/", http.StripPrefix("/api", api.NewRootMux(roomService)))
 
 	port := "4080"
 	if len(os.Args) > 1 {
