@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/Rugvip/bullettime/db"
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -51,14 +52,14 @@ func (u User) GetProfile() (types.UserProfile, error) {
 	return db.GetUserProfile(u.id)
 }
 
-func (u User) SetDisplayName(displayName string, doneBy User) error {
+func (u User) SetDisplayName(displayName string, doneBy interfaces.User) error {
 	if u != doneBy {
 		return types.ForbiddenError("can't change the display name of other users")
 	}
 	return db.SetUserDisplayName(u.id, displayName)
 }
 
-func (u User) SetAvatarUrl(avatarUrl string, doneBy User) error {
+func (u User) SetAvatarUrl(avatarUrl string, doneBy interfaces.User) error {
 	if u != doneBy {
 		return types.ForbiddenError("can't change the display name of other users")
 	}

@@ -26,7 +26,8 @@ func createRoom(req *http.Request, body *types.RoomDescription) interface{} {
 		return err
 	}
 	hostname := strings.Split(req.Host, ":")[0]
-	roomId, alias, err := service.CreateRoom(hostname, creator, body)
+	service, _ := service.CreateRoomService()
+	room, alias, err := service.CreateRoom(hostname, creator, body)
 	if err != nil {
 		return err
 	}
