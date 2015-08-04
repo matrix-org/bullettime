@@ -32,15 +32,15 @@ func getDisplayName(params httprouter.Params) interface{} {
 	}
 	profile, err := user.GetProfile()
 	if err != nil {
-		return types.ServerError(err.Error())
+		return err
 	}
 	return displayNameResponse{profile.DisplayName}
 }
 
 func setDisplayName(req *http.Request, params httprouter.Params, body *displayNameRequest) interface{} {
-	authedUser, apiErr := readAccessToken(req)
-	if apiErr != nil {
-		return apiErr
+	authedUser, err := readAccessToken(req)
+	if err != nil {
+		return err
 	}
 	user, err := userFromParams(params)
 	if err != nil {
@@ -53,7 +53,7 @@ func setDisplayName(req *http.Request, params httprouter.Params, body *displayNa
 		return types.BadJsonError("missing 'displayname'")
 	}
 	if err := user.SetDisplayName(*body.DisplayName); err != nil {
-		return types.ServerError(err.Error())
+		return err
 	}
 	return struct{}{}
 }
@@ -65,7 +65,7 @@ func getAvatarUrl(params httprouter.Params) interface{} {
 	}
 	profile, err := user.GetProfile()
 	if err != nil {
-		return types.ServerError(err.Error())
+		return err
 	}
 	return avatarUrlResponse{profile.AvatarUrl}
 }
@@ -86,7 +86,7 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRe
 		return types.BadJsonError("missing 'avatar_url'")
 	}
 	if err := user.SetAvatarUrl(*body.AvatarUrl); err != nil {
-		return types.ServerError(err.Error())
+		return err
 	}
 	return struct{}{}
 }
@@ -98,7 +98,7 @@ func userFromParams(params httprouter.Params) (service.User, error) {
 	}
 	user, err := service.GetUser(userId)
 	if err != nil {
-		return service.User{}, types.NotFoundError(err.Error())
+		return service.User{}, err
 	}
 	return user, nil
 }

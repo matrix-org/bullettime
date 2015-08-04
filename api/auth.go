@@ -67,14 +67,14 @@ func registerWithPassword(hostname string, body *authRequest) interface{} {
 	userId := types.NewUserId(body.Username, hostname)
 	user, err := service.CreateUser(userId)
 	if err != nil {
-		return types.UserInUseError(err.Error())
+		return err
 	}
 	if err := user.SetPassword(body.Password); err != nil {
-		return types.ServerError(err.Error())
+		return err
 	}
 	accessToken, err := service.NewAccessToken(userId)
 	if err != nil {
-		return types.ServerError(err.Error())
+		return err
 	}
 	return authResponse{
 		UserId:      userId,
