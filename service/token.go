@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -24,7 +23,7 @@ func ParseAccessToken(token string) (TokenInfo, error) {
 	var info TokenInfo
 	splits := strings.Split(token, "..")
 	if len(splits) != 2 {
-		return info, errors.New("failed to parse token")
+		return info, types.DefaultUnknownTokenError
 	}
 	userIdStr, err := base64.URLEncoding.DecodeString(splits[0])
 	if err != nil {
