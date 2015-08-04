@@ -17,7 +17,7 @@ type userInfo struct {
 	id types.UserId
 }
 
-func (u userService) GetUser(id types.UserId) (interfaces.User, types.Error) {
+func (u userService) User(id types.UserId) (interfaces.User, types.Error) {
 	if err := db.UserExists(id); err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (u userInfo) Id() types.UserId {
 }
 
 func (u userInfo) VerifyPassword(password string) types.Error {
-	hash, err := db.GetUserPasswordHash(u.id)
+	hash, err := db.UserPasswordHash(u.id)
 	if err != nil {
 		return err
 	}
@@ -57,8 +57,8 @@ func (u userInfo) SetPassword(password string) types.Error {
 	return nil
 }
 
-func (u userInfo) GetProfile() (types.UserProfile, types.Error) {
-	return db.GetUserProfile(u.id)
+func (u userInfo) Profile() (types.UserProfile, types.Error) {
+	return db.UserProfile(u.id)
 }
 
 func (u userInfo) SetDisplayName(displayName string, doneBy interfaces.User) types.Error {

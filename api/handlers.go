@@ -158,7 +158,7 @@ func readAccessToken(
 	if err != nil {
 		return nil, types.DefaultUnknownTokenError
 	}
-	user, err := userService.GetUser(info.UserId())
+	user, err := userService.User(info.UserId())
 	if err != nil {
 		return nil, types.DefaultUnknownTokenError
 	}

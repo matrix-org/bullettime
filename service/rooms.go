@@ -19,7 +19,7 @@ type Room struct {
 	id types.RoomId
 }
 
-func (r roomService) GetRoom(id types.RoomId) (interfaces.Room, types.Error) {
+func (r roomService) Room(id types.RoomId) (interfaces.Room, types.Error) {
 	if err := db.RoomExists(id); err != nil {
 		return Room{}, err
 	}
@@ -41,7 +41,7 @@ func (r roomService) CreateRoom(hostname string, creator interfaces.User, desc *
 	if err != nil {
 		return nil, nil, err
 	}
-	profile, err := creator.GetProfile()
+	profile, err := creator.Profile()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -95,7 +95,7 @@ func (r Room) AddMessage(user interfaces.User, content types.TypedContent) (*typ
 	return nil, nil
 }
 
-func (r Room) GetState(user interfaces.User, eventType, stateKey string) (*types.State, types.Error) {
+func (r Room) State(user interfaces.User, eventType, stateKey string) (*types.State, types.Error) {
 	membership, err := r.userMembership(user.Id())
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (r Room) GetState(user interfaces.User, eventType, stateKey string) (*types
 	if membership != types.MembershipMember {
 		return nil, types.ForbiddenError("cannot read room state, not a member")
 	}
-	return db.GetRoomState(r.Id(), eventType, stateKey)
+	return db.RoomState(r.Id(), eventType, stateKey)
 }
 
 func (r Room) SetState(user interfaces.User, content types.TypedContent, stateKey string) (*types.State, types.Error) {
@@ -197,7 +197,7 @@ func (r Room) doMembershipChange(by interfaces.User, userId types.UserId, member
 		if userId != by.Id() {
 			return nil, types.ForbiddenError("cannot force other users to join the room")
 		}
-		profile, err := by.GetProfile()
+		profile, err := by.Profile()
 		if err != nil {
 			return nil, err
 		}
@@ -266,7 +266,7 @@ func (r Room) testPowerLevel(userId types.UserId, powerLevelFunc func(*types.Pow
 }
 
 func (r Room) userMembership(userId types.UserId) (types.Membership, types.Error) {
-	state, err := db.GetRoomState(r.Id(), types.EventTypeMembership, userId.String())
+	state, err := db.RoomState(r.Id(), types.EventTypeMembership, userId.String())
 	if err != nil {
 		return types.MembershipNone, err
 	}
@@ -281,7 +281,7 @@ func (r Room) userMembership(userId types.UserId) (types.Membership, types.Error
 }
 
 func (r Room) allowsJoinRule(joinRule types.JoinRule) (bool, types.Error) {
-	state, err := db.GetRoomState(r.Id(), types.EventTypeJoinRules, "")
+	state, err := db.RoomState(r.Id(), types.EventTypeJoinRules, "")
 	if err != nil {
 		return false, err
 	}
@@ -299,7 +299,7 @@ func (r Room) allowsJoinRule(joinRule types.JoinRule) (bool, types.Error) {
 }
 
 func (r Room) powerLevels() (*types.PowerLevelsEventContent, types.Error) {
-	state, err := db.GetRoomState(r.Id(), types.EventTypePowerLevels, "")
+	state, err := db.RoomState(r.Id(), types.EventTypePowerLevels, "")
 	if err != nil {
 		return nil, err
 	}

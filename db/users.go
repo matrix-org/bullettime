@@ -36,7 +36,7 @@ func SetUserPasswordHash(id types.UserId, hash string) types.Error {
 	return nil
 }
 
-func GetUserPasswordHash(id types.UserId) (string, types.Error) {
+func UserPasswordHash(id types.UserId) (string, types.Error) {
 	user := userTable[id]
 	if user == nil {
 		return "", types.NotFoundError("user '" + id.String() + "' doesn't exist")
@@ -62,7 +62,7 @@ func SetUserAvatarUrl(id types.UserId, avatarUrl string) types.Error {
 	return nil
 }
 
-func GetUserProfile(id types.UserId) (types.UserProfile, types.Error) {
+func UserProfile(id types.UserId) (types.UserProfile, types.Error) {
 	user := userTable[id]
 	if user == nil {
 		return types.UserProfile{}, types.NotFoundError("user '" + id.String() + "' doesn't exist")

@@ -108,7 +108,7 @@ func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedC
 	return state, nil
 }
 
-func GetRoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error) {
+func RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error) {
 	room := roomTable[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")

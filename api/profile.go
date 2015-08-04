@@ -29,7 +29,7 @@ func (e profileEndpoint) getDisplayName(params httprouter.Params) interface{} {
 	if err != nil {
 		return err
 	}
-	profile, err := user.GetProfile()
+	profile, err := user.Profile()
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (e profileEndpoint) getAvatarUrl(params httprouter.Params) interface{} {
 	if err != nil {
 		return err
 	}
-	profile, err := user.GetProfile()
+	profile, err := user.Profile()
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (e profileEndpoint) userFromParams(params httprouter.Params) (interfaces.Us
 	if err != nil {
 		return nil, types.BadJsonError(err.Error())
 	}
-	user, err := e.userService.GetUser(userId)
+	user, err := e.userService.User(userId)
 	if err != nil {
 		return nil, err
 	}
