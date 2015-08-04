@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Rugvip/bullettime/db"
+
 	"github.com/Rugvip/bullettime/service"
 	"github.com/Rugvip/bullettime/types"
 	"github.com/julienschmidt/httprouter"
@@ -13,11 +15,20 @@ import (
 )
 
 func setupApiEndpoint() http.Handler {
-	roomService, err := service.CreateRoomService()
+	roomStore, err := db.NewRoomDb()
 	if err != nil {
 		panic(err)
 	}
-	userService, err := service.CreateUserService()
+	userStore, err := db.NewUserDb()
+	if err != nil {
+		panic(err)
+	}
+
+	roomService, err := service.CreateRoomService(roomStore)
+	if err != nil {
+		panic(err)
+	}
+	userService, err := service.CreateUserService(userStore)
 	if err != nil {
 		panic(err)
 	}
