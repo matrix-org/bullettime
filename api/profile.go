@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Rugvip/bullettime/db"
-	"github.com/Rugvip/bullettime/service"
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 
 	"github.com/julienschmidt/httprouter"
@@ -25,8 +25,8 @@ type displayNameResponse struct {
 	DisplayName string `json:"displayname"`
 }
 
-func getDisplayName(params httprouter.Params) interface{} {
-	user, err := userFromParams(params)
+func (e profileEndpoint) getDisplayName(params httprouter.Params) interface{} {
+	user, err := e.userFromParams(params)
 	if err != nil {
 		return err
 	}
@@ -37,12 +37,12 @@ func getDisplayName(params httprouter.Params) interface{} {
 	return displayNameResponse{profile.DisplayName}
 }
 
-func setDisplayName(req *http.Request, params httprouter.Params, body *displayNameRequest) interface{} {
-	authedUser, err := readAccessToken(req)
+func (e profileEndpoint) setDisplayName(req *http.Request, params httprouter.Params, body *displayNameRequest) interface{} {
+	authedUser, err := readAccessToken(e.userService, e.tokenService, req)
 	if err != nil {
 		return err
 	}
-	user, err := userFromParams(params)
+	user, err := e.userFromParams(params)
 	if err != nil {
 		return err
 	}
@@ -55,8 +55,8 @@ func setDisplayName(req *http.Request, params httprouter.Params, body *displayNa
 	return struct{}{}
 }
 
-func getAvatarUrl(params httprouter.Params) interface{} {
-	user, err := userFromParams(params)
+func (e profileEndpoint) getAvatarUrl(params httprouter.Params) interface{} {
+	user, err := e.userFromParams(params)
 	if err != nil {
 		return err
 	}
@@ -67,12 +67,12 @@ func getAvatarUrl(params httprouter.Params) interface{} {
 	return avatarUrlResponse{profile.AvatarUrl}
 }
 
-func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRequest) interface{} {
-	authedUser, err := readAccessToken(req)
+func (e profileEndpoint) setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRequest) interface{} {
+	authedUser, err := readAccessToken(e.userService, e.tokenService, req)
 	if err != nil {
 		return err
 	}
-	user, err := userFromParams(params)
+	user, err := e.userFromParams(params)
 	if err != nil {
 		return err
 	}
@@ -85,23 +85,23 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRe
 	return struct{}{}
 }
 
-func userFromParams(params httprouter.Params) (service.User, error) {
+func (e profileEndpoint) userFromParams(params httprouter.Params) (interfaces.User, error) {
 	userId, err := types.ParseUserId(params[0].Value)
 	if err != nil {
-		return service.User{}, types.BadJsonError(err.Error())
+		return nil, types.BadJsonError(err.Error())
 	}
-	user, err := service.GetUser(userId)
+	user, err := e.userService.GetUser(userId)
 	if err != nil {
-		return service.User{}, err
+		return nil, err
 	}
 	return user, nil
 }
 
-func registerProfileResources(mux *httprouter.Router) {
-	mux.GET("/profile/:userId/displayname", jsonHandler(getDisplayName))
-	mux.PUT("/profile/:userId/displayname", jsonHandler(setDisplayName))
-	mux.GET("/profile/:userId/avatar_url", jsonHandler(getAvatarUrl))
-	mux.PUT("/profile/:userId/avatar_url", jsonHandler(setAvatarUrl))
+func (e profileEndpoint) Register(mux *httprouter.Router) {
+	mux.GET("/profile/:userId/displayname", jsonHandler(e.getDisplayName))
+	mux.PUT("/profile/:userId/displayname", jsonHandler(e.setDisplayName))
+	mux.GET("/profile/:userId/avatar_url", jsonHandler(e.getAvatarUrl))
+	mux.PUT("/profile/:userId/avatar_url", jsonHandler(e.setAvatarUrl))
 	mux.GET("/user", jsonHandler(func() interface{} {
 		user := new(types.User)
 		user.UserId = types.NewUserId("test", "localhost")
@@ -162,4 +162,22 @@ func registerProfileResources(mux *httprouter.Router) {
 		log.Println("got event: ", event)
 		return event
 	}))
+}
+
+type profileEndpoint struct {
+	userService  interfaces.UserService
+	tokenService interfaces.TokenService
+	roomService  interfaces.RoomService
+}
+
+func NewProfileEndpoint(
+	userService interfaces.UserService,
+	tokenService interfaces.TokenService,
+	roomService interfaces.RoomService,
+) Endpoint {
+	return profileEndpoint{
+		userService:  userService,
+		tokenService: tokenService,
+		roomService:  roomService,
+	}
 }

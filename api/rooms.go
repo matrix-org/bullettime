@@ -21,12 +21,12 @@ type CreateRoomResponse struct {
 }
 
 func (e roomsEndpoint) createRoom(req *http.Request, body *types.RoomDescription) interface{} {
-	creator, err := readAccessToken(req)
+	creator, err := readAccessToken(e.userService, e.tokenService, req)
 	if err != nil {
 		return err
 	}
 	hostname := strings.Split(req.Host, ":")[0]
-	room, alias, err := e.service.CreateRoom(hostname, creator, body)
+	room, alias, err := e.roomService.CreateRoom(hostname, creator, body)
 	if err != nil {
 		return err
 	}
@@ -53,9 +53,19 @@ func (e roomsEndpoint) Register(mux *httprouter.Router) {
 }
 
 type roomsEndpoint struct {
-	service interfaces.RoomService
+	userService  interfaces.UserService
+	tokenService interfaces.TokenService
+	roomService  interfaces.RoomService
 }
 
-func NewRoomsEndpoint(service interfaces.RoomService) Endpoint {
-	return roomsEndpoint{service}
+func NewRoomsEndpoint(
+	userService interfaces.UserService,
+	tokenService interfaces.TokenService,
+	roomService interfaces.RoomService,
+) Endpoint {
+	return roomsEndpoint{
+		userService:  userService,
+		tokenService: tokenService,
+		roomService:  roomService,
+	}
 }

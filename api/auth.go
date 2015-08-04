@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Rugvip/bullettime/service"
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 	"github.com/julienschmidt/httprouter"
 
@@ -57,7 +57,7 @@ var defaultLoginFlows = AuthFlows{
 	},
 }
 
-func registerWithPassword(hostname string, body *authRequest) interface{} {
+func (e authEndpoint) registerWithPassword(hostname string, body *authRequest) interface{} {
 	if body.Username == "" {
 		return types.BadJsonError("Missing or invalid user")
 	}
@@ -65,43 +65,58 @@ func registerWithPassword(hostname string, body *authRequest) interface{} {
 		return types.BadJsonError("Missing or invalid password")
 	}
 	userId := types.NewUserId(body.Username, hostname)
-	user, err := service.CreateUser(userId)
+	user, err := e.userService.CreateUser(userId)
 	if err != nil {
 		return err
 	}
 	if err := user.SetPassword(body.Password); err != nil {
 		return err
 	}
-	accessToken, err := service.NewAccessToken(userId)
+	accessToken, err := e.tokenService.NewAccessToken(userId)
 	if err != nil {
 		return err
 	}
 	return authResponse{
 		UserId:      userId,
-		AccessToken: accessToken,
+		AccessToken: accessToken.String(),
 	}
 }
 
-func postRegister(req *http.Request, params httprouter.Params, body *authRequest) interface{} {
+func (e authEndpoint) postRegister(req *http.Request, params httprouter.Params, body *authRequest) interface{} {
 	switch body.Type {
 	case LoginTypePassword:
 		hostname := strings.Split(req.Host, ":")[0]
-		return registerWithPassword(hostname, body)
+		return e.registerWithPassword(hostname, body)
 	}
 	return types.BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
 }
 
-func postLogin() interface{} {
+func (e authEndpoint) postLogin() interface{} {
 	return "login"
 }
 
-func registerAuthResources(mux *httprouter.Router) {
+func (e authEndpoint) Register(mux *httprouter.Router) {
 	mux.GET("/register", jsonHandler(func() interface{} {
 		return &defaultRegisterFlows
 	}))
 	mux.GET("/login", jsonHandler(func() interface{} {
 		return &defaultLoginFlows
 	}))
-	mux.POST("/register", jsonHandler(postRegister))
-	mux.POST("/login", jsonHandler(postLogin))
+	mux.POST("/register", jsonHandler(e.postRegister))
+	mux.POST("/login", jsonHandler(e.postLogin))
+}
+
+type authEndpoint struct {
+	userService  interfaces.UserService
+	tokenService interfaces.TokenService
+}
+
+func NewAuthEndpoint(
+	userService interfaces.UserService,
+	tokenService interfaces.TokenService,
+) Endpoint {
+	return authEndpoint{
+		userService:  userService,
+		tokenService: tokenService,
+	}
 }
