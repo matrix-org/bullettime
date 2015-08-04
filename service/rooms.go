@@ -84,7 +84,7 @@ func (r Room) Id() types.RoomId {
 	return r.id
 }
 
-func (r Room) AddEvent(user User, content types.GenericContent) (*types.Event, error) {
+func (r Room) AddMessage(user User, content types.TypedContent) (*types.Event, error) {
 	return nil, nil
 }
 
