@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -97,25 +96,25 @@ func (r Room) SetState(user User, content types.TypedContent, stateKey string) (
 	switch eventType {
 	case types.EventTypeName:
 		if stateKey != "" {
-			return nil, errors.New("state key must be empty for state " + eventType)
+			return nil, types.ForbiddenError("state key must be empty for state " + eventType)
 		}
 	case types.EventTypeTopic:
 		if stateKey != "" {
-			return nil, errors.New("state key must be empty for state " + eventType)
+			return nil, types.ForbiddenError("state key must be empty for state " + eventType)
 		}
 	case types.EventTypeJoinRules:
 		if stateKey != "" {
-			return nil, errors.New("state key must be empty for state " + eventType)
+			return nil, types.ForbiddenError("state key must be empty for state " + eventType)
 		}
 	case types.EventTypePowerLevels:
 		if stateKey != "" {
-			return nil, errors.New("state key must be empty for state " + eventType)
+			return nil, types.ForbiddenError("state key must be empty for state " + eventType)
 		}
 	case types.EventTypeCreate:
-		return nil, errors.New("cannot set state " + eventType)
+		return nil, types.ForbiddenError("cannot set state " + eventType)
 
 	case types.EventTypeAliases:
-		return nil, errors.New("cannot set state " + eventType)
+		return nil, types.ForbiddenError("cannot set state " + eventType)
 
 	case types.EventTypeMembership:
 		membership, ok := content.(*types.MembershipEventContent)
@@ -123,12 +122,12 @@ func (r Room) SetState(user User, content types.TypedContent, stateKey string) (
 			panic("expected membership event content, got " + reflect.TypeOf(content).String())
 		}
 		if !isUserIdStateKey {
-			return nil, errors.New("state key must be a user id for state " + eventType)
+			return nil, types.ForbiddenError("state key must be a user id for state " + eventType)
 		}
 		return r.doMembershipChange(user, userIdStateKey, membership)
 	}
 	if isUserIdStateKey && userIdStateKey != user.Id() {
-		return nil, errors.New("cannot set the state of another user")
+		return nil, types.ForbiddenError("cannot set the state of another user")
 	}
 	return nil, nil
 }
@@ -139,14 +138,14 @@ func (r Room) doMembershipChange(changeBy User, userId types.UserId, membership 
 		return nil, err
 	}
 	if currentMembership == membership.Membership {
-		return nil, errors.New("membership change was a no-op")
+		return nil, types.ForbiddenError("membership change was a no-op")
 	}
 	membership.UserProfile = nil
 
 	switch membership.Membership {
 	case types.MembershipNone:
 		if currentMembership != types.MembershipBanned {
-			return nil, errors.New("invalid or missing membership in membership change")
+			return nil, types.BadJsonError("invalid or missing membership in membership change")
 		}
 		err = r.TestPowerLevel(changeBy.Id(), func(pl *types.PowerLevelsEventContent) int {
 			return pl.Ban
@@ -155,19 +154,19 @@ func (r Room) doMembershipChange(changeBy User, userId types.UserId, membership 
 			return nil, err
 		}
 		if userId == changeBy.Id() {
-			return nil, errors.New("cannot remove a ban from self")
+			return nil, types.ForbiddenError("cannot remove a ban from self")
 		}
 
 	case types.MembershipInvited:
 		if currentMembership != types.MembershipNone {
-			return nil, errors.New("could not invite user to room, already have membership '" + currentMembership.String() + "'")
+			return nil, types.ForbiddenError("could not invite user to room, already have membership '" + currentMembership.String() + "'")
 		}
 		ok, err := r.AllowsJoinRule(types.JoinRuleInvite)
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
-			return nil, errors.New("room does not allow join method: " + types.JoinRuleInvite.String())
+			return nil, types.ForbiddenError("room does not allow join method: " + types.JoinRuleInvite.String())
 		}
 		err = r.TestPowerLevel(changeBy.Id(), func(pl *types.PowerLevelsEventContent) int {
 			return pl.Invite
@@ -178,7 +177,7 @@ func (r Room) doMembershipChange(changeBy User, userId types.UserId, membership 
 
 	case types.MembershipMember:
 		if userId != changeBy.Id() {
-			return nil, errors.New("cannot force other users to join the room")
+			return nil, types.ForbiddenError("cannot force other users to join the room")
 		}
 		profile, err := changeBy.GetProfile()
 		if err != nil {
@@ -188,25 +187,25 @@ func (r Room) doMembershipChange(changeBy User, userId types.UserId, membership 
 
 	case types.MembershipKnocking:
 		if userId != changeBy.Id() {
-			return nil, errors.New("cannot force other users to knock")
+			return nil, types.ForbiddenError("cannot force other users to knock")
 		}
 		if currentMembership != types.MembershipNone {
-			return nil, errors.New("could not knock on room, already have membership '" + currentMembership.String() + "'")
+			return nil, types.ForbiddenError("could not knock on room, already have membership '" + currentMembership.String() + "'")
 		}
 		ok, err := r.AllowsJoinRule(types.JoinRuleKnock)
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
-			return nil, errors.New("room does not allow join method: " + types.JoinRuleKnock.String())
+			return nil, types.ForbiddenError("room does not allow join method: " + types.JoinRuleKnock.String())
 		}
 
 	case types.MembershipLeaving:
 		if currentMembership == types.MembershipNone {
-			return nil, errors.New("tried to leave a room without current membership")
+			return nil, types.ForbiddenError("tried to leave a room without current membership")
 		}
 		if currentMembership == types.MembershipBanned {
-			return nil, errors.New("tried to leave room with current membership '" + types.MembershipBanned.String() + "'")
+			return nil, types.ForbiddenError("tried to leave room with current membership '" + types.MembershipBanned.String() + "'")
 		}
 		if userId != changeBy.Id() {
 			err = r.TestPowerLevel(changeBy.Id(), func(pl *types.PowerLevelsEventContent) int {
@@ -219,7 +218,7 @@ func (r Room) doMembershipChange(changeBy User, userId types.UserId, membership 
 
 	case types.MembershipBanned:
 		if userId == changeBy.Id() {
-			return nil, errors.New("cannot ban self")
+			return nil, types.ForbiddenError("cannot ban self")
 		}
 		err = r.TestPowerLevel(changeBy.Id(), func(pl *types.PowerLevelsEventContent) int {
 			return pl.Ban
@@ -243,7 +242,7 @@ func (r Room) TestPowerLevel(userId types.UserId, powerLevelFunc func(*types.Pow
 	requiredPowerLevel := powerLevelFunc(powerLevels)
 	if userPowerLevel < requiredPowerLevel {
 		msg := fmt.Sprintf("not enough power level to perform action (%d < %d)", userPowerLevel, requiredPowerLevel)
-		return errors.New(msg)
+		return types.ForbiddenError(msg)
 	}
 	return nil
 }
@@ -269,14 +268,14 @@ func (r Room) AllowsJoinRule(joinRule types.JoinRule) (bool, error) {
 		return false, err
 	}
 	if state == nil {
-		return false, errors.New("room power levels are invalid or missing")
+		panic("room power levels are invalid or missing: " + r.Id().String())
 	}
 	joinRules, ok := state.Content.(*types.JoinRulesEventContent)
 	if !ok {
 		panic("invalid join rule content, was " + reflect.TypeOf(state.Content).String())
 	}
 	if joinRules.JoinRule != joinRule {
-		return false, errors.New("room does not allow join rule: " + joinRule.String())
+		return false, types.ForbiddenError("room does not allow join rule: " + joinRule.String())
 	}
 	return true, nil
 }
@@ -287,7 +286,7 @@ func (r Room) PowerLevels() (*types.PowerLevelsEventContent, error) {
 		return nil, err
 	}
 	if state == nil {
-		return nil, errors.New("room power levels are invalid or missing")
+		panic("room power levels are invalid or missing: " + r.Id().String())
 	}
 	powerLevels, ok := state.Content.(*types.PowerLevelsEventContent)
 	if !ok {
