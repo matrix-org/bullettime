@@ -51,10 +51,16 @@ func (u User) GetProfile() (types.UserProfile, error) {
 	return db.GetUserProfile(u.id)
 }
 
-func (u User) SetDisplayName(displayName string) error {
+func (u User) SetDisplayName(displayName string, doneBy User) error {
+	if u != doneBy {
+		return types.ForbiddenError("can't change the display name of other users")
+	}
 	return db.SetUserDisplayName(u.id, displayName)
 }
 
-func (u User) SetAvatarUrl(avatarUrl string) error {
+func (u User) SetAvatarUrl(avatarUrl string, doneBy User) error {
+	if u != doneBy {
+		return types.ForbiddenError("can't change the display name of other users")
+	}
 	return db.SetUserAvatarUrl(u.id, avatarUrl)
 }

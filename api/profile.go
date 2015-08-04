@@ -46,13 +46,10 @@ func setDisplayName(req *http.Request, params httprouter.Params, body *displayNa
 	if err != nil {
 		return err
 	}
-	if authedUser.Id() != user.Id() {
-		return types.ForbiddenError("can't change the display name of other users")
-	}
 	if body.DisplayName == nil {
 		return types.BadJsonError("missing 'displayname'")
 	}
-	if err := user.SetDisplayName(*body.DisplayName); err != nil {
+	if err := user.SetDisplayName(*body.DisplayName, authedUser); err != nil {
 		return err
 	}
 	return struct{}{}
@@ -79,13 +76,10 @@ func setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRe
 	if err != nil {
 		return err
 	}
-	if authedUser.Id() != user.Id() {
-		return types.ForbiddenError("can't change the avatar url of other users")
-	}
 	if body.AvatarUrl == nil {
 		return types.BadJsonError("missing 'avatar_url'")
 	}
-	if err := user.SetAvatarUrl(*body.AvatarUrl); err != nil {
+	if err := user.SetAvatarUrl(*body.AvatarUrl, authedUser); err != nil {
 		return err
 	}
 	return struct{}{}
