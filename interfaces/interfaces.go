@@ -1,6 +1,8 @@
 package interfaces
 
 import (
+	"fmt"
+
 	"github.com/Rugvip/bullettime/types"
 )
 
@@ -28,4 +30,14 @@ type User interface {
 	GetProfile() (types.UserProfile, error)
 	SetDisplayName(name string, by User) error
 	SetAvatarUrl(url string, by User) error
+}
+
+type TokenService interface {
+	NewAccessToken(types.UserId) (Token, error)
+	ParseAccessToken(token string) (Token, error)
+}
+
+type Token interface {
+	fmt.Stringer
+	UserId() types.UserId
 }
