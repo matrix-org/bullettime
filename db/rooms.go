@@ -18,11 +18,11 @@ type room struct {
 	events []types.Event
 }
 
-var eventTable = make(map[types.EventId]*types.Event)
+var eventTable = map[types.EventId]*types.Event{}
 
-var roomTable = make(map[types.RoomId]*room)
+var roomTable = map[types.RoomId]*room{}
 
-var aliasTable = make(map[types.Alias]*room)
+var aliasTable = map[types.Alias]*room{}
 
 func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err error) {
 	if alias != nil && aliasTable[*alias] != nil {
@@ -38,7 +38,7 @@ func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err error
 	}
 	roomTable[id] = &room{
 		id:     id,
-		states: make(map[StateId]*types.State),
+		states: map[StateId]*types.State{},
 	}
 	if alias != nil {
 		aliasTable[*alias] = roomTable[id]
