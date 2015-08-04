@@ -9,14 +9,14 @@ import (
 )
 
 type roomDb struct {
-	events  map[types.EventId]*types.Event
+	events  map[types.EventId]types.Event
 	rooms   map[types.RoomId]*dbRoom
 	aliases map[types.Alias]*dbRoom
 }
 
 func NewRoomDb() (interfaces.RoomStore, types.Error) {
 	return roomDb{
-		events:  map[types.EventId]*types.Event{},
+		events:  map[types.EventId]types.Event{},
 		rooms:   map[types.RoomId]*dbRoom{},
 		aliases: map[types.Alias]*dbRoom{},
 	}, nil
@@ -82,6 +82,7 @@ func (db roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conten
 	event.Timestamp = types.Timestamp{time.Now()}
 	event.Content = content
 
+	db.events[eventId] = event
 	room.events = append(room.events, event)
 
 	return event, nil
@@ -111,6 +112,7 @@ func (db roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content 
 	state.Content = content
 	state.OldState = (*types.OldState)(room.states[stateId])
 
+	db.events[eventId] = state
 	room.events = append(room.events, state)
 	room.states[stateId] = state
 
