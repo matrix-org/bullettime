@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -34,16 +32,7 @@ func setupApiEndpoint() http.Handler {
 	api.NewRoomsEndpoint(userService, tokenService, roomService).Register(mux)
 
 	mux.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-		res, err := json.Marshal(types.DefaultUnrecognizedError)
-		if err != nil {
-			rw.WriteHeader(500)
-			log.Println("marshaling error: ", err)
-			fmt.Fprintf(rw, "{\"errcode\":\"M_SERVER_ERROR\",\"error\":\"failed to marshal response\"}")
-		} else {
-			rw.WriteHeader(types.DefaultUnrecognizedError.Status())
-			rw.Write(res)
-		}
+		api.WriteJsonResponseWithStatus(rw, types.DefaultUnrecognizedError)
 	})
 
 	return mux

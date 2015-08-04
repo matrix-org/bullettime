@@ -90,12 +90,12 @@ func jsonHandler(i interface{}) httprouter.Handle {
 				switch err := err.(type) {
 				case *json.SyntaxError:
 					msg := fmt.Sprintf("error at [%d]: %s", err.Offset, err.Error())
-					writeJsonResponseWithStatus(rw, types.NotJsonError(msg))
+					WriteJsonResponseWithStatus(rw, types.NotJsonError(msg))
 				case *json.UnmarshalTypeError:
 					msg := fmt.Sprintf("error at [%d]: expected type %s but got %s", err.Offset, err.Type, err.Value)
-					writeJsonResponseWithStatus(rw, types.BadJsonError(msg))
+					WriteJsonResponseWithStatus(rw, types.BadJsonError(msg))
 				default:
-					writeJsonResponseWithStatus(rw, types.BadJsonError(err.Error()))
+					WriteJsonResponseWithStatus(rw, types.BadJsonError(err.Error()))
 				}
 				return
 			}
@@ -121,14 +121,14 @@ func jsonHandler(i interface{}) httprouter.Handle {
 
 		withStatus, ok := res.(WithStatus)
 		if ok {
-			writeJsonResponseWithStatus(rw, withStatus)
+			WriteJsonResponseWithStatus(rw, withStatus)
 		} else {
-			writeJsonResponse(rw, 200, res)
+			WriteJsonResponse(rw, 200, res)
 		}
 	}
 }
 
-func writeJsonResponse(rw http.ResponseWriter, status int, body interface{}) {
+func WriteJsonResponse(rw http.ResponseWriter, status int, body interface{}) {
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	res, err := json.Marshal(body)
 	if err != nil {
@@ -141,8 +141,8 @@ func writeJsonResponse(rw http.ResponseWriter, status int, body interface{}) {
 	}
 }
 
-func writeJsonResponseWithStatus(rw http.ResponseWriter, body WithStatus) {
-	writeJsonResponse(rw, body.Status(), body)
+func WriteJsonResponseWithStatus(rw http.ResponseWriter, body WithStatus) {
+	WriteJsonResponse(rw, body.Status(), body)
 }
 
 func readAccessToken(
