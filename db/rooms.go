@@ -22,14 +22,14 @@ func NewRoomDb() (interfaces.RoomStore, types.Error) {
 	}, nil
 }
 
-type StateId struct {
+type stateId struct {
 	EventType string
 	StateKey  string
 }
 
 type dbRoom struct {
 	id     types.RoomId
-	states map[StateId]*types.State
+	states map[stateId]*types.State
 	events []types.Event
 }
 
@@ -47,7 +47,7 @@ func (db roomDb) CreateRoom(hostname string, alias *types.Alias) (id types.RoomI
 	}
 	db.rooms[id] = &dbRoom{
 		id:     id,
-		states: map[StateId]*types.State{},
+		states: map[stateId]*types.State{},
 	}
 	if alias != nil {
 		db.aliases[*alias] = db.rooms[id]
@@ -99,7 +99,7 @@ func (db roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content 
 			break
 		}
 	}
-	stateId := StateId{content.EventType(), stateKey}
+	stateId := stateId{content.EventType(), stateKey}
 
 	state := new(types.State)
 	state.EventId = eventId
@@ -122,6 +122,6 @@ func (db roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*ty
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
-	state := room.states[StateId{eventType, stateKey}]
+	state := room.states[stateId{eventType, stateKey}]
 	return state, nil
 }
