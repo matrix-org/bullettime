@@ -5,34 +5,47 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 	"github.com/Rugvip/bullettime/utils"
 )
 
-type TokenInfo struct {
-	UserId types.UserId
+func CreateTokenService() (interfaces.TokenService, error) {
+	return tokenService{}, nil
 }
 
-func NewAccessToken(userId types.UserId) (string, error) {
-	encodedUserId := base64.URLEncoding.EncodeToString([]byte(userId.String()))
+type tokenService struct{}
+
+type tokenInfo struct {
+	userId types.UserId
+}
+
+func (t tokenInfo) String() string {
+	encodedUserId := base64.URLEncoding.EncodeToString([]byte(t.userId.String()))
 	encodedUserId = strings.TrimRight(encodedUserId, "=")
-	return fmt.Sprintf("%s..%s", encodedUserId, utils.RandomString(16)), nil
+	return fmt.Sprintf("%s..%s", encodedUserId, utils.RandomString(16))
 }
 
-func ParseAccessToken(token string) (TokenInfo, error) {
-	var info TokenInfo
+func (t tokenInfo) UserId() types.UserId {
+	return t.userId
+}
+
+func (t tokenService) NewAccessToken(userId types.UserId) (interfaces.Token, error) {
+	return tokenInfo{userId}, nil
+}
+
+func (t tokenService) ParseAccessToken(token string) (interfaces.Token, error) {
 	splits := strings.Split(token, "..")
 	if len(splits) != 2 {
-		return info, types.DefaultUnknownTokenError
+		return nil, types.DefaultUnknownTokenError
 	}
 	userIdStr, err := base64.URLEncoding.DecodeString(splits[0])
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 	userId, err := types.ParseUserId(string(userIdStr))
 	if err != nil {
-		return info, err
+		return nil, err
 	}
-	info.UserId = userId
-	return info, nil
+	return tokenInfo{userId}, nil
 }
