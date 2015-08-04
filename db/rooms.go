@@ -3,9 +3,24 @@ package db
 import (
 	"time"
 
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 	"github.com/Rugvip/bullettime/utils"
 )
+
+type roomDb struct {
+	events  map[types.EventId]*types.Event
+	rooms   map[types.RoomId]*dbRoom
+	aliases map[types.Alias]*dbRoom
+}
+
+func NewRoomDb() (interfaces.RoomStore, types.Error) {
+	return roomDb{
+		events:  map[types.EventId]*types.Event{},
+		rooms:   map[types.RoomId]*dbRoom{},
+		aliases: map[types.Alias]*dbRoom{},
+	}, nil
+}
 
 type StateId struct {
 	EventType string
@@ -18,50 +33,44 @@ type dbRoom struct {
 	events []types.Event
 }
 
-var eventTable = map[types.EventId]*types.Event{}
-
-var roomTable = map[types.RoomId]*dbRoom{}
-
-var aliasTable = map[types.Alias]*dbRoom{}
-
-func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error) {
-	if alias != nil && aliasTable[*alias] != nil {
+func (db roomDb) CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error) {
+	if alias != nil && db.aliases[*alias] != nil {
 		err = types.RoomInUseError("room alias '" + alias.String() + "' already exists")
 		return
 	}
 	id.Domain = hostname
 	for {
 		id.Id.Id = utils.RandomString(16)
-		if roomTable[id] == nil {
+		if db.rooms[id] == nil {
 			break
 		}
 	}
-	roomTable[id] = &dbRoom{
+	db.rooms[id] = &dbRoom{
 		id:     id,
 		states: map[StateId]*types.State{},
 	}
 	if alias != nil {
-		aliasTable[*alias] = roomTable[id]
+		db.aliases[*alias] = db.rooms[id]
 	}
 	return
 }
 
-func RoomExists(id types.RoomId) types.Error {
-	if roomTable[id] == nil {
+func (db roomDb) RoomExists(id types.RoomId) types.Error {
+	if db.rooms[id] == nil {
 		return types.NotFoundError("room '" + id.String() + "' doesn't exist")
 	}
 	return nil
 }
 
-func AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, types.Error) {
-	room := roomTable[roomId]
+func (db roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, types.Error) {
+	room := db.rooms[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
 	var eventId = types.EventId{types.Id{Domain: userId.Domain}}
 	for {
 		eventId.Id.Id = utils.RandomString(16)
-		if eventTable[eventId] == nil {
+		if db.events[eventId] == nil {
 			break
 		}
 	}
@@ -78,15 +87,15 @@ func AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.Type
 	return event, nil
 }
 
-func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error) {
-	room := roomTable[roomId]
+func (db roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error) {
+	room := db.rooms[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
 	var eventId = types.EventId{types.Id{Domain: userId.Domain}}
 	for {
 		eventId.Id.Id = utils.RandomString(16)
-		if eventTable[eventId] == nil {
+		if db.events[eventId] == nil {
 			break
 		}
 	}
@@ -108,8 +117,8 @@ func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedC
 	return state, nil
 }
 
-func RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error) {
-	room := roomTable[roomId]
+func (db roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error) {
+	room := db.rooms[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
