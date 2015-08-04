@@ -59,3 +59,10 @@ type RoomStore interface {
 	SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error)
 	RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error)
 }
+
+type AliasStore interface {
+	AddAlias(types.RoomId, types.Alias) types.Error
+	RemoveAlias(types.RoomId, types.Alias) types.Error
+	Aliases(types.RoomId) ([]types.Alias, types.Error)
+	Room(types.Alias) (*types.RoomId, types.Error)
+}
