@@ -12,7 +12,7 @@ type StateId struct {
 	StateKey  string
 }
 
-type room struct {
+type dbRoom struct {
 	id     types.RoomId
 	states map[StateId]*types.State
 	events []types.Event
@@ -20,9 +20,9 @@ type room struct {
 
 var eventTable = map[types.EventId]*types.Event{}
 
-var roomTable = map[types.RoomId]*room{}
+var roomTable = map[types.RoomId]*dbRoom{}
 
-var aliasTable = map[types.Alias]*room{}
+var aliasTable = map[types.Alias]*dbRoom{}
 
 func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error) {
 	if alias != nil && aliasTable[*alias] != nil {
@@ -36,7 +36,7 @@ func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types
 			break
 		}
 	}
-	roomTable[id] = &room{
+	roomTable[id] = &dbRoom{
 		id:     id,
 		states: map[StateId]*types.State{},
 	}
