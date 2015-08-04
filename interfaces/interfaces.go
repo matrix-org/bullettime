@@ -7,34 +7,34 @@ import (
 )
 
 type RoomService interface {
-	GetRoom(types.RoomId) (Room, error)
-	CreateRoom(hostname string, creator User, desc *types.RoomDescription) (Room, *types.Alias, error)
+	GetRoom(types.RoomId) (Room, types.Error)
+	CreateRoom(hostname string, creator User, desc *types.RoomDescription) (Room, *types.Alias, types.Error)
 }
 
 type Room interface {
 	Id() types.RoomId
-	AddMessage(user User, content types.TypedContent) (*types.Event, error)
-	SetState(user User, content types.TypedContent, stateKey string) (*types.State, error)
-	GetState(user User, eventType, stateKey string) (*types.State, error)
+	AddMessage(user User, content types.TypedContent) (*types.Event, types.Error)
+	SetState(user User, content types.TypedContent, stateKey string) (*types.State, types.Error)
+	GetState(user User, eventType, stateKey string) (*types.State, types.Error)
 }
 
 type UserService interface {
-	GetUser(types.UserId) (User, error)
-	CreateUser(types.UserId) (User, error)
+	GetUser(types.UserId) (User, types.Error)
+	CreateUser(types.UserId) (User, types.Error)
 }
 
 type User interface {
 	Id() types.UserId
-	VerifyPassword(password string) error
-	SetPassword(password string) error
-	GetProfile() (types.UserProfile, error)
-	SetDisplayName(name string, by User) error
-	SetAvatarUrl(url string, by User) error
+	VerifyPassword(password string) types.Error
+	SetPassword(password string) types.Error
+	GetProfile() (types.UserProfile, types.Error)
+	SetDisplayName(name string, by User) types.Error
+	SetAvatarUrl(url string, by User) types.Error
 }
 
 type TokenService interface {
-	NewAccessToken(types.UserId) (Token, error)
-	ParseAccessToken(token string) (Token, error)
+	NewAccessToken(types.UserId) (Token, types.Error)
+	ParseAccessToken(token string) (Token, types.Error)
 }
 
 type Token interface {

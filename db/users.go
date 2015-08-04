@@ -10,7 +10,7 @@ type User struct {
 
 var userTable = map[types.UserId]*User{}
 
-func CreateUser(id types.UserId) error {
+func CreateUser(id types.UserId) types.Error {
 	if userTable[id] != nil {
 		return types.UserInUseError("user '" + id.String() + "' already exists")
 	}
@@ -20,14 +20,14 @@ func CreateUser(id types.UserId) error {
 	return nil
 }
 
-func UserExists(id types.UserId) error {
+func UserExists(id types.UserId) types.Error {
 	if userTable[id] == nil {
 		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
 	}
 	return nil
 }
 
-func SetUserPasswordHash(id types.UserId, hash string) error {
+func SetUserPasswordHash(id types.UserId, hash string) types.Error {
 	user := userTable[id]
 	if user == nil {
 		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
@@ -36,7 +36,7 @@ func SetUserPasswordHash(id types.UserId, hash string) error {
 	return nil
 }
 
-func GetUserPasswordHash(id types.UserId) (string, error) {
+func GetUserPasswordHash(id types.UserId) (string, types.Error) {
 	user := userTable[id]
 	if user == nil {
 		return "", types.NotFoundError("user '" + id.String() + "' doesn't exist")
@@ -44,7 +44,7 @@ func GetUserPasswordHash(id types.UserId) (string, error) {
 	return user.PasswordHash, nil
 }
 
-func SetUserDisplayName(id types.UserId, displayName string) error {
+func SetUserDisplayName(id types.UserId, displayName string) types.Error {
 	user := userTable[id]
 	if user == nil {
 		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
@@ -53,7 +53,7 @@ func SetUserDisplayName(id types.UserId, displayName string) error {
 	return nil
 }
 
-func SetUserAvatarUrl(id types.UserId, avatarUrl string) error {
+func SetUserAvatarUrl(id types.UserId, avatarUrl string) types.Error {
 	user := userTable[id]
 	if user == nil {
 		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
@@ -62,7 +62,7 @@ func SetUserAvatarUrl(id types.UserId, avatarUrl string) error {
 	return nil
 }
 
-func GetUserProfile(id types.UserId) (types.UserProfile, error) {
+func GetUserProfile(id types.UserId) (types.UserProfile, types.Error) {
 	user := userTable[id]
 	if user == nil {
 		return types.UserProfile{}, types.NotFoundError("user '" + id.String() + "' doesn't exist")

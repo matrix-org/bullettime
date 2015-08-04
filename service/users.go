@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateUserService() (interfaces.UserService, error) {
+func CreateUserService() (interfaces.UserService, types.Error) {
 	return userService{}, nil
 }
 
@@ -17,14 +17,14 @@ type userInfo struct {
 	id types.UserId
 }
 
-func (u userService) GetUser(id types.UserId) (interfaces.User, error) {
+func (u userService) GetUser(id types.UserId) (interfaces.User, types.Error) {
 	if err := db.UserExists(id); err != nil {
 		return nil, err
 	}
 	return userInfo{id: id}, nil
 }
 
-func (u userService) CreateUser(id types.UserId) (interfaces.User, error) {
+func (u userService) CreateUser(id types.UserId) (interfaces.User, types.Error) {
 	if err := db.CreateUser(id); err != nil {
 		return nil, err
 	}
@@ -35,18 +35,21 @@ func (u userInfo) Id() types.UserId {
 	return u.id
 }
 
-func (u userInfo) VerifyPassword(password string) error {
+func (u userInfo) VerifyPassword(password string) types.Error {
 	hash, err := db.GetUserPasswordHash(u.id)
 	if err != nil {
 		return err
 	}
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+		return types.ForbiddenError("invalid credentials")
+	}
+	return nil
 }
 
-func (u userInfo) SetPassword(password string) error {
+func (u userInfo) SetPassword(password string) types.Error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
-		return err
+		return types.ServerError("failed to generate password: " + err.Error())
 	}
 	if err := db.SetUserPasswordHash(u.id, string(hash)); err != nil {
 		return err
@@ -54,18 +57,18 @@ func (u userInfo) SetPassword(password string) error {
 	return nil
 }
 
-func (u userInfo) GetProfile() (types.UserProfile, error) {
+func (u userInfo) GetProfile() (types.UserProfile, types.Error) {
 	return db.GetUserProfile(u.id)
 }
 
-func (u userInfo) SetDisplayName(displayName string, doneBy interfaces.User) error {
+func (u userInfo) SetDisplayName(displayName string, doneBy interfaces.User) types.Error {
 	if u != doneBy {
 		return types.ForbiddenError("can't change the display name of other users")
 	}
 	return db.SetUserDisplayName(u.id, displayName)
 }
 
-func (u userInfo) SetAvatarUrl(avatarUrl string, doneBy interfaces.User) error {
+func (u userInfo) SetAvatarUrl(avatarUrl string, doneBy interfaces.User) types.Error {
 	if u != doneBy {
 		return types.ForbiddenError("can't change the display name of other users")
 	}

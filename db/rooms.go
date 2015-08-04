@@ -24,7 +24,7 @@ var roomTable = map[types.RoomId]*room{}
 
 var aliasTable = map[types.Alias]*room{}
 
-func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err error) {
+func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error) {
 	if alias != nil && aliasTable[*alias] != nil {
 		err = types.RoomInUseError("room alias '" + alias.String() + "' already exists")
 		return
@@ -46,14 +46,14 @@ func CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err error
 	return
 }
 
-func RoomExists(id types.RoomId) error {
+func RoomExists(id types.RoomId) types.Error {
 	if roomTable[id] == nil {
 		return types.NotFoundError("room '" + id.String() + "' doesn't exist")
 	}
 	return nil
 }
 
-func AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, error) {
+func AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, types.Error) {
 	room := roomTable[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
@@ -78,7 +78,7 @@ func AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.Type
 	return event, nil
 }
 
-func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, error) {
+func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error) {
 	room := roomTable[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
@@ -108,7 +108,7 @@ func SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedC
 	return state, nil
 }
 
-func GetRoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, error) {
+func GetRoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error) {
 	room := roomTable[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")

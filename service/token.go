@@ -10,7 +10,7 @@ import (
 	"github.com/Rugvip/bullettime/utils"
 )
 
-func CreateTokenService() (interfaces.TokenService, error) {
+func CreateTokenService() (interfaces.TokenService, types.Error) {
 	return tokenService{}, nil
 }
 
@@ -30,22 +30,22 @@ func (t tokenInfo) UserId() types.UserId {
 	return t.userId
 }
 
-func (t tokenService) NewAccessToken(userId types.UserId) (interfaces.Token, error) {
+func (t tokenService) NewAccessToken(userId types.UserId) (interfaces.Token, types.Error) {
 	return tokenInfo{userId}, nil
 }
 
-func (t tokenService) ParseAccessToken(token string) (interfaces.Token, error) {
+func (t tokenService) ParseAccessToken(token string) (interfaces.Token, types.Error) {
 	splits := strings.Split(token, "..")
 	if len(splits) != 2 {
 		return nil, types.DefaultUnknownTokenError
 	}
 	userIdStr, err := base64.URLEncoding.DecodeString(splits[0])
 	if err != nil {
-		return nil, err
+		return nil, types.DefaultUnknownTokenError
 	}
 	userId, err := types.ParseUserId(string(userIdStr))
 	if err != nil {
-		return nil, err
+		return nil, types.DefaultUnknownTokenError
 	}
 	return tokenInfo{userId}, nil
 }

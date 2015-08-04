@@ -9,7 +9,7 @@ import (
 	"github.com/Rugvip/bullettime/types"
 )
 
-func CreateRoomService() (interfaces.RoomService, error) {
+func CreateRoomService() (interfaces.RoomService, types.Error) {
 	return roomService{}, nil
 }
 
@@ -19,14 +19,14 @@ type Room struct {
 	id types.RoomId
 }
 
-func (r roomService) GetRoom(id types.RoomId) (interfaces.Room, error) {
+func (r roomService) GetRoom(id types.RoomId) (interfaces.Room, types.Error) {
 	if err := db.RoomExists(id); err != nil {
 		return Room{}, err
 	}
 	return Room{id: id}, nil
 }
 
-func (r roomService) CreateRoom(hostname string, creator interfaces.User, desc *types.RoomDescription) (interfaces.Room, *types.Alias, error) {
+func (r roomService) CreateRoom(hostname string, creator interfaces.User, desc *types.RoomDescription) (interfaces.Room, *types.Alias, types.Error) {
 	var alias *types.Alias
 	if desc.Alias != nil {
 		a := types.NewAlias(*desc.Alias, hostname)
@@ -91,11 +91,11 @@ func (r Room) Id() types.RoomId {
 	return r.id
 }
 
-func (r Room) AddMessage(user interfaces.User, content types.TypedContent) (*types.Event, error) {
+func (r Room) AddMessage(user interfaces.User, content types.TypedContent) (*types.Event, types.Error) {
 	return nil, nil
 }
 
-func (r Room) GetState(user interfaces.User, eventType, stateKey string) (*types.State, error) {
+func (r Room) GetState(user interfaces.User, eventType, stateKey string) (*types.State, types.Error) {
 	membership, err := r.userMembership(user.Id())
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (r Room) GetState(user interfaces.User, eventType, stateKey string) (*types
 	return db.GetRoomState(r.Id(), eventType, stateKey)
 }
 
-func (r Room) SetState(user interfaces.User, content types.TypedContent, stateKey string) (*types.State, error) {
+func (r Room) SetState(user interfaces.User, content types.TypedContent, stateKey string) (*types.State, types.Error) {
 	userIdStateKey, err := types.ParseUserId(stateKey)
 	isUserIdStateKey := err == nil
 
@@ -150,7 +150,7 @@ func (r Room) SetState(user interfaces.User, content types.TypedContent, stateKe
 	return nil, nil
 }
 
-func (r Room) doMembershipChange(by interfaces.User, userId types.UserId, membership *types.MembershipEventContent) (*types.State, error) {
+func (r Room) doMembershipChange(by interfaces.User, userId types.UserId, membership *types.MembershipEventContent) (*types.State, types.Error) {
 	currentMembership, err := r.userMembership(userId)
 	if err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func (r Room) doMembershipChange(by interfaces.User, userId types.UserId, member
 	return db.SetRoomState(r.Id(), by.Id(), membership, userId.String())
 }
 
-func (r Room) testPowerLevel(userId types.UserId, powerLevelFunc func(*types.PowerLevelsEventContent) int) error {
+func (r Room) testPowerLevel(userId types.UserId, powerLevelFunc func(*types.PowerLevelsEventContent) int) types.Error {
 	powerLevels, err := r.powerLevels()
 	if err != nil {
 		return err
@@ -265,7 +265,7 @@ func (r Room) testPowerLevel(userId types.UserId, powerLevelFunc func(*types.Pow
 	return nil
 }
 
-func (r Room) userMembership(userId types.UserId) (types.Membership, error) {
+func (r Room) userMembership(userId types.UserId) (types.Membership, types.Error) {
 	state, err := db.GetRoomState(r.Id(), types.EventTypeMembership, userId.String())
 	if err != nil {
 		return types.MembershipNone, err
@@ -280,7 +280,7 @@ func (r Room) userMembership(userId types.UserId) (types.Membership, error) {
 	return membership.Membership, nil
 }
 
-func (r Room) allowsJoinRule(joinRule types.JoinRule) (bool, error) {
+func (r Room) allowsJoinRule(joinRule types.JoinRule) (bool, types.Error) {
 	state, err := db.GetRoomState(r.Id(), types.EventTypeJoinRules, "")
 	if err != nil {
 		return false, err
@@ -298,7 +298,7 @@ func (r Room) allowsJoinRule(joinRule types.JoinRule) (bool, error) {
 	return true, nil
 }
 
-func (r Room) powerLevels() (*types.PowerLevelsEventContent, error) {
+func (r Room) powerLevels() (*types.PowerLevelsEventContent, types.Error) {
 	state, err := db.GetRoomState(r.Id(), types.EventTypePowerLevels, "")
 	if err != nil {
 		return nil, err
@@ -313,7 +313,7 @@ func (r Room) powerLevels() (*types.PowerLevelsEventContent, error) {
 	return powerLevels, nil
 }
 
-func (r Room) userPowerLevel(userId types.UserId) (int, error) {
+func (r Room) userPowerLevel(userId types.UserId) (int, types.Error) {
 	powerLevels, err := r.powerLevels()
 	if err != nil {
 		return 0, err
@@ -324,7 +324,7 @@ func (r Room) userPowerLevel(userId types.UserId) (int, error) {
 	return powerLevels.UserDefault, nil
 }
 
-func (r Room) eventPowerLevel(eventType string) (int, error) {
+func (r Room) eventPowerLevel(eventType string) (int, types.Error) {
 	powerLevels, err := r.powerLevels()
 	if err != nil {
 		return 0, err
