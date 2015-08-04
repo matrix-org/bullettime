@@ -26,19 +26,91 @@ type Timestamp struct {
 	time.Time
 }
 
-type Event struct {
+type Event interface {
+	GetContent() interface{}
+	GetEventType() string
+	GetEventId() *EventId
+	GetRoomId() *RoomId
+}
+
+type BaseEvent struct {
+	EventType string `json:"type"`
+}
+
+func (e *BaseEvent) GetEventType() string {
+	return e.EventType
+}
+
+type Message struct {
+	BaseEvent
+	Content   Content   `json:"content"`
 	EventId   EventId   `json:"event_id"`
 	RoomId    RoomId    `json:"room_id"`
 	UserId    UserId    `json:"user_id"`
-	EventType string    `json:"type"`
 	Timestamp Timestamp `json:"origin_server_ts"`
-	Content   Content   `json:"content"`
+}
+
+func (e *Message) GetContent() interface{} {
+	return e.Content
+}
+
+func (e *Message) GetEventId() *EventId {
+	return &e.EventId
+}
+
+func (e *Message) GetRoomId() *RoomId {
+	return &e.RoomId
+}
+
+type PresenceEventContent struct {
+	UserProfile
+	UserPresence
+	UserId UserId `json:"user_id"`
+}
+
+type PresenceEvent struct {
+	BaseEvent
+	Content PresenceEventContent `json:"content"`
+}
+
+func (e *PresenceEvent) GetContent() interface{} {
+	return e.Content
+}
+
+func (e *PresenceEvent) GetEventId() *EventId {
+	return nil
+}
+
+func (e *PresenceEvent) GetRoomId() *RoomId {
+	return nil
+}
+
+type TypingEventContent struct {
+	UserIds []UserId `json:"user_ids"`
+}
+
+type TypingEvent struct {
+	BaseEvent
+	Content TypingEventContent `json:"content"`
+	RoomId  RoomId             `json:"room_id"`
+}
+
+func (e *TypingEvent) GetContent() interface{} {
+	return e.Content
+}
+
+func (e *TypingEvent) GetEventId() *EventId {
+	return nil
+}
+
+func (e *TypingEvent) GetRoomId() *RoomId {
+	return &e.RoomId
 }
 
 type OldState State
 
 type State struct {
-	Event
+	Message
 	StateKey string    `json:"state_key"`
 	OldState *OldState `json:"prev_content"`
 }

@@ -15,7 +15,7 @@ type StateId struct {
 type room struct {
 	id     types.RoomId
 	states map[StateId]*types.State
-	events []interface{}
+	events []types.Event
 }
 
 var eventTable = make(map[types.EventId]*types.Event)
@@ -53,7 +53,7 @@ func RoomExists(id types.RoomId) error {
 	return nil
 }
 
-func AddRoomEvent(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Event, error) {
+func AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, error) {
 	room := roomTable[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
@@ -65,7 +65,7 @@ func AddRoomEvent(roomId types.RoomId, userId types.UserId, content types.TypedC
 			break
 		}
 	}
-	event := new(types.Event)
+	event := new(types.Message)
 	event.EventId = eventId
 	event.RoomId = roomId
 	event.UserId = userId
