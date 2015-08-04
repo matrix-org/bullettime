@@ -1,15 +1,10 @@
 package db
 
-import (
-	"time"
-
-	"github.com/Rugvip/bullettime/types"
-)
+import "github.com/Rugvip/bullettime/types"
 
 type User struct {
-	Id types.UserId
+	types.UserId
 	types.UserProfile
-	types.UserPresence
 	PasswordHash string `json:"-"`
 }
 
@@ -20,8 +15,7 @@ func CreateUser(id types.UserId) error {
 		return types.UserInUseError("user '" + id.String() + "' already exists")
 	}
 	user := new(User)
-	user.Id = id
-	user.LastActive = types.LastActive(time.Now())
+	user.UserId = id
 	userTable[id] = user
 	return nil
 }

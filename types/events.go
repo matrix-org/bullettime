@@ -62,15 +62,9 @@ func (e *Message) GetRoomId() *RoomId {
 	return &e.RoomId
 }
 
-type PresenceEventContent struct {
-	UserProfile
-	UserPresence
-	UserId UserId `json:"user_id"`
-}
-
 type PresenceEvent struct {
 	BaseEvent
-	Content PresenceEventContent `json:"content"`
+	Content User `json:"content"`
 }
 
 func (e *PresenceEvent) GetContent() interface{} {

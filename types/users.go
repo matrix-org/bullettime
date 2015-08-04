@@ -28,6 +28,12 @@ type UserPresence struct {
 	LastActive    LastActive `json:"last_active_ago"`
 }
 
+type User struct {
+	UserProfile
+	UserPresence
+	UserId UserId `json:"user_id"`
+}
+
 func (p *Presence) UnmarshalJSON(bytes []byte) error {
 	str := string(bytes)
 	switch str {

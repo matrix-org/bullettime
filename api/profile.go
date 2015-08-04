@@ -103,17 +103,13 @@ func registerProfileResources(mux *httprouter.Router) {
 	mux.GET("/profile/:userId/avatar_url", jsonHandler(getAvatarUrl))
 	mux.PUT("/profile/:userId/avatar_url", jsonHandler(setAvatarUrl))
 	mux.GET("/user", jsonHandler(func() interface{} {
-		return &db.User{
-			Id: types.NewUserId("test", "localhost"),
-			UserProfile: types.UserProfile{
-				DisplayName: "Testan",
-				AvatarUrl:   "http://avatar.com",
-			},
-			UserPresence: types.UserPresence{
-				Presence:   types.PresenceOnline,
-				LastActive: types.LastActive(time.Now()),
-			},
-		}
+		user := new(types.User)
+		user.UserId = types.NewUserId("test", "localhost")
+		user.DisplayName = "Testan"
+		user.AvatarUrl = "http://avatar.com"
+		user.Presence = types.PresenceOnline
+		user.LastActive = types.LastActive(time.Now())
+		return user
 	}))
 	mux.POST("/user", jsonHandler(func(user *db.User) interface{} {
 		log.Println("got user:", user)
