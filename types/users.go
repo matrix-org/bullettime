@@ -44,11 +44,13 @@ func (p *Presence) UnmarshalJSON(bytes []byte) error {
 		*p = PresenceUnavailable
 		return nil
 	}
-	return errors.New("invalid presence identifier: '" + str + "'")
+	return errors.New("invalid presence: " + str)
 }
 
 func (p Presence) MarshalJSON() ([]byte, error) {
 	switch p {
+	default:
+		return []byte("\"offline\""), nil
 	case PresenceOffline:
 		return []byte("\"offline\""), nil
 	case PresenceOnline:
@@ -58,7 +60,6 @@ func (p Presence) MarshalJSON() ([]byte, error) {
 	case PresenceUnavailable:
 		return []byte("\"unavailable\""), nil
 	}
-	return nil, errors.New("invalid presence value: '" + string(p) + "'")
 }
 
 func (l LastActive) MarshalJSON() ([]byte, error) {
