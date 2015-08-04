@@ -22,19 +22,23 @@ type Room struct {
 }
 
 func (r roomService) Room(id types.RoomId) (interfaces.Room, types.Error) {
-	if err := r.db.RoomExists(id); err != nil {
+	exists, err := r.db.RoomExists(id)
+	if err != nil {
 		return Room{}, err
+	}
+	if !exists {
+		return nil, types.NotFoundError("room '" + id.String() + "' doesn't exist")
 	}
 	return Room{id, r}, nil
 }
 
-func (r roomService) CreateRoom(hostname string, creator interfaces.User, desc *types.RoomDescription) (interfaces.Room, *types.Alias, types.Error) {
+func (r roomService) CreateRoom(domain string, creator interfaces.User, desc *types.RoomDescription) (interfaces.Room, *types.Alias, types.Error) {
 	var alias *types.Alias
 	if desc.Alias != nil {
-		a := types.NewAlias(*desc.Alias, hostname)
+		a := types.NewAlias(*desc.Alias, domain)
 		alias = &a
 	}
-	id, err := r.db.CreateRoom(hostname, alias)
+	id, err := r.db.CreateRoom(domain)
 	if err != nil {
 		return nil, nil, err
 	}

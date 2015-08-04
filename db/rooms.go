@@ -10,8 +10,6 @@ import (
 )
 
 type roomDb struct { // always lock in the same order as below
-	aliasesLock sync.RWMutex
-	aliases     map[types.Alias]*dbRoom
 	roomsLock   sync.RWMutex
 	rooms       map[types.RoomId]*dbRoom
 	eventsLock  sync.RWMutex
@@ -22,7 +20,6 @@ func NewRoomDb() (interfaces.RoomStore, types.Error) {
 	return &roomDb{
 		events:  map[types.EventId]types.Event{},
 		rooms:   map[types.RoomId]*dbRoom{},
-		aliases: map[types.Alias]*dbRoom{},
 	}, nil
 }
 
@@ -39,18 +36,10 @@ type dbRoom struct { // always lock in the same order as below
 	events     []types.Event
 }
 
-func (db *roomDb) CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error) {
-	if alias != nil {
-		db.aliasesLock.Lock()
-		defer db.aliasesLock.Unlock()
-		if db.aliases[*alias] != nil {
-			err = types.RoomInUseError("room alias '" + alias.String() + "' already exists")
-			return
-		}
-	}
-	id.Domain = hostname
+func (db *roomDb) CreateRoom(domain string) (types.RoomId, types.Error) {
 	db.roomsLock.Lock()
 	defer db.roomsLock.Unlock()
+	id := types.NewRoomId("", domain)
 	for {
 		id.Id.Id = utils.RandomString(16)
 		if db.rooms[id] == nil {
@@ -61,19 +50,16 @@ func (db *roomDb) CreateRoom(hostname string, alias *types.Alias) (id types.Room
 		id:     id,
 		states: map[stateId]*types.State{},
 	}
-	if alias != nil {
-		db.aliases[*alias] = db.rooms[id]
-	}
-	return
+	return id, nil
 }
 
-func (db *roomDb) RoomExists(id types.RoomId) types.Error {
+func (db *roomDb) RoomExists(id types.RoomId) (bool, types.Error) {
 	db.roomsLock.RLock()
 	defer db.roomsLock.RUnlock()
 	if db.rooms[id] == nil {
-		return types.NotFoundError("room '" + id.String() + "' doesn't exist")
+		return false, nil
 	}
-	return nil
+	return true, nil
 }
 
 func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, types.Error) {
