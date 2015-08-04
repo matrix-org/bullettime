@@ -123,14 +123,14 @@ func (i *Alias) UnmarshalJSON(bytes []byte) (err error) {
 }
 
 func (i UserId) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", i)), nil
+	return []byte(fmt.Sprintf(`"%s"`, i)), nil
 }
 func (i RoomId) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", i)), nil
+	return []byte(fmt.Sprintf(`"%s"`, i)), nil
 }
 func (i EventId) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", i)), nil
+	return []byte(fmt.Sprintf(`"%s"`, i)), nil
 }
 func (i Alias) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", i)), nil
+	return []byte(fmt.Sprintf(`"%s"`, i)), nil
 }
