@@ -15,7 +15,7 @@ type roomDb struct {
 }
 
 func NewRoomDb() (interfaces.RoomStore, types.Error) {
-	return roomDb{
+	return &roomDb{
 		events:  map[types.EventId]types.Event{},
 		rooms:   map[types.RoomId]*dbRoom{},
 		aliases: map[types.Alias]*dbRoom{},
@@ -33,7 +33,7 @@ type dbRoom struct {
 	events []types.Event
 }
 
-func (db roomDb) CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error) {
+func (db *roomDb) CreateRoom(hostname string, alias *types.Alias) (id types.RoomId, err types.Error) {
 	if alias != nil && db.aliases[*alias] != nil {
 		err = types.RoomInUseError("room alias '" + alias.String() + "' already exists")
 		return
@@ -55,14 +55,14 @@ func (db roomDb) CreateRoom(hostname string, alias *types.Alias) (id types.RoomI
 	return
 }
 
-func (db roomDb) RoomExists(id types.RoomId) types.Error {
+func (db *roomDb) RoomExists(id types.RoomId) types.Error {
 	if db.rooms[id] == nil {
 		return types.NotFoundError("room '" + id.String() + "' doesn't exist")
 	}
 	return nil
 }
 
-func (db roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, types.Error) {
+func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, types.Error) {
 	room := db.rooms[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
@@ -88,7 +88,7 @@ func (db roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conten
 	return event, nil
 }
 
-func (db roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error) {
+func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error) {
 	room := db.rooms[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
@@ -119,7 +119,7 @@ func (db roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content 
 	return state, nil
 }
 
-func (db roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error) {
+func (db *roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error) {
 	room := db.rooms[roomId]
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
