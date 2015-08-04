@@ -74,7 +74,11 @@ func jsonHandler(i interface{}) httprouter.Handle {
 					args = []reflect.Value{reflect.ValueOf(req)}
 				}
 			case 2:
-				args = []reflect.Value{reflect.ValueOf(req), reflect.ValueOf(params)}
+				if firstParamIsParams {
+					args = []reflect.Value{reflect.ValueOf(params), reflect.ValueOf(req)}
+				} else {
+					args = []reflect.Value{reflect.ValueOf(req), reflect.ValueOf(params)}
+				}
 			}
 		} else {
 			body := reflect.New(jsonType)
@@ -101,7 +105,11 @@ func jsonHandler(i interface{}) httprouter.Handle {
 					args = []reflect.Value{reflect.ValueOf(req), body}
 				}
 			case 3:
-				args = []reflect.Value{reflect.ValueOf(req), reflect.ValueOf(params), body}
+				if firstParamIsParams {
+					args = []reflect.Value{reflect.ValueOf(params), reflect.ValueOf(req), body}
+				} else {
+					args = []reflect.Value{reflect.ValueOf(req), reflect.ValueOf(params), body}
+				}
 			}
 		}
 		returnValue = handlerFunc.Call(args)[0]
