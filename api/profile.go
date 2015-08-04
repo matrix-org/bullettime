@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Rugvip/bullettime/db"
 	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 
@@ -102,19 +101,6 @@ func (e profileEndpoint) Register(mux *httprouter.Router) {
 	mux.PUT("/profile/:userId/displayname", jsonHandler(e.setDisplayName))
 	mux.GET("/profile/:userId/avatar_url", jsonHandler(e.getAvatarUrl))
 	mux.PUT("/profile/:userId/avatar_url", jsonHandler(e.setAvatarUrl))
-	mux.GET("/user", jsonHandler(func() interface{} {
-		user := new(types.User)
-		user.UserId = types.NewUserId("test", "localhost")
-		user.DisplayName = "Testan"
-		user.AvatarUrl = "http://avatar.com"
-		user.Presence = types.PresenceOnline
-		user.LastActive = types.LastActive(time.Now())
-		return user
-	}))
-	mux.POST("/user", jsonHandler(func(user *db.User) interface{} {
-		log.Println("got user:", user)
-		return user
-	}))
 	mux.GET("/event", jsonHandler(func() interface{} {
 		event := new(types.Message)
 		event.EventId = types.NewEventId("dkjfhg", "localhost")
