@@ -19,6 +19,6 @@ func NewRootMux(roomService interfaces.RoomService) http.Handler {
 	// }
 	registerAuthResources(mux)
 	registerProfileResources(mux)
-	NewRoomsEndpoint(roomService).register(mux)
+	NewRoomsEndpoint(roomService).Register(mux)
 	return mux
 }

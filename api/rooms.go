@@ -33,7 +33,7 @@ func (e roomsEndpoint) createRoom(req *http.Request, body *types.RoomDescription
 	return CreateRoomResponse{room.Id(), alias}
 }
 
-func (e roomsEndpoint) register(mux *httprouter.Router) {
+func (e roomsEndpoint) Register(mux *httprouter.Router) {
 	mux.POST("/rooms/:roomId/send/:eventType", jsonHandler(dummy))
 	mux.GET("/rooms/:roomId/state/:eventType", jsonHandler(dummy))
 	mux.PUT("/rooms/:roomId/state/:eventType", jsonHandler(dummy))
@@ -56,6 +56,6 @@ type roomsEndpoint struct {
 	service interfaces.RoomService
 }
 
-func NewRoomsEndpoint(service interfaces.RoomService) roomsEndpoint {
+func NewRoomsEndpoint(service interfaces.RoomService) Endpoint {
 	return roomsEndpoint{service}
 }

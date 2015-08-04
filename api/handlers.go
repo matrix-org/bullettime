@@ -13,6 +13,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+type Endpoint interface {
+	Register(mux *httprouter.Router)
+}
+
 type WithStatus interface {
 	Status() int
 }
