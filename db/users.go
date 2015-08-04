@@ -2,19 +2,19 @@ package db
 
 import "github.com/Rugvip/bullettime/types"
 
-type User struct {
+type dbUser struct {
 	types.UserId
 	types.UserProfile
 	PasswordHash string `json:"-"`
 }
 
-var userTable = map[types.UserId]*User{}
+var userTable = map[types.UserId]*dbUser{}
 
 func CreateUser(id types.UserId) types.Error {
 	if userTable[id] != nil {
 		return types.UserInUseError("user '" + id.String() + "' already exists")
 	}
-	user := new(User)
+	user := new(dbUser)
 	user.UserId = id
 	userTable[id] = user
 	return nil
