@@ -11,7 +11,7 @@ func CreateUserService(userStore interfaces.UserStore) (interfaces.UserService, 
 }
 
 type userService struct {
-	db interfaces.UserStore
+	users interfaces.UserStore
 }
 
 type userInfo struct {
@@ -20,14 +20,14 @@ type userInfo struct {
 }
 
 func (u userService) User(id types.UserId) (interfaces.User, types.Error) {
-	if err := u.db.UserExists(id); err != nil {
+	if err := u.users.UserExists(id); err != nil {
 		return nil, err
 	}
 	return userInfo{id, u}, nil
 }
 
 func (u userService) CreateUser(id types.UserId) (interfaces.User, types.Error) {
-	if err := u.db.CreateUser(id); err != nil {
+	if err := u.users.CreateUser(id); err != nil {
 		return nil, err
 	}
 	return userInfo{id, u}, nil
@@ -38,7 +38,7 @@ func (u userInfo) Id() types.UserId {
 }
 
 func (u userInfo) VerifyPassword(password string) types.Error {
-	hash, err := u.service.db.UserPasswordHash(u.id)
+	hash, err := u.service.users.UserPasswordHash(u.id)
 	if err != nil {
 		return err
 	}
@@ -53,26 +53,26 @@ func (u userInfo) SetPassword(password string) types.Error {
 	if err != nil {
 		return types.ServerError("failed to generate password: " + err.Error())
 	}
-	if err := u.service.db.SetUserPasswordHash(u.id, string(hash)); err != nil {
+	if err := u.service.users.SetUserPasswordHash(u.id, string(hash)); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (u userInfo) Profile() (types.UserProfile, types.Error) {
-	return u.service.db.UserProfile(u.id)
+	return u.service.users.UserProfile(u.id)
 }
 
 func (u userInfo) SetDisplayName(displayName string, doneBy interfaces.User) types.Error {
 	if u.Id() != doneBy.Id() {
 		return types.ForbiddenError("can't change the display name of other users")
 	}
-	return u.service.db.SetUserDisplayName(u.id, displayName)
+	return u.service.users.SetUserDisplayName(u.id, displayName)
 }
 
 func (u userInfo) SetAvatarUrl(avatarUrl string, doneBy interfaces.User) types.Error {
 	if u.Id() != doneBy.Id() {
 		return types.ForbiddenError("can't change the display name of other users")
 	}
-	return u.service.db.SetUserAvatarUrl(u.id, avatarUrl)
+	return u.service.users.SetUserAvatarUrl(u.id, avatarUrl)
 }
