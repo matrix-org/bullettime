@@ -8,13 +8,18 @@ import (
 	"github.com/Rugvip/bullettime/types"
 )
 
-func CreateRoomService(roomStore interfaces.RoomStore, aliasStore interfaces.AliasStore) (interfaces.RoomService, types.Error) {
-	return roomService{roomStore, aliasStore}, nil
+func CreateRoomService(
+	roomStore interfaces.RoomStore,
+	aliasStore interfaces.AliasStore,
+	memberStore interfaces.MembershipStore,
+) (interfaces.RoomService, types.Error) {
+	return roomService{roomStore, aliasStore, memberStore}, nil
 }
 
 type roomService struct {
-	roomDb  interfaces.RoomStore
-	aliasDb interfaces.AliasStore
+	roomDb   interfaces.RoomStore
+	aliasDb  interfaces.AliasStore
+	memberDb interfaces.MembershipStore
 }
 
 type Room struct {
@@ -52,6 +57,7 @@ func (r roomService) CreateRoom(domain string, creator interfaces.User, desc *ty
 		}
 	}
 	userId := creator.Id()
+	r.memberDb.AddMember(id, userId)
 	_, err = r.roomDb.SetRoomState(id, userId, &types.CreateEventContent{userId}, "")
 	if err != nil {
 		return nil, nil, err
@@ -257,6 +263,15 @@ func (r Room) doMembershipChange(by interfaces.User, userId types.UserId, member
 			return pl.Ban
 		})
 		if err != nil {
+			return nil, err
+		}
+	}
+	if membership.Membership == types.MembershipMember {
+		if err := r.service.memberDb.AddMember(r.Id(), userId); err != nil {
+			return nil, err
+		}
+	} else if currentMembership == types.MembershipMember {
+		if err := r.service.memberDb.RemoveMember(r.Id(), userId); err != nil {
 			return nil, err
 		}
 	}

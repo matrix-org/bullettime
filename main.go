@@ -27,8 +27,12 @@ func setupApiEndpoint() http.Handler {
 	if err != nil {
 		panic(err)
 	}
+	memberStore, err := db.NewMembershipDb()
+	if err != nil {
+		panic(err)
+	}
 
-	roomService, err := service.CreateRoomService(roomStore, aliasStore)
+	roomService, err := service.CreateRoomService(roomStore, aliasStore, memberStore)
 	if err != nil {
 		panic(err)
 	}
