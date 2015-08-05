@@ -71,7 +71,7 @@ func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conte
 	}
 	db.eventsLock.Lock()
 	defer db.eventsLock.Unlock()
-	var eventId = types.EventId{types.Id{Domain: userId.Domain}}
+	var eventId = types.NewEventId("", userId.Domain())
 	for {
 		eventId.Id.Id = utils.RandomString(16)
 		if db.events[eventId] == nil {
@@ -103,7 +103,7 @@ func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content
 	}
 	db.eventsLock.Lock()
 	defer db.eventsLock.Unlock()
-	var eventId = types.EventId{types.Id{Domain: userId.Domain}}
+	var eventId = types.NewEventId("", userId.Domain())
 	for {
 		eventId.Id.Id = utils.RandomString(16)
 		if db.events[eventId] == nil {

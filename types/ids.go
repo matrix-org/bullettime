@@ -17,7 +17,7 @@ const (
 
 type Id struct {
 	Id     string
-	Domain string
+	domain string
 }
 
 type IdParseError string
@@ -48,19 +48,23 @@ func parseId(id *Id, str string, prefix rune) error {
 		return IdParseError("missing domain part")
 	}
 	id.Id = split[0]
-	id.Domain = split[1]
+	id.domain = split[1]
 	return nil
 }
 
 func stringifyId(id Id, prefix rune) string {
 	if !id.Valid() {
-		panic("tried to stringify invalid id: {" + id.Id + ", " + id.Domain + "}")
+		panic("tried to stringify invalid id: {" + id.Id + ", " + id.Domain() + "}")
 	}
-	return fmt.Sprintf("%c%s:%s", prefix, id.Id, id.Domain)
+	return fmt.Sprintf("%c%s:%s", prefix, id.Id, id.Domain())
 }
 
 func (id Id) Valid() bool {
-	return id.Id != "" && id.Domain != ""
+	return id.Id != "" && id.Domain() != ""
+}
+
+func (id Id) Domain() string {
+	return id.domain
 }
 
 type UserId struct{ Id }
