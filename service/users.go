@@ -6,7 +6,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateUserService(userStore interfaces.UserStore) (interfaces.UserService, types.Error) {
+func CreateUserService(userStore interfaces.UserStore) (interfaces.UserService, error) {
 	return userService{userStore}, nil
 }
 

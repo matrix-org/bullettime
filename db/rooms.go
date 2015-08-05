@@ -16,7 +16,7 @@ type roomDb struct { // always lock in the same order as below
 	events     map[types.EventId]types.Event
 }
 
-func NewRoomDb() (interfaces.RoomStore, types.Error) {
+func NewRoomDb() (interfaces.RoomStore, error) {
 	return &roomDb{
 		events: map[types.EventId]types.Event{},
 		rooms:  map[types.RoomId]*dbRoom{},

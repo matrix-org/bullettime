@@ -17,7 +17,7 @@ type aliasDb struct { // always lock in the same order as below
 	reserved  map[types.Alias]struct{}
 }
 
-func NewAliasDb() (interfaces.AliasStore, types.Error) {
+func NewAliasDb() (interfaces.AliasStore, error) {
 	return &aliasDb{
 		aliases:  map[types.RoomId][]types.Alias{},
 		rooms:    map[types.Alias]types.RoomId{},

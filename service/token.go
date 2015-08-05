@@ -10,7 +10,7 @@ import (
 	"github.com/Rugvip/bullettime/utils"
 )
 
-func CreateTokenService() (interfaces.TokenService, types.Error) {
+func CreateTokenService() (interfaces.TokenService, error) {
 	return tokenService{}, nil
 }
 

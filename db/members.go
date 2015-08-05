@@ -20,7 +20,7 @@ type memberKey struct {
 	types.UserId
 }
 
-func NewMembershipDb() (interfaces.MembershipStore, types.Error) {
+func NewMembershipDb() (interfaces.MembershipStore, error) {
 	return &memberDb{
 		users:   map[types.RoomId][]types.UserId{},
 		rooms:   map[types.UserId][]types.RoomId{},

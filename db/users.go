@@ -13,7 +13,7 @@ type userDb struct {
 	users map[types.UserId]*dbUser
 }
 
-func NewUserDb() (interfaces.UserStore, types.Error) {
+func NewUserDb() (interfaces.UserStore, error) {
 	return userDb{
 		users: map[types.UserId]*dbUser{},
 	}, nil

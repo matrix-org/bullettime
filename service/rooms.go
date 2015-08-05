@@ -12,7 +12,7 @@ func CreateRoomService(
 	roomStore interfaces.RoomStore,
 	aliasStore interfaces.AliasStore,
 	memberStore interfaces.MembershipStore,
-) (interfaces.RoomService, types.Error) {
+) (interfaces.RoomService, error) {
 	return roomService{roomStore, aliasStore, memberStore}, nil
 }
 
