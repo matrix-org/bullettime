@@ -2,6 +2,7 @@ package db
 
 import (
 	"sync"
+	"time"
 
 	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
@@ -10,15 +11,53 @@ import (
 type aliasDb struct { // always lock in the same order as below
 	aliasesLock sync.RWMutex
 	aliases     map[types.RoomId][]types.Alias
-	roomsLock   sync.RWMutex
-	rooms       map[types.Alias]types.RoomId
+
+	roomsLock sync.RWMutex
+	rooms     map[types.Alias]types.RoomId
+	reserved  map[types.Alias]struct{}
 }
 
 func NewAliasDb() (interfaces.AliasStore, types.Error) {
 	return &aliasDb{
-		aliases: map[types.RoomId][]types.Alias{},
-		rooms:   map[types.Alias]types.RoomId{},
+		aliases:  map[types.RoomId][]types.Alias{},
+		rooms:    map[types.Alias]types.RoomId{},
+		reserved: map[types.Alias]struct{}{},
 	}, nil
+}
+
+func (db *aliasDb) Reserve(alias types.Alias) types.Error {
+	db.roomsLock.Lock()
+	defer db.roomsLock.Unlock()
+	if _, ok := db.rooms[alias]; ok {
+		return types.RoomInUseError("room alias '" + alias.String() + "' already exists")
+	}
+	if _, ok := db.reserved[alias]; ok {
+		return types.RoomInUseError("room alias '" + alias.String() + "' already reserved")
+	}
+	db.reserved[alias] = struct{}{}
+	go func() {
+		time.Sleep(time.Second * 10)
+		delete(db.reserved, alias)
+	}()
+	return nil
+}
+
+func (db *aliasDb) Claim(alias types.Alias, roomId types.RoomId) types.Error {
+	db.roomsLock.Lock()
+	defer db.roomsLock.Unlock()
+	if _, ok := db.rooms[alias]; ok {
+		return types.RoomInUseError("room alias '" + alias.String() + "' already exists")
+	}
+	if _, ok := db.reserved[alias]; !ok {
+		return types.RoomInUseError("room alias '" + alias.String() + "' was not reserved")
+	}
+	delete(db.reserved, alias)
+	db.rooms[alias] = roomId
+
+	db.aliasesLock.Lock()
+	defer db.aliasesLock.Unlock()
+	db.aliases[roomId] = append(db.aliases[roomId], alias)
+	return nil
 }
 
 func (db *aliasDb) AddAlias(alias types.Alias, roomId types.RoomId) types.Error {
@@ -26,6 +65,9 @@ func (db *aliasDb) AddAlias(alias types.Alias, roomId types.RoomId) types.Error 
 	defer db.roomsLock.Unlock()
 	if _, ok := db.rooms[alias]; ok {
 		return types.RoomInUseError("room alias '" + alias.String() + "' already exists")
+	}
+	if _, ok := db.reserved[alias]; ok {
+		return types.RoomInUseError("room alias '" + alias.String() + "' is reserved")
 	}
 	db.rooms[alias] = roomId
 
