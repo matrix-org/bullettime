@@ -21,7 +21,7 @@ func NewAliasDb() (interfaces.AliasStore, types.Error) {
 	}, nil
 }
 
-func (db *aliasDb) AddAlias(roomId types.RoomId, alias types.Alias) types.Error {
+func (db *aliasDb) AddAlias(alias types.Alias, roomId types.RoomId) types.Error {
 	db.roomsLock.Lock()
 	defer db.roomsLock.Unlock()
 	if _, ok := db.rooms[alias]; ok {
@@ -36,7 +36,7 @@ func (db *aliasDb) AddAlias(roomId types.RoomId, alias types.Alias) types.Error 
 	return nil
 }
 
-func (db *aliasDb) RemoveAlias(roomId types.RoomId, alias types.Alias) types.Error {
+func (db *aliasDb) RemoveAlias(alias types.Alias, roomId types.RoomId) types.Error {
 	db.roomsLock.Lock()
 	defer db.roomsLock.Unlock()
 	if _, ok := db.rooms[alias]; !ok {

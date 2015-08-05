@@ -61,8 +61,8 @@ type RoomStore interface {
 }
 
 type AliasStore interface {
-	AddAlias(types.RoomId, types.Alias) types.Error
-	RemoveAlias(types.RoomId, types.Alias) types.Error
+	AddAlias(types.Alias, types.RoomId) types.Error
+	RemoveAlias(types.Alias, types.RoomId) types.Error
 	Aliases(types.RoomId) ([]types.Alias, types.Error)
 	Room(types.Alias) (*types.RoomId, types.Error)
 }
