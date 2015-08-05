@@ -90,6 +90,22 @@ func NewUserId(id, domain string) UserId {
 	return UserId{Id{id, domainId(domain)}}
 }
 
+func DeriveRoomId(id string, from Id) RoomId {
+	return RoomId{Id{id, from.domain}}
+}
+
+func DeriveAlias(id string, from Id) Alias {
+	return Alias{Id{id, from.domain}}
+}
+
+func DeriveEventId(id string, from Id) EventId {
+	return EventId{Id{id, from.domain}}
+}
+
+func DeriveUserId(id string, from Id) UserId {
+	return UserId{Id{id, from.domain}}
+}
+
 func ParseUserId(str string) (id UserId, err error) {
 	err = parseId(&id.Id, str, UserIdPrefix)
 	return id, err
