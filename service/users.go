@@ -64,14 +64,14 @@ func (u userInfo) Profile() (types.UserProfile, types.Error) {
 }
 
 func (u userInfo) SetDisplayName(displayName string, doneBy interfaces.User) types.Error {
-	if u != doneBy {
+	if u.Id() != doneBy.Id() {
 		return types.ForbiddenError("can't change the display name of other users")
 	}
 	return u.service.db.SetUserDisplayName(u.id, displayName)
 }
 
 func (u userInfo) SetAvatarUrl(avatarUrl string, doneBy interfaces.User) types.Error {
-	if u != doneBy {
+	if u.Id() != doneBy.Id() {
 		return types.ForbiddenError("can't change the display name of other users")
 	}
 	return u.service.db.SetUserAvatarUrl(u.id, avatarUrl)
