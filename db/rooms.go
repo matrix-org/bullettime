@@ -10,16 +10,16 @@ import (
 )
 
 type roomDb struct { // always lock in the same order as below
-	roomsLock   sync.RWMutex
-	rooms       map[types.RoomId]*dbRoom
-	eventsLock  sync.RWMutex
-	events      map[types.EventId]types.Event
+	roomsLock  sync.RWMutex
+	rooms      map[types.RoomId]*dbRoom
+	eventsLock sync.RWMutex
+	events     map[types.EventId]types.Event
 }
 
 func NewRoomDb() (interfaces.RoomStore, types.Error) {
 	return &roomDb{
-		events:  map[types.EventId]types.Event{},
-		rooms:   map[types.RoomId]*dbRoom{},
+		events: map[types.EventId]types.Event{},
+		rooms:  map[types.RoomId]*dbRoom{},
 	}, nil
 }
 
