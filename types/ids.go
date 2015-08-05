@@ -2,7 +2,9 @@ package types
 
 import (
 	"fmt"
+	"log"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/Rugvip/bullettime/utils"
@@ -17,7 +19,7 @@ const (
 
 type Id struct {
 	Id     string
-	domain string
+	domain int
 }
 
 type IdParseError string
@@ -48,7 +50,7 @@ func parseId(id *Id, str string, prefix rune) error {
 		return IdParseError("missing domain part")
 	}
 	id.Id = split[0]
-	id.domain = split[1]
+	id.domain = domainId(split[1])
 	return nil
 }
 
@@ -64,7 +66,7 @@ func (id Id) Valid() bool {
 }
 
 func (id Id) Domain() string {
-	return id.domain
+	return domainName(id.domain)
 }
 
 type UserId struct{ Id }
@@ -73,19 +75,19 @@ type EventId struct{ Id }
 type Alias struct{ Id }
 
 func NewRoomId(id, domain string) RoomId {
-	return RoomId{Id{id, domain}}
+	return RoomId{Id{id, domainId(domain)}}
 }
 
 func NewAlias(id, domain string) Alias {
-	return Alias{Id{id, domain}}
+	return Alias{Id{id, domainId(domain)}}
 }
 
 func NewEventId(id, domain string) EventId {
-	return EventId{Id{id, domain}}
+	return EventId{Id{id, domainId(domain)}}
 }
 
 func NewUserId(id, domain string) UserId {
-	return UserId{Id{id, domain}}
+	return UserId{Id{id, domainId(domain)}}
 }
 
 func ParseUserId(str string) (id UserId, err error) {
@@ -144,4 +146,35 @@ func (i EventId) MarshalJSON() ([]byte, error) {
 }
 func (i Alias) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf(`"%s"`, i)), nil
+}
+
+var domainTableLock sync.RWMutex
+var domainIdTable = map[string]int{}
+var domainNames = []string{""}
+
+func domainId(domain string) int {
+	domainTableLock.RLock()
+	id, ok := domainIdTable[domain]
+	domainTableLock.RUnlock()
+	if ok {
+		return id
+	}
+	domainTableLock.Lock()
+	defer domainTableLock.Unlock()
+	if id, ok := domainIdTable[domain]; ok { // since we had to reacquire the lock
+		return id
+	}
+	id = len(domainNames)
+	domainIdTable[domain] = id
+	domainNames = append(domainNames, domain)
+	return id
+}
+
+func domainName(id int) string {
+	domainTableLock.RLock()
+	defer domainTableLock.RUnlock()
+	if id <= 0 || id >= len(domainNames) {
+		log.Panicf("invalid domain index: %d, should be [1, %d]", id, len(domainNames))
+	}
+	return domainNames[id]
 }
