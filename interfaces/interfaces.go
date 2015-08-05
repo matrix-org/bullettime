@@ -68,3 +68,10 @@ type AliasStore interface {
 	Aliases(types.RoomId) ([]types.Alias, types.Error)
 	Room(types.Alias) (*types.RoomId, types.Error)
 }
+
+type MembershipStore interface {
+	AddMember(types.RoomId, types.UserId) types.Error
+	RemoveMember(types.RoomId, types.UserId) types.Error
+	Rooms(types.UserId) ([]types.RoomId, types.Error)
+	Users(types.RoomId) ([]types.UserId, types.Error)
+}
