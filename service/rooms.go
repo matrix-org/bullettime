@@ -38,10 +38,18 @@ func (r roomService) CreateRoom(domain string, creator interfaces.User, desc *ty
 	if desc.Alias != nil {
 		a := types.NewAlias(*desc.Alias, domain)
 		alias = &a
+		if err := r.aliasDb.Reserve(*alias); err != nil {
+			return nil, nil, err
+		}
 	}
 	id, err := r.roomDb.CreateRoom(domain)
 	if err != nil {
 		return nil, nil, err
+	}
+	if alias != nil {
+		if err := r.aliasDb.Claim(*alias, id); err != nil {
+			return nil, nil, err
+		}
 	}
 	userId := creator.Id()
 	_, err = r.roomDb.SetRoomState(id, userId, &types.CreateEventContent{userId}, "")
