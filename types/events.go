@@ -32,6 +32,7 @@ type Event interface {
 	GetEventId() *EventId
 	GetRoomId() *RoomId
 	GetUserId() *UserId
+	Id() Id
 }
 
 type BaseEvent struct {
@@ -67,6 +68,10 @@ func (e *Message) GetUserId() *UserId {
 	return &e.UserId
 }
 
+func (e *Message) Id() Id {
+	return e.EventId.Id
+}
+
 type PresenceEvent struct {
 	BaseEvent
 	Content User `json:"content"`
@@ -86,6 +91,10 @@ func (e *PresenceEvent) GetRoomId() *RoomId {
 
 func (e *PresenceEvent) GetUserId() *UserId {
 	return &e.Content.UserId
+}
+
+func (e *PresenceEvent) Id() Id {
+	return e.Content.UserId.Id
 }
 
 type TypingEventContent struct {
@@ -112,6 +121,10 @@ func (e *TypingEvent) GetRoomId() *RoomId {
 
 func (e *TypingEvent) GetUserId() *UserId {
 	return nil
+}
+
+func (e *TypingEvent) Id() Id {
+	return e.RoomId.Id
 }
 
 type OldState State
