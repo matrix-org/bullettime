@@ -75,3 +75,9 @@ type MembershipStore interface {
 	Rooms(types.UserId) ([]types.RoomId, types.Error)
 	Users(types.RoomId) ([]types.UserId, types.Error)
 }
+
+type EventStream interface {
+	Push(types.Event) (index uint64, err types.Error)
+	Iterate(index uint64) ([]types.Event, types.Error)
+	Max() (index uint64, err types.Error)
+}
