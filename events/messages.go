@@ -43,7 +43,7 @@ func (h *messageSource) Send(event *types.Message) (uint64, types.Error) {
 		h.list.MoveToFront(element)
 		element.Value = item
 	} else {
-		element = h.list.PushFront(listItem{event, h.max})
+		element = h.list.PushFront(listItem{event, index})
 		h.elements[event.Id()] = element
 	}
 	h.indices = append(h.indices, element)
