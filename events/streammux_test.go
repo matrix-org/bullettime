@@ -1,7 +1,6 @@
 package events
 
 import (
-	"log"
 	"testing"
 
 	"github.com/Rugvip/bullettime/types"
@@ -14,7 +13,6 @@ func TestEventStreamMux(t *testing.T) {
 	}
 	es := StreamMuxTest{_es, t}
 	cancel := make(chan struct{}, 1)
-	log.Println("Listening")
 	streamA, err := es.Listen(types.NewUserId("userA", "test"), cancel)
 	streamB, err := es.Listen(types.NewUserId("userB", "test"), cancel)
 	streamC, err := es.Listen(types.NewUserId("userC", "test"), cancel)
@@ -22,11 +20,9 @@ func TestEventStreamMux(t *testing.T) {
 	streamE1, err := es.Listen(types.NewUserId("userE", "test"), cancel)
 	streamE2, err := es.Listen(types.NewUserId("userE", "test"), cancel)
 	streamE3, err := es.Listen(types.NewUserId("userE", "test"), cancel)
-	log.Println("Pushing")
 	es.send(typing("room1", "user1"), 1, "userA")
 	es.send(typing("room2", "user2"), 1, "userB", "userC")
 	es.send(typing("room3", "user3"), 1, "userA")
-	log.Println("Reading")
 	close(cancel)
 	resA := <-streamA
 	resB := <-streamB

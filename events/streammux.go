@@ -1,7 +1,6 @@
 package events
 
 import (
-	"log"
 	"sync"
 
 	"github.com/Rugvip/bullettime/types"
@@ -65,17 +64,12 @@ func (s streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan types
 	s.channels[userId] = chs
 	if !ok {
 	}
-	log.Println("listen", userId, chs, s.channels[userId])
 	go func() {
-		log.Println(userId.Id.Id, "cancel?")
 		<-cancel
-		log.Println(userId.Id.Id, "cancel!")
 		s.Lock()
 		defer s.Unlock()
 		if chs2, ok := s.channels[userId]; ok {
-			log.Println(userId.Id.Id, "cancel!", chs2)
 			chs2.close(channel)
-			log.Println(userId.Id.Id, "cancel!", chs2)
 			if len(chs2) == 0 {
 				delete(s.channels, userId)
 			} else {
