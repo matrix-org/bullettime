@@ -35,6 +35,11 @@ type Event interface {
 	Id() Id
 }
 
+type IndexedEvent interface {
+	Event
+	Index() uint64
+}
+
 type BaseEvent struct {
 	EventType string `json:"type"`
 }
