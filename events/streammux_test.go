@@ -79,3 +79,15 @@ func (es StreamMuxTest) send(event types.Event, index uint64, ids ...string) {
 		es.t.Fatal(err)
 	}
 }
+
+func typing(id string, ids ...string) *types.TypingEvent {
+	event := &types.TypingEvent{}
+	event.EventType = "m.typing"
+	event.RoomId = types.NewRoomId(id, "test")
+	userIds := make([]types.UserId, len(ids))
+	for i := range ids {
+		userIds[i] = types.NewUserId(ids[i], "test")
+	}
+	event.Content.UserIds = userIds
+	return event
+}
