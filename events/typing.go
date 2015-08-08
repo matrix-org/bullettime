@@ -10,7 +10,7 @@ import (
 )
 
 type typingSource struct {
-	sync.RWMutex
+	lock      sync.RWMutex
 	states    map[types.RoomId]*indexedTypingState
 	max       uint64
 	members   interfaces.MembershipStore
@@ -34,8 +34,8 @@ func NewTypingSource(
 }
 
 func (s *typingSource) SetTyping(room types.RoomId, user types.UserId, typing bool) types.Error {
-	s.Lock()
-	defer s.Unlock()
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	state := s.states[room]
 	index := atomic.AddUint64(&s.max, 1) - 1
 	if state == nil {
@@ -71,8 +71,8 @@ func (s *typingSource) SetTyping(room types.RoomId, user types.UserId, typing bo
 }
 
 func (s *typingSource) Typing(room types.RoomId) ([]types.UserId, types.Error) {
-	s.RLock()
-	defer s.RUnlock()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 	state := s.states[room]
 	if state == nil {
 		return []types.UserId{}, nil
@@ -93,8 +93,8 @@ func (s *typingSource) EventRange(userId types.UserId, from, to uint64) ([]types
 	if len(rooms) == 0 || from >= to {
 		return result, nil
 	}
-	s.RLock()
-	defer s.RUnlock()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 	result = make([]types.Event, len(rooms))
 	for _, room := range rooms {
 		state := s.states[room]
