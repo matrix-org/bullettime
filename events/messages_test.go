@@ -2,63 +2,73 @@ package events
 
 import (
 	"testing"
+	"time"
 
-	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 )
 
-func TestEventStream(t *testing.T) {
-	_es, err := NewEventStream()
+func TestMessageSource(t *testing.T) {
+	_es, err := NewMessageSource()
 	if err != nil {
 		t.Fatal(err)
 	}
-	es := EventStreamTest{_es, t}
-	es.push(typing("room1", "user1"), 1)
-	es.push(typing("room1", "user2"), 2)
-	es.push(typing("room1", "user3"), 3)
+	es := MessageSourceTest{_es, t}
+	es.push(message("event1", "user1"), 0)
+	es.push(message("event1", "user2"), 1)
+	es.push(message("event1", "user3"), 2)
 	es.check(0, "user3")
-	es.check(2, "user3")
+	es.check(1, "user3")
+	es.check(2)
 	es.check(3)
-	es.check(4)
-	es.push(typing("room2", "user4"), 4)
-	es.push(typing("room2", "user5"), 5)
-	es.push(typing("room2", "user6"), 6)
+	es.push(message("event2", "user4"), 3)
+	es.push(message("event2", "user5"), 4)
+	es.push(message("event2", "user6"), 5)
 	es.check(0, "user6", "user3")
-	es.check(3, "user6")
-	es.push(typing("room1", "user7"), 7)
-	es.check(3, "user7", "user6")
-	es.check(6, "user7")
+	es.check(2, "user6")
+	es.push(message("event7", "user7"), 6)
+	es.check(2, "user7", "user6")
+	es.check(5, "user7")
+	es.check(6)
 	es.check(7)
-	es.check(8)
 }
 
-type EventStreamTest struct {
-	interfaces.EventStream
+type MessageSourceTest struct {
+	*messageSource
 	t *testing.T
 }
 
-func (es EventStreamTest) push(event types.Event, expectedIndex uint64) {
-	index, err := es.Push(event)
+func (es MessageSourceTest) push(event *types.Message, expectedIndex uint64) {
+	index, err := es.Send(event)
 	if err != nil {
 		es.t.Fatal(err)
 	}
 	if index != expectedIndex {
-		es.t.Error("index should be", expectedIndex, "was", index)
+		es.t.Fatal("index should be", expectedIndex, "was", index)
 	}
 }
 
-func (es EventStreamTest) check(from uint64, expect ...string) {
+func (es MessageSourceTest) check(from uint64, expect ...string) {
 	result, err := es.Iterate(from)
 	if err != nil {
 		es.t.Fatal(err)
 	}
 	if len(result) != len(expect) {
-		es.t.Error("result length should be", len(expect), "was", len(result))
+		es.t.Fatal("result length should be", len(expect), "was", len(result))
 	}
 	for i := range result {
-		id := result[i].GetContent().(types.TypingEventContent).UserIds[0].Id.Id
+		id := result[i].GetContent().(types.CreateEventContent).Creator.Id.Id
 		if id != expect[i] {
-			es.t.Error("result", i, "should be", expect[i], "was", id)
+			es.t.Fatal("result", i, "should be", expect[i], "was", id)
 		}
 	}
+}
+
+func message(eventId, userId string) *types.Message {
+	event := types.Message{}
+	event.EventType = "m.room.create"
+	event.Content = types.CreateEventContent{types.NewUserId(userId, "test")}
+	event.RoomId = types.NewRoomId("room", "test")
+	event.Timestamp = types.Timestamp{time.Now()}
+	event.EventId = types.NewEventId(eventId, "test")
+	return &event
 }
