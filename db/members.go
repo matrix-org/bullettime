@@ -83,3 +83,19 @@ func (db *memberDb) Users(roomId types.RoomId) ([]types.UserId, types.Error) {
 	defer db.RUnlock()
 	return db.users[roomId], nil
 }
+
+func (db *memberDb) Peers(user types.UserId) ([]types.UserId, types.Error) {
+	db.RLock()
+	defer db.RUnlock()
+	peerSet := map[types.UserId]struct{}{}
+	for _, room := range db.rooms[user] {
+		for _, peer := range db.users[room] {
+			peerSet[peer] = struct{}{}
+		}
+	}
+	peers := make([]types.UserId, len(peerSet))
+	for peer := range peerSet {
+		peers = append(peers, peer)
+	}
+	return peers, nil
+}

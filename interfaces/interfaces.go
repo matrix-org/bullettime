@@ -74,6 +74,7 @@ type MembershipStore interface {
 	RemoveMember(types.RoomId, types.UserId) types.Error
 	Rooms(types.UserId) ([]types.RoomId, types.Error)
 	Users(types.RoomId) ([]types.UserId, types.Error)
+	Peers(types.UserId) ([]types.UserId, types.Error)
 }
 
 type EventStream interface {
