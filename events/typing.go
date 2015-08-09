@@ -84,12 +84,8 @@ func (s *typingSource) Max() (uint64, types.Error) {
 	return atomic.LoadUint64(&s.max), nil
 }
 
-func (s *typingSource) EventRange(userId types.UserId, from, to uint64) ([]types.Event, types.Error) {
+func (s *typingSource) Range(rooms []types.RoomId, from, to uint64) ([]types.Event, types.Error) {
 	var result []types.Event
-	rooms, err := s.members.Rooms(userId)
-	if err != nil {
-		return result, err
-	}
 	if len(rooms) == 0 || from >= to {
 		return result, nil
 	}
