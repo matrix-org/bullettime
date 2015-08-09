@@ -1,14 +1,25 @@
 package events
 
 import (
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/Rugvip/bullettime/db"
 
 	"github.com/Rugvip/bullettime/types"
 )
 
 func TestMessageSource(t *testing.T) {
-	_es, err := NewMessageSource()
+	members, err := db.NewMembershipDb()
+	if err != nil {
+		t.Fatal(err)
+	}
+	streamMux, err := NewStreamMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_es, err := NewMessageSource(members, streamMux)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -16,20 +27,25 @@ func TestMessageSource(t *testing.T) {
 	es.push(message("event1", "user1"), 0)
 	es.push(message("event1", "user2"), 1)
 	es.push(message("event1", "user3"), 2)
-	es.check(0, "user3")
-	es.check(1, "user3")
-	es.check(2)
-	es.check(3)
+	es.check(0, 3, 5, "user3")
+	es.check(0, 3, 3, "user3")
+	es.check(0, 3, 1, "user3")
+	es.check(0, 3, 0)
+	es.check(1, 3, 1, "user3")
+	es.check(2, 3, 1, "user3")
+	es.check(3, 2, 1, "user3")
+	es.check(3, 0, 3, "user3")
+	es.check(3, 0, 0)
 	es.push(message("event2", "user4"), 3)
 	es.push(message("event2", "user5"), 4)
 	es.push(message("event2", "user6"), 5)
-	es.check(0, "user6", "user3")
-	es.check(2, "user6")
+	es.check(0, 6, 2, "user3", "user6")
+	es.check(0, 6, 1, "user3")
+	es.check(0, 6, 0)
+	es.check(0, 5, 1, "user3")
 	es.push(message("event7", "user7"), 6)
-	es.check(2, "user7", "user6")
-	es.check(5, "user7")
-	es.check(6)
-	es.check(7)
+	es.check(2, 7, 5, "user3", "user6", "user7")
+	es.check(3, 7, 5, "user6", "user7")
 }
 
 type MessageSourceTest struct {
@@ -47,18 +63,23 @@ func (es MessageSourceTest) push(event *types.Message, expectedIndex uint64) {
 	}
 }
 
-func (es MessageSourceTest) check(from uint64, expect ...string) {
-	result, err := es.Iterate(from)
+func (es MessageSourceTest) check(from, to uint64, limit int, expect ...string) {
+	user := types.NewUserId("test", "test")
+	roomSet := map[types.RoomId]struct{}{
+		types.NewRoomId("room", "test"): struct{}{},
+	}
+	result, err := es.Range(user, roomSet, from, to, limit)
 	if err != nil {
 		es.t.Fatal(err)
 	}
+	str := fmt.Sprintf("{from=%v, to=%v, limit=%v, expect=%v}", from, to, limit, expect)
 	if len(result) != len(expect) {
-		es.t.Fatal("result length should be", len(expect), "was", len(result))
+		es.t.Fatal(str+": result length should be", len(expect), "was", len(result))
 	}
 	for i := range result {
 		id := result[i].GetContent().(types.CreateEventContent).Creator.Id.Id
 		if id != expect[i] {
-			es.t.Fatal("result", i, "should be", expect[i], "was", id)
+			es.t.Fatal(str+": result", i, "should be", expect[i], "was", id)
 		}
 	}
 }
