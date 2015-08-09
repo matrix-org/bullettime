@@ -83,11 +83,12 @@ func (s streamMux) Send(userIds []types.UserId, event types.Event, index uint64)
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	for _, userId := range userIds {
-		chs := s.channels[userId]
-		if err := chs.send(indexed); err != nil {
-			return err
+		if chs, ok := s.channels[userId]; ok {
+			if err := chs.send(indexed); err != nil {
+				return err
+			}
+			delete(s.channels, userId)
 		}
-		delete(s.channels, userId)
 	}
 	return nil
 }
