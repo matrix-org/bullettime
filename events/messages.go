@@ -3,67 +3,135 @@ package events
 import (
 	"container/list"
 	"sync"
+	"sync/atomic"
 
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 )
 
-type listItem struct {
-	event types.Event
+type indexedMessage struct {
+	event types.Message
 	index uint64
 }
 
 type messageSource struct {
-	lock     sync.RWMutex
-	list     *list.List
-	elements map[types.Id]*list.Element
-	indices  []*list.Element
-	max      uint64
+	lock      sync.RWMutex
+	list      *list.List
+	byId      map[types.EventId]indexedMessage
+	byIndex   []*indexedMessage
+	max       uint64
+	members   interfaces.MembershipStore
+	eventSink interfaces.UserEventSink
 }
 
-func NewMessageSource() (*messageSource, error) {
+func NewMessageSource(
+	members interfaces.MembershipStore,
+	eventSink interfaces.UserEventSink,
+) (*messageSource, error) {
 	return &messageSource{
-		list:     list.New(),
-		elements: map[types.Id]*list.Element{},
-		indices:  []*list.Element{},
-		max:      0,
+		list:      list.New(),
+		byId:      map[types.EventId]indexedMessage{},
+		byIndex:   []*indexedMessage{},
+		members:   members,
+		eventSink: eventSink,
 	}, nil
 }
 
-func (h *messageSource) Send(event *types.Message) (uint64, types.Error) {
-	h.lock.Lock()
-	defer h.lock.Unlock()
+func (s *messageSource) Send(event *types.Message) (uint64, types.Error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
-	index := h.max
-	h.max += 1
-	item := listItem{event, index}
+	index := atomic.AddUint64(&s.max, 1) - 1
+	item := indexedMessage{*event, index}
 
-	element := h.elements[event.Id()]
-	if element != nil {
-		h.indices[element.Value.(listItem).index] = element.Next()
-		h.list.MoveToFront(element)
-		element.Value = item
-	} else {
-		element = h.list.PushFront(listItem{event, index})
-		h.elements[event.Id()] = element
+	if currentItem, ok := s.byId[event.EventId]; ok {
+		s.byIndex[currentItem.index] = nil
 	}
-	h.indices = append(h.indices, element)
+	s.byIndex = append(s.byIndex, &item)
+	s.byId[event.EventId] = item
+
+	users, err := s.members.Users(event.RoomId)
+	if err != nil {
+		return 0, nil
+	}
+	if extraUser := extraUserForEvent(event); extraUser != nil {
+		l := len(users)
+		allUsers := make([]types.UserId, l+1)
+		copy(allUsers, users)
+		allUsers[l] = *extraUser
+		users = allUsers
+	}
+	s.eventSink.Send(users, event, index)
 	return index, nil
 }
 
-func (h *messageSource) Iterate(index uint64) ([]types.Event, types.Error) {
-	h.lock.RLock()
-	defer h.lock.RUnlock()
-	result := []types.Event{}
-	e := h.list.Front()
-	for e != nil && e.Value.(listItem).index > index {
-		result = append(result, e.Value.(listItem).event)
-		e = e.Next()
+func extraUserForEvent(event *types.Message) *types.UserId {
+	if event.EventType == types.EventTypeMembership {
+		switch event.Content.(types.MembershipEventContent).Membership {
+		case types.MembershipInvited:
+			return &event.UserId
+		case types.MembershipKnocking:
+			return &event.UserId
+		case types.MembershipBanned:
+			return &event.UserId
+		}
+	}
+	return nil
+}
+
+func (s *messageSource) Event(eventId types.EventId) (types.Message, types.Error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.byId[eventId].event, nil
+}
+
+func (s *messageSource) Range(
+	user types.UserId,
+	roomSet map[types.RoomId]struct{},
+	from, to uint64,
+	limit int,
+) ([]types.Event, types.Error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	result := make([]types.Event, 0, limit)
+
+	if from == to {
+		return result, nil
+	}
+	max := atomic.LoadUint64(&s.max)
+	if to < from && from >= max {
+		from = max - 1
+	}
+	i := from
+	for len(result) < limit && i < max && i >= 0 {
+		item := s.byIndex[i]
+		if item != nil {
+			event := item.event
+			_, ok := roomSet[event.RoomId]
+			if ok {
+				result = append(result, &event)
+			} else if extra := extraUserForEvent(&event); extra != nil && *extra == user {
+				result = append(result, &event)
+			}
+		}
+		if to > from {
+			i += 1
+			if i >= to {
+				break
+			}
+		} else {
+			if i == 0 {
+				break
+			}
+			i -= 1
+			if i <= to {
+				break
+			}
+		}
 	}
 	return result, nil
 }
 
-func (h *messageSource) Max() (index uint64, err types.Error) {
-	h.lock.RLock()
-	defer h.lock.RUnlock()
-	return h.max, nil
+func (s *messageSource) Max() (index uint64, err types.Error) {
+	return atomic.LoadUint64(&s.max), nil
 }
