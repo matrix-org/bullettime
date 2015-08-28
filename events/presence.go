@@ -31,8 +31,8 @@ type updateFunc func(*types.User)
 func NewPresenceSource(
 	members interfaces.MembershipStore,
 	eventSink interfaces.UserEventSink,
-) (presenceSource, error) {
-	return presenceSource{
+) (interfaces.PresenceStream, error) {
+	return &presenceSource{
 		events:    map[types.UserId]indexedPresenceEvent{},
 		members:   members,
 		eventSink: eventSink,
@@ -45,7 +45,7 @@ func (s *presenceSource) SetUserProfile(userId types.UserId, profile types.UserP
 	})
 }
 
-func (s presenceSource) SetUserPresence(userId types.UserId, presence types.UserPresence) (types.IndexedEvent, types.Error) {
+func (s *presenceSource) SetUserPresence(userId types.UserId, presence types.UserPresence) (types.IndexedEvent, types.Error) {
 	return s.update(userId, func(user *types.User) {
 		user.UserPresence = presence
 	})
@@ -83,15 +83,22 @@ func (s *presenceSource) Max() (uint64, types.Error) {
 	return atomic.LoadUint64(&s.max), nil
 }
 
-func (s *presenceSource) Range(users []types.UserId, from, to uint64) ([]types.Event, types.Error) {
+// Ignores user, roomSet, and limit
+func (s *presenceSource) Range(
+	user types.UserId,
+	userSet map[types.UserId]struct{},
+	roomSet map[types.RoomId]struct{},
+	from, to uint64,
+	limit int,
+) ([]types.Event, types.Error) {
 	var result []types.Event
-	if len(users) == 0 || from >= to {
+	if len(userSet) == 0 || from >= to {
 		return result, nil
 	}
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	result = make([]types.Event, len(users))
-	for _, user := range users {
+	result = make([]types.Event, len(userSet))
+	for user := range userSet {
 		event := s.events[user]
 		if event.index >= from && event.index < to {
 			result = append(result, &event)

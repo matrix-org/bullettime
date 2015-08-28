@@ -25,8 +25,8 @@ type indexedTypingState struct {
 func NewTypingSource(
 	members interfaces.MembershipStore,
 	eventSink interfaces.UserEventSink,
-) (typingSource, error) {
-	return typingSource{
+) (interfaces.TypingStream, error) {
+	return &typingSource{
 		states:    map[types.RoomId]*indexedTypingState{},
 		members:   members,
 		eventSink: eventSink,
@@ -84,15 +84,22 @@ func (s *typingSource) Max() (uint64, types.Error) {
 	return atomic.LoadUint64(&s.max), nil
 }
 
-func (s *typingSource) Range(rooms []types.RoomId, from, to uint64) ([]types.Event, types.Error) {
+// ignores user, userSet, and limit
+func (s *typingSource) Range(
+	user types.UserId,
+	userSet map[types.UserId]struct{},
+	roomSet map[types.RoomId]struct{},
+	from, to uint64,
+	limit int,
+) ([]types.Event, types.Error) {
 	var result []types.Event
-	if len(rooms) == 0 || from >= to {
+	if len(roomSet) == 0 || from >= to {
 		return result, nil
 	}
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	result = make([]types.Event, len(rooms))
-	for _, room := range rooms {
+	result = make([]types.Event, len(roomSet))
+	for room := range roomSet {
 		state := s.states[room]
 		if state.index >= from && state.index < to {
 			result = append(result, &state.event)

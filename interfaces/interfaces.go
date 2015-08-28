@@ -77,8 +77,64 @@ type MembershipStore interface {
 	Peers(types.UserId) ([]types.UserId, types.Error)
 }
 
-type EventStream interface {
-	Push(types.Event) (index uint64, err types.Error)
-	Iterate(index uint64) ([]types.Event, types.Error)
-	Max() (index uint64, err types.Error)
+type UserEventSink interface {
+	Send(userIds []types.UserId, event types.Event, index uint64) types.Error
+}
+
+type UserEventSource interface {
+	Listen(types.UserId) (chan types.IndexedEvent, types.Error)
+}
+
+type IndexedEventSource interface {
+	Max() (uint64, types.Error)
+	Range(
+		user types.UserId,
+		userSet map[types.UserId]struct{},
+		roomSet map[types.RoomId]struct{},
+		from, to uint64,
+		limit int,
+	) ([]types.Event, types.Error)
+}
+
+type MessageEventSink interface {
+	Send(event *types.Message) (uint64, types.Error)
+}
+
+type EventStore interface {
+	Event(eventId types.EventId) (types.Event, types.Error)
+}
+
+type PresenceEventSink interface {
+	SetUserProfile(userId types.UserId, profile types.UserProfile) (types.IndexedEvent, types.Error)
+	SetUserPresence(userId types.UserId, presence types.UserPresence) (types.IndexedEvent, types.Error)
+}
+
+type UserStateStore interface {
+	User(user types.UserId) (types.User, types.Error)
+}
+
+type TypingEventSink interface {
+	SetTyping(room types.RoomId, user types.UserId, typing bool) types.Error
+}
+
+type TypingStore interface {
+	Typing(room types.RoomId) ([]types.UserId, types.Error)
+}
+
+type MessageStream interface {
+	MessageEventSink
+	EventStore
+	IndexedEventSource
+}
+
+type PresenceStream interface {
+	PresenceEventSink
+	UserStateStore
+	IndexedEventSource
+}
+
+type TypingStream interface {
+	TypingEventSink
+	TypingStore
+	IndexedEventSource
 }

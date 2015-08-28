@@ -27,7 +27,7 @@ type messageSource struct {
 func NewMessageSource(
 	members interfaces.MembershipStore,
 	eventSink interfaces.UserEventSink,
-) (*messageSource, error) {
+) (interfaces.MessageStream, error) {
 	return &messageSource{
 		list:      list.New(),
 		byId:      map[types.EventId]indexedMessage{},
@@ -79,14 +79,17 @@ func extraUserForEvent(event *types.Message) *types.UserId {
 	return nil
 }
 
-func (s *messageSource) Event(eventId types.EventId) (types.Message, types.Error) {
+func (s *messageSource) Event(eventId types.EventId) (types.Event, types.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	return s.byId[eventId].event, nil
+	event := s.byId[eventId].event
+	return &event, nil
 }
 
+// ignores userSet
 func (s *messageSource) Range(
 	user types.UserId,
+	userSet map[types.UserId]struct{},
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
 	limit int,
