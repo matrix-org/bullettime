@@ -10,11 +10,11 @@ import (
 )
 
 type presenceSource struct {
-	lock      sync.RWMutex
-	events    map[types.UserId]indexedPresenceEvent
-	max       uint64
-	members   interfaces.MembershipStore
-	eventSink interfaces.UserEventSink
+	lock           sync.RWMutex
+	events         map[types.UserId]indexedPresenceEvent
+	max            uint64
+	members        interfaces.MembershipStore
+	asyncEventSink interfaces.AsyncEventSink
 }
 
 type indexedPresenceEvent struct {
@@ -30,12 +30,12 @@ type updateFunc func(*types.User)
 
 func NewPresenceSource(
 	members interfaces.MembershipStore,
-	eventSink interfaces.UserEventSink,
+	asyncEventSink interfaces.AsyncEventSink,
 ) (interfaces.PresenceStream, error) {
 	return &presenceSource{
-		events:    map[types.UserId]indexedPresenceEvent{},
-		members:   members,
-		eventSink: eventSink,
+		events:         map[types.UserId]indexedPresenceEvent{},
+		members:        members,
+		asyncEventSink: asyncEventSink,
 	}, nil
 }
 
@@ -66,7 +66,7 @@ func (s *presenceSource) update(userId types.UserId, updateFunc updateFunc) (typ
 	if err != nil {
 		return nil, err
 	}
-	s.eventSink.Send(peers, &event.PresenceEvent, index)
+	s.asyncEventSink.Send(peers, &event.PresenceEvent, index)
 	return &event, nil
 }
 

@@ -42,6 +42,16 @@ type Token interface {
 	UserId() types.UserId
 }
 
+type EventService interface {
+	Event(types.EventId) (types.Event, types.Error)
+	GetRange(
+		user types.UserId,
+		from, to types.StreamToken,
+		limit int,
+		cancel chan struct{},
+	) ([]types.IndexedEvent, types.Error)
+}
+
 type UserStore interface {
 	CreateUser(types.UserId) types.Error
 	UserExists(types.UserId) types.Error
@@ -77,11 +87,11 @@ type MembershipStore interface {
 	Peers(types.UserId) ([]types.UserId, types.Error)
 }
 
-type UserEventSink interface {
+type AsyncEventSink interface {
 	Send(userIds []types.UserId, event types.Event, index uint64) types.Error
 }
 
-type UserEventSource interface {
+type AsyncEventSource interface {
 	Listen(types.UserId) (chan types.IndexedEvent, types.Error)
 }
 

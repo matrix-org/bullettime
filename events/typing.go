@@ -10,11 +10,11 @@ import (
 )
 
 type typingSource struct {
-	lock      sync.RWMutex
-	states    map[types.RoomId]*indexedTypingState
-	max       uint64
-	members   interfaces.MembershipStore
-	eventSink interfaces.UserEventSink
+	lock           sync.RWMutex
+	states         map[types.RoomId]*indexedTypingState
+	max            uint64
+	members        interfaces.MembershipStore
+	asyncEventSink interfaces.AsyncEventSink
 }
 
 type indexedTypingState struct {
@@ -24,12 +24,12 @@ type indexedTypingState struct {
 
 func NewTypingSource(
 	members interfaces.MembershipStore,
-	eventSink interfaces.UserEventSink,
+	asyncEventSink interfaces.AsyncEventSink,
 ) (interfaces.TypingStream, error) {
 	return &typingSource{
-		states:    map[types.RoomId]*indexedTypingState{},
-		members:   members,
-		eventSink: eventSink,
+		states:         map[types.RoomId]*indexedTypingState{},
+		members:        members,
+		asyncEventSink: asyncEventSink,
 	}, nil
 }
 
@@ -66,7 +66,7 @@ func (s *typingSource) SetTyping(room types.RoomId, user types.UserId, typing bo
 	if err != nil {
 		return err
 	}
-	s.eventSink.Send(roomMembers, &state.event, index)
+	s.asyncEventSink.Send(roomMembers, &state.event, index)
 	return nil
 }
 

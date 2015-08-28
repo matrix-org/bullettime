@@ -15,25 +15,25 @@ type indexedMessage struct {
 }
 
 type messageSource struct {
-	lock      sync.RWMutex
-	list      *list.List
-	byId      map[types.EventId]indexedMessage
-	byIndex   []*indexedMessage
-	max       uint64
-	members   interfaces.MembershipStore
-	eventSink interfaces.UserEventSink
+	lock           sync.RWMutex
+	list           *list.List
+	byId           map[types.EventId]indexedMessage
+	byIndex        []*indexedMessage
+	max            uint64
+	members        interfaces.MembershipStore
+	asyncEventSink interfaces.AsyncEventSink
 }
 
 func NewMessageSource(
 	members interfaces.MembershipStore,
-	eventSink interfaces.UserEventSink,
+	asyncEventSink interfaces.AsyncEventSink,
 ) (interfaces.MessageStream, error) {
 	return &messageSource{
-		list:      list.New(),
-		byId:      map[types.EventId]indexedMessage{},
-		byIndex:   []*indexedMessage{},
-		members:   members,
-		eventSink: eventSink,
+		list:           list.New(),
+		byId:           map[types.EventId]indexedMessage{},
+		byIndex:        []*indexedMessage{},
+		members:        members,
+		asyncEventSink: asyncEventSink,
 	}, nil
 }
 
@@ -61,7 +61,7 @@ func (s *messageSource) Send(event *types.Message) (uint64, types.Error) {
 		allUsers[l] = *extraUser
 		users = allUsers
 	}
-	s.eventSink.Send(users, event, index)
+	s.asyncEventSink.Send(users, event, index)
 	return index, nil
 }
 
