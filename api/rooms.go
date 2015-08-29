@@ -30,7 +30,7 @@ func (e roomsEndpoint) createRoom(req *http.Request, body *types.RoomDescription
 	if err != nil {
 		return err
 	}
-	return CreateRoomResponse{room.Id(), alias}
+	return CreateRoomResponse{room, alias}
 }
 
 func (e roomsEndpoint) Register(mux *httprouter.Router) {

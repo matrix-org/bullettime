@@ -65,11 +65,11 @@ func (e authEndpoint) registerWithPassword(hostname string, body *authRequest) i
 		return types.BadJsonError("Missing or invalid password")
 	}
 	userId := types.NewUserId(body.Username, hostname)
-	user, err := e.userService.CreateUser(userId)
+	err := e.userService.CreateUser(userId)
 	if err != nil {
 		return err
 	}
-	if err := user.SetPassword(body.Password); err != nil {
+	if err := e.userService.SetPassword(userId, userId, body.Password); err != nil {
 		return err
 	}
 	accessToken, err := e.tokenService.NewAccessToken(userId)

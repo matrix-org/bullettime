@@ -8,47 +8,33 @@ import (
 
 func CreateUserService(
 	users interfaces.UserStore,
-	profiles interfaces.UserStateStore,
-	eventSink interfaces.PresenceEventSink,
 ) (interfaces.UserService, error) {
 	return userService{
 		users,
-		profiles,
-		eventSink,
 	}, nil
 }
 
 type userService struct {
-	users        interfaces.UserStore
-	profiles     interfaces.UserStateStore
-	presenceSink interfaces.PresenceEventSink
+	users interfaces.UserStore
 }
 
-type userInfo struct {
-	id      types.UserId
-	service userService
-}
-
-func (u userService) User(id types.UserId) (interfaces.User, types.Error) {
-	if err := u.users.UserExists(id); err != nil {
-		return nil, err
+func (s userService) UserExists(user, caller types.UserId) types.Error {
+	exists, err := s.users.UserExists(user)
+	if err != nil {
+		return err
 	}
-	return userInfo{id, u}, nil
-}
-
-func (u userService) CreateUser(id types.UserId) (interfaces.User, types.Error) {
-	if err := u.users.CreateUser(id); err != nil {
-		return nil, err
+	if !exists {
+		return types.NotFoundError("user '" + user.String() + "' doesn't exist")
 	}
-	return userInfo{id, u}, nil
+	return nil
 }
 
-func (u userInfo) Id() types.UserId {
-	return u.id
+func (s userService) CreateUser(id types.UserId) types.Error {
+	return s.users.CreateUser(id)
 }
 
-func (u userInfo) VerifyPassword(password string) types.Error {
-	hash, err := u.service.users.UserPasswordHash(u.id)
+func (s userService) VerifyPassword(user types.UserId, password string) types.Error {
+	hash, err := s.users.UserPasswordHash(user)
 	if err != nil {
 		return err
 	}
@@ -58,31 +44,16 @@ func (u userInfo) VerifyPassword(password string) types.Error {
 	return nil
 }
 
-func (u userInfo) SetPassword(password string) types.Error {
+func (s userService) SetPassword(user, caller types.UserId, password string) types.Error {
+	if user != caller {
+		return types.ForbiddenError("can't change the password of other users")
+	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		return types.ServerError("failed to generate password: " + err.Error())
 	}
-	if err := u.service.users.SetUserPasswordHash(u.id, string(hash)); err != nil {
+	if err := s.users.SetUserPasswordHash(user, string(hash)); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (u userInfo) Profile() (types.UserProfile, types.Error) {
-	return u.service.users.UserProfile(u.id)
-}
-
-func (u userInfo) SetDisplayName(displayName string, doneBy interfaces.User) types.Error {
-	if u.Id() != doneBy.Id() {
-		return types.ForbiddenError("can't change the display name of other users")
-	}
-	return u.service.users.SetUserDisplayName(u.id, displayName)
-}
-
-func (u userInfo) SetAvatarUrl(avatarUrl string, doneBy interfaces.User) types.Error {
-	if u.Id() != doneBy.Id() {
-		return types.ForbiddenError("can't change the display name of other users")
-	}
-	return u.service.users.SetUserAvatarUrl(u.id, avatarUrl)
 }

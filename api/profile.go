@@ -29,7 +29,7 @@ func (e profileEndpoint) getDisplayName(params httprouter.Params) interface{} {
 	if err != nil {
 		return err
 	}
-	profile, err := user.Profile()
+	profile, err := e.profiles.Profile(user, user)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (e profileEndpoint) getDisplayName(params httprouter.Params) interface{} {
 }
 
 func (e profileEndpoint) setDisplayName(req *http.Request, params httprouter.Params, body *displayNameRequest) interface{} {
-	authedUser, err := readAccessToken(e.userService, e.tokenService, req)
+	authedUser, err := readAccessToken(e.users, e.tokens, req)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (e profileEndpoint) setDisplayName(req *http.Request, params httprouter.Par
 	if body.DisplayName == nil {
 		return types.BadJsonError("missing 'displayname'")
 	}
-	if err := user.SetDisplayName(*body.DisplayName, authedUser); err != nil {
+	if _, err := e.profiles.UpdateProfile(user, authedUser, body.DisplayName, nil); err != nil {
 		return err
 	}
 	return struct{}{}
@@ -59,7 +59,7 @@ func (e profileEndpoint) getAvatarUrl(params httprouter.Params) interface{} {
 	if err != nil {
 		return err
 	}
-	profile, err := user.Profile()
+	profile, err := e.profiles.Profile(user, user)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (e profileEndpoint) getAvatarUrl(params httprouter.Params) interface{} {
 }
 
 func (e profileEndpoint) setAvatarUrl(req *http.Request, params httprouter.Params, body *avatarUrlRequest) interface{} {
-	authedUser, err := readAccessToken(e.userService, e.tokenService, req)
+	authedUser, err := readAccessToken(e.users, e.tokens, req)
 	if err != nil {
 		return err
 	}
@@ -78,20 +78,19 @@ func (e profileEndpoint) setAvatarUrl(req *http.Request, params httprouter.Param
 	if body.AvatarUrl == nil {
 		return types.BadJsonError("missing 'avatar_url'")
 	}
-	if err := user.SetAvatarUrl(*body.AvatarUrl, authedUser); err != nil {
+	if _, err := e.profiles.UpdateProfile(user, authedUser, nil, body.AvatarUrl); err != nil {
 		return err
 	}
 	return struct{}{}
 }
 
-func (e profileEndpoint) userFromParams(params httprouter.Params) (interfaces.User, error) {
-	userId, err := types.ParseUserId(params[0].Value)
+func (e profileEndpoint) userFromParams(params httprouter.Params) (types.UserId, error) {
+	user, err := types.ParseUserId(params[0].Value)
 	if err != nil {
-		return nil, types.BadJsonError(err.Error())
+		return types.UserId{}, types.BadJsonError(err.Error())
 	}
-	user, err := e.userService.User(userId)
-	if err != nil {
-		return nil, err
+	if err := e.users.UserExists(user, user); err != nil {
+		return types.UserId{}, err
 	}
 	return user, nil
 }
@@ -151,19 +150,19 @@ func (e profileEndpoint) Register(mux *httprouter.Router) {
 }
 
 type profileEndpoint struct {
-	userService  interfaces.UserService
-	tokenService interfaces.TokenService
-	roomService  interfaces.RoomService
+	users    interfaces.UserService
+	tokens   interfaces.TokenService
+	profiles interfaces.ProfileService
 }
 
 func NewProfileEndpoint(
-	userService interfaces.UserService,
-	tokenService interfaces.TokenService,
-	roomService interfaces.RoomService,
+	users interfaces.UserService,
+	tokens interfaces.TokenService,
+	profiles interfaces.ProfileService,
 ) Endpoint {
 	return profileEndpoint{
-		userService:  userService,
-		tokenService: tokenService,
-		roomService:  roomService,
+		users,
+		tokens,
+		profiles,
 	}
 }

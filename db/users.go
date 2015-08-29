@@ -38,13 +38,13 @@ func (db userDb) CreateUser(id types.UserId) types.Error {
 	return nil
 }
 
-func (db userDb) UserExists(id types.UserId) types.Error {
+func (db userDb) UserExists(id types.UserId) (bool, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	if db.users[id] == nil {
-		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
+		return false, nil
 	}
-	return nil
+	return true, nil
 }
 
 func (db userDb) SetUserPasswordHash(id types.UserId, hash string) types.Error {
@@ -72,40 +72,40 @@ func (db userDb) UserPasswordHash(id types.UserId) (string, types.Error) {
 	return user.PasswordHash, nil
 }
 
-func (db userDb) SetUserDisplayName(id types.UserId, displayName string) types.Error {
-	db.RLock()
-	defer db.RUnlock()
-	user := db.users[id]
-	if user == nil {
-		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
-	}
-	user.Lock()
-	defer user.Unlock()
-	user.DisplayName = displayName
-	return nil
-}
+// func (db userDb) SetUserDisplayName(id types.UserId, displayName string) types.Error {
+// 	db.RLock()
+// 	defer db.RUnlock()
+// 	user := db.users[id]
+// 	if user == nil {
+// 		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
+// 	}
+// 	user.Lock()
+// 	defer user.Unlock()
+// 	user.DisplayName = displayName
+// 	return nil
+// }
 
-func (db userDb) SetUserAvatarUrl(id types.UserId, avatarUrl string) types.Error {
-	db.RLock()
-	defer db.RUnlock()
-	user := db.users[id]
-	if user == nil {
-		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
-	}
-	user.Lock()
-	defer user.Unlock()
-	user.AvatarUrl = avatarUrl
-	return nil
-}
+// func (db userDb) SetUserAvatarUrl(id types.UserId, avatarUrl string) types.Error {
+// 	db.RLock()
+// 	defer db.RUnlock()
+// 	user := db.users[id]
+// 	if user == nil {
+// 		return types.NotFoundError("user '" + id.String() + "' doesn't exist")
+// 	}
+// 	user.Lock()
+// 	defer user.Unlock()
+// 	user.AvatarUrl = avatarUrl
+// 	return nil
+// }
 
-func (db userDb) UserProfile(id types.UserId) (types.UserProfile, types.Error) {
-	db.RLock()
-	defer db.RUnlock()
-	user := db.users[id]
-	if user == nil {
-		return types.UserProfile{}, types.NotFoundError("user '" + id.String() + "' doesn't exist")
-	}
-	user.RLock()
-	defer user.RUnlock()
-	return user.UserProfile, nil
-}
+// func (db userDb) UserProfile(id types.UserId) (types.UserProfile, types.Error) {
+// 	db.RLock()
+// 	defer db.RUnlock()
+// 	user := db.users[id]
+// 	if user == nil {
+// 		return types.UserProfile{}, types.NotFoundError("user '" + id.String() + "' doesn't exist")
+// 	}
+// 	user.RLock()
+// 	defer user.RUnlock()
+// 	return user.UserProfile, nil
+// }

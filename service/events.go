@@ -10,7 +10,7 @@ func NewEventService(
 	presenceSource interfaces.IndexedEventSource,
 	typingSource interfaces.IndexedEventSource,
 	asyncEventSource interfaces.AsyncEventSource,
-	eventStore interfaces.EventStore,
+	eventProvider interfaces.EventProvider,
 	membershipStore interfaces.MembershipStore,
 ) (interfaces.EventService, error) {
 	return &eventService{
@@ -18,7 +18,7 @@ func NewEventService(
 		presenceSource,
 		typingSource,
 		asyncEventSource,
-		eventStore,
+		eventProvider,
 		membershipStore,
 	}, nil
 }
@@ -28,12 +28,12 @@ type eventService struct {
 	presenceSource   interfaces.IndexedEventSource
 	typingSource     interfaces.IndexedEventSource
 	asyncEventSource interfaces.AsyncEventSource
-	eventStore       interfaces.EventStore
+	eventProvider    interfaces.EventProvider
 	membershipStore  interfaces.MembershipStore
 }
 
 func (s eventService) Event(user types.UserId, eventId types.EventId) (types.Event, types.Error) {
-	event, err := s.eventStore.Event(user, eventId)
+	event, err := s.eventProvider.Event(user, eventId)
 	if err != nil {
 		return nil, err
 	}
@@ -183,10 +183,10 @@ func (s eventService) Range(
 		} else {
 			i -= len(messages)
 			if i < len(presences) {
-				events[i] = presences[i].Event()
+				events[len(messages)+i] = presences[i].Event()
 			} else {
 				i -= len(presences)
-				events[i] = typings[i].Event()
+				events[len(messages)+len(presences)+i] = typings[i].Event()
 			}
 		}
 	}

@@ -22,7 +22,7 @@ const (
 
 type LastActive time.Time
 
-type UserPresence struct {
+type UserStatus struct {
 	Presence      Presence   `json:"presence"`
 	StatusMessage string     `json:"status_msg"`
 	LastActive    LastActive `json:"last_active_ago"`
@@ -30,7 +30,7 @@ type UserPresence struct {
 
 type User struct {
 	UserProfile
-	UserPresence
+	UserStatus
 	UserId UserId `json:"user_id"`
 }
 

@@ -7,29 +7,52 @@ import (
 )
 
 type RoomService interface {
-	Room(types.RoomId) (Room, types.Error)
-	CreateRoom(hostname string, creator User, desc *types.RoomDescription) (Room, *types.Alias, types.Error)
-}
-
-type Room interface {
-	Id() types.RoomId
-	AddMessage(user User, content types.TypedContent) (*types.Message, types.Error)
-	SetState(user User, content types.TypedContent, stateKey string) (*types.State, types.Error)
-	State(user User, eventType, stateKey string) (*types.State, types.Error)
+	CreateRoom(
+		hostname string,
+		creator types.UserId,
+		desc *types.RoomDescription,
+	) (types.RoomId, *types.Alias, types.Error)
+	RoomExists(room types.RoomId, caller types.UserId) types.Error
+	AddMessage(
+		room types.RoomId,
+		caller types.UserId,
+		content types.TypedContent,
+	) (*types.Message, types.Error)
+	State(
+		room types.RoomId,
+		caller types.UserId,
+		eventType, stateKey string,
+	) (*types.State, types.Error)
+	SetState(
+		room types.RoomId,
+		caller types.UserId,
+		content types.TypedContent,
+		stateKey string,
+	) (*types.State, types.Error)
 }
 
 type UserService interface {
-	User(types.UserId) (User, types.Error)
-	CreateUser(types.UserId) (User, types.Error)
+	CreateUser(types.UserId) types.Error
+	UserExists(user, caller types.UserId) types.Error
+	VerifyPassword(user types.UserId, password string) types.Error
+	SetPassword(user, caller types.UserId, password string) types.Error
 }
 
-type User interface {
-	Id() types.UserId
-	VerifyPassword(password string) types.Error
-	SetPassword(password string) types.Error
-	Profile() (types.UserProfile, types.Error)
-	SetDisplayName(name string, by User) types.Error
-	SetAvatarUrl(url string, by User) types.Error
+type ProfileService interface {
+	Profile(user, caller types.UserId) (types.UserProfile, types.Error)
+	UpdateProfile(
+		user, caller types.UserId,
+		name, avatarUrl *string,
+	) (types.UserProfile, types.Error)
+}
+
+type PresenceService interface {
+	Status(user, caller types.UserId) (types.UserStatus, types.Error)
+	UpdateStatus(
+		user, caller types.UserId,
+		presence *types.Presence,
+		statusMessage *string,
+	) (types.UserStatus, types.Error)
 }
 
 type TokenService interface {
@@ -43,9 +66,9 @@ type Token interface {
 }
 
 type EventService interface {
-	Event(user types.UserId, eventId types.EventId) (types.Event, types.Error)
+	Event(caller types.UserId, eventId types.EventId) (types.Event, types.Error)
 	Range(
-		user types.UserId,
+		caller types.UserId,
 		from, to *types.StreamToken,
 		limit uint,
 		cancel chan struct{},
@@ -54,12 +77,9 @@ type EventService interface {
 
 type UserStore interface {
 	CreateUser(types.UserId) types.Error
-	UserExists(types.UserId) types.Error
+	UserExists(types.UserId) (bool, types.Error)
 	SetUserPasswordHash(id types.UserId, hash string) types.Error
 	UserPasswordHash(types.UserId) (string, types.Error)
-	SetUserDisplayName(id types.UserId, displayName string) types.Error
-	SetUserAvatarUrl(id types.UserId, avatarUrl string) types.Error
-	UserProfile(types.UserId) (types.UserProfile, types.Error)
 }
 
 type RoomStore interface {
@@ -110,41 +130,50 @@ type EventSink interface {
 	Send(event types.Event) (uint64, types.Error)
 }
 
-type EventStore interface {
-	Event(user types.UserId, eventId types.EventId) (types.Event, types.Error)
+type EventProvider interface {
+	Event(types.UserId, types.EventId) (types.Event, types.Error)
+}
+
+type ProfileEventSink interface {
+	SetUserProfile(types.UserId, types.UserProfile) (types.IndexedEvent, types.Error)
 }
 
 type PresenceEventSink interface {
-	SetUserProfile(userId types.UserId, profile types.UserProfile) (types.IndexedEvent, types.Error)
-	SetUserPresence(userId types.UserId, presence types.UserPresence) (types.IndexedEvent, types.Error)
+	SetUserStatus(types.UserId, types.UserStatus) (types.IndexedEvent, types.Error)
 }
 
-type UserStateStore interface {
-	User(user types.UserId) (types.User, types.Error)
+type ProfileProvider interface {
+	Profile(types.UserId) (types.UserProfile, types.Error)
+}
+
+type PresenceProvider interface {
+	Status(types.UserId) (types.UserStatus, types.Error)
 }
 
 type TypingEventSink interface {
 	SetTyping(room types.RoomId, user types.UserId, typing bool) types.Error
 }
 
-type TypingStore interface {
+type TypingProvider interface {
 	Typing(room types.RoomId) ([]types.UserId, types.Error)
 }
 
 type EventStream interface {
 	EventSink
-	EventStore
+	EventProvider
 	IndexedEventSource
 }
 
 type PresenceStream interface {
+	ProfileEventSink
 	PresenceEventSink
-	UserStateStore
+	ProfileProvider
+	PresenceProvider
 	IndexedEventSource
 }
 
 type TypingStream interface {
 	TypingEventSink
-	TypingStore
+	TypingProvider
 	IndexedEventSource
 }

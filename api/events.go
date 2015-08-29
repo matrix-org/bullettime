@@ -81,7 +81,7 @@ func (e eventsEndpoint) getEvents(req *http.Request) interface{} {
 		close(cancel)
 	}()
 
-	chunk, err := e.eventService.Range(authedUser.Id(), from, to, uint(limit), cancel)
+	chunk, err := e.eventService.Range(authedUser, from, to, uint(limit), cancel)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (e eventsEndpoint) getSingleEvent(req *http.Request, params httprouter.Para
 	if err != nil {
 		return types.BadJsonError(err.Error())
 	}
-	event, err := e.eventService.Event(authedUser.Id(), eventId)
+	event, err := e.eventService.Event(authedUser, eventId)
 	if err != nil {
 		return err
 	}

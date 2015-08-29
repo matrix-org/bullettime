@@ -49,9 +49,9 @@ func (s *presenceStream) SetUserProfile(userId types.UserId, profile types.UserP
 	})
 }
 
-func (s *presenceStream) SetUserPresence(userId types.UserId, presence types.UserPresence) (types.IndexedEvent, types.Error) {
+func (s *presenceStream) SetUserStatus(userId types.UserId, status types.UserStatus) (types.IndexedEvent, types.Error) {
 	return s.update(userId, func(user *types.User) {
-		user.UserPresence = presence
+		user.UserStatus = status
 	})
 }
 
@@ -61,6 +61,7 @@ func (s *presenceStream) update(userId types.UserId, updateFunc updateFunc) (typ
 	indexed, existed := s.events[userId]
 	if !existed {
 		indexed.event.Content.UserId = userId
+		indexed.event.EventType = types.EventTypePresence
 	}
 	updateFunc(&indexed.event.Content)
 	index := atomic.AddUint64(&s.max, 1) - 1
@@ -78,13 +79,22 @@ func (s *presenceStream) update(userId types.UserId, updateFunc updateFunc) (typ
 	return &indexed, nil
 }
 
-func (s *presenceStream) User(user types.UserId) (types.User, types.Error) {
+func (s *presenceStream) Profile(user types.UserId) (types.UserProfile, types.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	if indexed, ok := s.events[user]; ok {
-		return indexed.event.Content, nil
+		return indexed.event.Content.UserProfile, nil
 	}
-	return types.User{}, nil
+	return types.UserProfile{}, nil
+}
+
+func (s *presenceStream) Status(user types.UserId) (types.UserStatus, types.Error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	if indexed, ok := s.events[user]; ok {
+		return indexed.event.Content.UserStatus, nil
+	}
+	return types.UserStatus{}, nil
 }
 
 func (s *presenceStream) Max() uint64 {
@@ -105,7 +115,7 @@ func (s *presenceStream) Range(
 	}
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	result = make([]types.IndexedEvent, len(userSet))
+	result = make([]types.IndexedEvent, 0, len(userSet))
 	for user := range userSet {
 		event := s.events[user]
 		if event.index >= from && event.index < to {

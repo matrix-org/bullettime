@@ -53,15 +53,25 @@ func setupApiEndpoint() http.Handler {
 		roomStore,
 		aliasStore,
 		memberStore,
-		presenceStream,
 		messageStream,
+		presenceStream,
 		typingStream,
 		typingStream,
 	)
 	if err != nil {
 		panic(err)
 	}
-	userService, err := service.CreateUserService(userStore, presenceStream, presenceStream)
+	userService, err := service.CreateUserService(userStore)
+	if err != nil {
+		panic(err)
+	}
+	profileService, err := service.NewProfileService(
+		presenceStream,
+		presenceStream,
+		memberStore,
+		roomStore,
+		messageStream,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +93,7 @@ func setupApiEndpoint() http.Handler {
 
 	mux := httprouter.New()
 	api.NewAuthEndpoint(userService, tokenService).Register(mux)
-	api.NewProfileEndpoint(userService, tokenService, roomService).Register(mux)
+	api.NewProfileEndpoint(userService, tokenService, profileService).Register(mux)
 	api.NewRoomsEndpoint(userService, tokenService, roomService).Register(mux)
 	api.NewEventsEndpoint(userService, tokenService, eventService).Register(mux)
 
@@ -96,7 +106,7 @@ func setupApiEndpoint() http.Handler {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.Handle("/api/", http.StripPrefix("/api", setupApiEndpoint()))
+	mux.Handle("/_matrix/client/api/v1/", http.StripPrefix("/_matrix/client/api/v1", setupApiEndpoint()))
 
 	port := "4080"
 	if len(os.Args) > 1 {

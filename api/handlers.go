@@ -149,18 +149,17 @@ func readAccessToken(
 	userService interfaces.UserService,
 	tokenService interfaces.TokenService,
 	req *http.Request,
-) (interfaces.User, error) {
+) (types.UserId, error) {
 	token := req.URL.Query().Get("access_token")
 	if token == "" {
-		return nil, types.DefaultMissingTokenError
+		return types.UserId{}, types.DefaultMissingTokenError
 	}
 	info, err := tokenService.ParseAccessToken(token)
 	if err != nil {
-		return nil, types.DefaultUnknownTokenError
+		return types.UserId{}, types.DefaultUnknownTokenError
 	}
-	user, err := userService.User(info.UserId())
-	if err != nil {
-		return nil, types.DefaultUnknownTokenError
+	if err := userService.UserExists(info.UserId(), info.UserId()); err != nil {
+		return types.UserId{}, types.DefaultUnknownTokenError
 	}
-	return user, nil
+	return info.UserId(), nil
 }

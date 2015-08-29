@@ -49,6 +49,7 @@ func (s *typingStream) SetTyping(room types.RoomId, user types.UserId, typing bo
 	if state == nil {
 		state = &indexedTypingState{index: index}
 		state.event.RoomId = room
+		state.event.EventType = types.EventTypeTyping
 		s.states[room] = state
 	} else {
 		state.index = index
@@ -106,7 +107,7 @@ func (s *typingStream) Range(
 	}
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	result = make([]types.IndexedEvent, len(roomSet))
+	result = make([]types.IndexedEvent, 0, len(roomSet))
 	for room := range roomSet {
 		state := s.states[room]
 		if state.index >= from && state.index < to {
