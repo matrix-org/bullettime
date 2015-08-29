@@ -12,14 +12,30 @@ func CreateRoomService(
 	roomStore interfaces.RoomStore,
 	aliasStore interfaces.AliasStore,
 	memberStore interfaces.MembershipStore,
+	userStateStore interfaces.UserStateStore,
+	eventSink interfaces.EventSink,
+	typingSink interfaces.TypingEventSink,
+	typingStore interfaces.TypingStore,
 ) (interfaces.RoomService, error) {
-	return roomService{roomStore, aliasStore, memberStore}, nil
+	return roomService{
+		roomStore,
+		aliasStore,
+		memberStore,
+		userStateStore,
+		eventSink,
+		typingSink,
+		typingStore,
+	}, nil
 }
 
 type roomService struct {
-	rooms   interfaces.RoomStore
-	aliases interfaces.AliasStore
-	members interfaces.MembershipStore
+	rooms          interfaces.RoomStore
+	aliases        interfaces.AliasStore
+	members        interfaces.MembershipStore
+	userStateStore interfaces.UserStateStore
+	eventSink      interfaces.EventSink
+	typingSink     interfaces.TypingEventSink
+	typingStore    interfaces.TypingStore
 }
 
 type Room struct {
@@ -38,7 +54,11 @@ func (r roomService) Room(id types.RoomId) (interfaces.Room, types.Error) {
 	return Room{id, r}, nil
 }
 
-func (r roomService) CreateRoom(domain string, creator interfaces.User, desc *types.RoomDescription) (interfaces.Room, *types.Alias, types.Error) {
+func (r roomService) CreateRoom(
+	domain string,
+	creator interfaces.User,
+	desc *types.RoomDescription,
+) (interfaces.Room, *types.Alias, types.Error) {
 	var alias *types.Alias
 	if desc.Alias != nil {
 		a := types.NewAlias(*desc.Alias, domain)
@@ -58,7 +78,7 @@ func (r roomService) CreateRoom(domain string, creator interfaces.User, desc *ty
 	}
 	userId := creator.Id()
 	r.members.AddMember(id, userId)
-	_, err = r.rooms.SetRoomState(id, userId, &types.CreateEventContent{userId}, "")
+	_, err = r.setState(id, userId, &types.CreateEventContent{userId}, "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -67,40 +87,40 @@ func (r roomService) CreateRoom(domain string, creator interfaces.User, desc *ty
 		return nil, nil, err
 	}
 	membership := &types.MembershipEventContent{&profile, types.MembershipMember}
-	_, err = r.rooms.SetRoomState(id, userId, membership, userId.String())
+	_, err = r.setState(id, userId, membership, userId.String())
 	if err != nil {
 		return nil, nil, err
 	}
-	_, err = r.rooms.SetRoomState(id, userId, types.DefaultPowerLevels(userId), "")
+	_, err = r.setState(id, userId, types.DefaultPowerLevels(userId), "")
 	if err != nil {
 		return nil, nil, err
 	}
 	joinRuleContent := types.JoinRulesEventContent{desc.Visibility.ToJoinRule()}
-	_, err = r.rooms.SetRoomState(id, userId, &joinRuleContent, "")
+	_, err = r.setState(id, userId, &joinRuleContent, "")
 	if err != nil {
 		return nil, nil, err
 	}
 	if alias != nil {
-		_, err = r.rooms.SetRoomState(id, userId, &types.AliasesEventContent{[]types.Alias{*alias}}, "")
+		_, err = r.setState(id, userId, &types.AliasesEventContent{[]types.Alias{*alias}}, "")
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 	if desc.Name != nil {
-		_, err = r.rooms.SetRoomState(id, userId, &types.NameEventContent{*desc.Name}, "")
+		_, err = r.setState(id, userId, &types.NameEventContent{*desc.Name}, "")
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 	if desc.Topic != nil {
-		_, err = r.rooms.SetRoomState(id, userId, &types.TopicEventContent{*desc.Topic}, "")
+		_, err = r.setState(id, userId, &types.TopicEventContent{*desc.Topic}, "")
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 	for _, invited := range desc.Invited {
 		membership := types.MembershipEventContent{nil, types.MembershipInvited}
-		_, err = r.rooms.SetRoomState(id, userId, &membership, invited.String())
+		_, err = r.setState(id, userId, &membership, invited.String())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -108,11 +128,28 @@ func (r roomService) CreateRoom(domain string, creator interfaces.User, desc *ty
 	return Room{id, r}, alias, nil
 }
 
+func (s roomService) setState(
+	roomId types.RoomId,
+	userId types.UserId,
+	content types.TypedContent,
+	stateKey string,
+) (*types.State, types.Error) {
+	state, err := s.rooms.SetRoomState(roomId, userId, content, stateKey)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.eventSink.Send(state)
+	if err != nil {
+		return nil, err
+	}
+	return state, nil
+}
+
 func (r Room) Id() types.RoomId {
 	return r.id
 }
 
-func (r Room) AddMessage(user interfaces.User, content types.TypedContent) (*types.Event, types.Error) {
+func (r Room) AddMessage(user interfaces.User, content types.TypedContent) (*types.Message, types.Error) {
 	return nil, nil
 }
 
@@ -275,7 +312,7 @@ func (r Room) doMembershipChange(by interfaces.User, userId types.UserId, member
 			return nil, err
 		}
 	}
-	return r.service.rooms.SetRoomState(r.Id(), by.Id(), membership, userId.String())
+	return r.service.setState(r.Id(), by.Id(), membership, userId.String())
 }
 
 func (r Room) testPowerLevel(userId types.UserId, powerLevelFunc func(*types.PowerLevelsEventContent) int) types.Error {
@@ -348,7 +385,7 @@ func (r Room) userPowerLevel(userId types.UserId) (int, types.Error) {
 	if err != nil {
 		return 0, err
 	}
-	if userLevel, ok := powerLevels.Users[userId]; ok {
+	if userLevel, ok := powerLevels.Users[userId.String()]; ok {
 		return userLevel, nil
 	}
 	return powerLevels.UserDefault, nil

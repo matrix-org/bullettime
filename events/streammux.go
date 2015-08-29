@@ -19,15 +19,6 @@ type streamMux struct {
 
 type userChannels []chan types.IndexedEvent
 
-type indexedEvent struct {
-	types.Event
-	index uint64
-}
-
-func (e indexedEvent) Index() uint64 {
-	return e.index
-}
-
 func (chs *userChannels) send(event types.IndexedEvent) types.Error {
 	for _, ch := range *chs {
 		ch <- event
@@ -78,13 +69,12 @@ func (s streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan types
 	return channel, nil
 }
 
-func (s streamMux) Send(userIds []types.UserId, event types.Event, index uint64) types.Error {
-	indexed := indexedEvent{event, index}
+func (s streamMux) Send(userIds []types.UserId, event types.IndexedEvent) types.Error {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	for _, userId := range userIds {
 		if chs, ok := s.channels[userId]; ok {
-			if err := chs.send(indexed); err != nil {
+			if err := chs.send(event); err != nil {
 				return err
 			}
 			delete(s.channels, userId)

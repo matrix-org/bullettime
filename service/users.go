@@ -6,12 +6,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateUserService(userStore interfaces.UserStore) (interfaces.UserService, error) {
-	return userService{userStore}, nil
+func CreateUserService(
+	users interfaces.UserStore,
+	profiles interfaces.UserStateStore,
+	eventSink interfaces.PresenceEventSink,
+) (interfaces.UserService, error) {
+	return userService{
+		users,
+		profiles,
+		eventSink,
+	}, nil
 }
 
 type userService struct {
-	users interfaces.UserStore
+	users        interfaces.UserStore
+	profiles     interfaces.UserStateStore
+	presenceSink interfaces.PresenceEventSink
 }
 
 type userInfo struct {

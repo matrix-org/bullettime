@@ -84,7 +84,7 @@ func (db *memberDb) Users(roomId types.RoomId) ([]types.UserId, types.Error) {
 	return db.users[roomId], nil
 }
 
-func (db *memberDb) Peers(user types.UserId) ([]types.UserId, types.Error) {
+func (db *memberDb) Peers(user types.UserId) (map[types.UserId]struct{}, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	peerSet := map[types.UserId]struct{}{}
@@ -93,9 +93,5 @@ func (db *memberDb) Peers(user types.UserId) ([]types.UserId, types.Error) {
 			peerSet[peer] = struct{}{}
 		}
 	}
-	peers := make([]types.UserId, len(peerSet))
-	for peer := range peerSet {
-		peers = append(peers, peer)
-	}
-	return peers, nil
+	return peerSet, nil
 }

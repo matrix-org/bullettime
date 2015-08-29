@@ -9,7 +9,7 @@ import (
 	"github.com/Rugvip/bullettime/types"
 )
 
-type typingSource struct {
+type typingStream struct {
 	lock           sync.RWMutex
 	states         map[types.RoomId]*indexedTypingState
 	max            uint64
@@ -18,22 +18,30 @@ type typingSource struct {
 }
 
 type indexedTypingState struct {
-	index uint64
 	event types.TypingEvent
+	index uint64
 }
 
-func NewTypingSource(
+func (m *indexedTypingState) Event() types.Event {
+	return &m.event
+}
+
+func (s *indexedTypingState) Index() uint64 {
+	return s.index
+}
+
+func NewTypingStream(
 	members interfaces.MembershipStore,
 	asyncEventSink interfaces.AsyncEventSink,
 ) (interfaces.TypingStream, error) {
-	return &typingSource{
+	return &typingStream{
 		states:         map[types.RoomId]*indexedTypingState{},
 		members:        members,
 		asyncEventSink: asyncEventSink,
 	}, nil
 }
 
-func (s *typingSource) SetTyping(room types.RoomId, user types.UserId, typing bool) types.Error {
+func (s *typingStream) SetTyping(room types.RoomId, user types.UserId, typing bool) types.Error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	state := s.states[room]
@@ -66,11 +74,11 @@ func (s *typingSource) SetTyping(room types.RoomId, user types.UserId, typing bo
 	if err != nil {
 		return err
 	}
-	s.asyncEventSink.Send(roomMembers, &state.event, index)
+	s.asyncEventSink.Send(roomMembers, state)
 	return nil
 }
 
-func (s *typingSource) Typing(room types.RoomId) ([]types.UserId, types.Error) {
+func (s *typingStream) Typing(room types.RoomId) ([]types.UserId, types.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	state := s.states[room]
@@ -80,29 +88,29 @@ func (s *typingSource) Typing(room types.RoomId) ([]types.UserId, types.Error) {
 	return state.event.Content.UserIds, nil
 }
 
-func (s *typingSource) Max() (uint64, types.Error) {
-	return atomic.LoadUint64(&s.max), nil
+func (s *typingStream) Max() uint64 {
+	return atomic.LoadUint64(&s.max)
 }
 
 // ignores user, userSet, and limit
-func (s *typingSource) Range(
+func (s *typingStream) Range(
 	user types.UserId,
 	userSet map[types.UserId]struct{},
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
-	limit int,
-) ([]types.Event, types.Error) {
-	var result []types.Event
+	limit uint,
+) ([]types.IndexedEvent, types.Error) {
+	var result []types.IndexedEvent
 	if len(roomSet) == 0 || from >= to {
 		return result, nil
 	}
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	result = make([]types.Event, len(roomSet))
+	result = make([]types.IndexedEvent, len(roomSet))
 	for room := range roomSet {
 		state := s.states[room]
 		if state.index >= from && state.index < to {
-			result = append(result, &state.event)
+			result = append(result, state)
 		}
 	}
 	return result, nil

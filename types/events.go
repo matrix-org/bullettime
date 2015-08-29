@@ -14,6 +14,8 @@ const (
 	EventTypeJoinRules   = "m.room.join_rules"
 	EventTypeMembership  = "m.room.member"
 	EventTypePowerLevels = "m.room.power_levels"
+	EventTypeTyping      = "m.typing"
+	EventTypePresence    = "m.presence"
 )
 
 type TypedContent interface {
@@ -36,7 +38,7 @@ type Event interface {
 }
 
 type IndexedEvent interface {
-	Event
+	Event() Event
 	Index() uint64
 }
 
@@ -82,6 +84,10 @@ type PresenceEvent struct {
 	Content User `json:"content"`
 }
 
+func (e *PresenceEvent) GetEventType() string {
+	return EventTypePresence
+}
+
 func (e *PresenceEvent) GetContent() interface{} {
 	return e.Content
 }
@@ -110,6 +116,10 @@ type TypingEvent struct {
 	BaseEvent
 	Content TypingEventContent `json:"content"`
 	RoomId  RoomId             `json:"room_id"`
+}
+
+func (e *TypingEvent) GetEventType() string {
+	return EventTypeTyping
 }
 
 func (e *TypingEvent) GetContent() interface{} {
@@ -218,8 +228,8 @@ func DefaultPowerLevels(creator UserId) *PowerLevelsEventContent {
 	powerLevels.Redact = 50
 	powerLevels.CreateState = 50
 	powerLevels.EventDefault = 0
-	powerLevels.Users = map[UserId]int{
-		creator: 100,
+	powerLevels.Users = UserPowerLevelMap{
+		creator.String(): 100,
 	}
 	powerLevels.Events = map[string]int{
 		"m.room.name":         100,
@@ -229,15 +239,33 @@ func DefaultPowerLevels(creator UserId) *PowerLevelsEventContent {
 }
 
 type PowerLevelsEventContent struct {
-	Ban          int            `json:"ban"`
-	Kick         int            `json:"kick"`
-	Invite       int            `json:"invite"`
-	Redact       int            `json:"redact"`
-	UserDefault  int            `json:"users_default"`
-	CreateState  int            `json:"state_default"`
-	EventDefault int            `json:"events_default"`
-	Users        map[UserId]int `json:"users"`
-	Events       map[string]int `json:"events"`
+	Ban          int               `json:"ban"`
+	Kick         int               `json:"kick"`
+	Invite       int               `json:"invite"`
+	Redact       int               `json:"redact"`
+	UserDefault  int               `json:"users_default"`
+	CreateState  int               `json:"state_default"`
+	EventDefault int               `json:"events_default"`
+	Users        UserPowerLevelMap `json:"users"`
+	Events       map[string]int    `json:"events"`
+}
+
+type UserPowerLevelMap map[string]int
+
+func (m *UserPowerLevelMap) UnmarshalJSON(bytes []byte) error {
+	userMap := map[string]int{}
+	err := json.Unmarshal(bytes, userMap)
+	if err != nil {
+		return err
+	}
+	for userId := range userMap {
+		_, err := ParseUserId(userId)
+		if err != nil {
+			return err
+		}
+	}
+	*m = userMap
+	return nil
 }
 
 func (c *PowerLevelsEventContent) EventType() string {

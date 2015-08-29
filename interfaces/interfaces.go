@@ -13,7 +13,7 @@ type RoomService interface {
 
 type Room interface {
 	Id() types.RoomId
-	AddMessage(user User, content types.TypedContent) (*types.Event, types.Error)
+	AddMessage(user User, content types.TypedContent) (*types.Message, types.Error)
 	SetState(user User, content types.TypedContent, stateKey string) (*types.State, types.Error)
 	State(user User, eventType, stateKey string) (*types.State, types.Error)
 }
@@ -43,13 +43,13 @@ type Token interface {
 }
 
 type EventService interface {
-	Event(types.EventId) (types.Event, types.Error)
-	GetRange(
+	Event(user types.UserId, eventId types.EventId) (types.Event, types.Error)
+	Range(
 		user types.UserId,
-		from, to types.StreamToken,
-		limit int,
+		from, to *types.StreamToken,
+		limit uint,
 		cancel chan struct{},
-	) ([]types.IndexedEvent, types.Error)
+	) (*types.EventStreamChunk, types.Error)
 }
 
 type UserStore interface {
@@ -84,34 +84,34 @@ type MembershipStore interface {
 	RemoveMember(types.RoomId, types.UserId) types.Error
 	Rooms(types.UserId) ([]types.RoomId, types.Error)
 	Users(types.RoomId) ([]types.UserId, types.Error)
-	Peers(types.UserId) ([]types.UserId, types.Error)
+	Peers(types.UserId) (map[types.UserId]struct{}, types.Error)
 }
 
 type AsyncEventSink interface {
-	Send(userIds []types.UserId, event types.Event, index uint64) types.Error
+	Send(userIds []types.UserId, event types.IndexedEvent) types.Error
 }
 
 type AsyncEventSource interface {
-	Listen(types.UserId) (chan types.IndexedEvent, types.Error)
+	Listen(user types.UserId, cancel chan struct{}) (chan types.IndexedEvent, types.Error)
 }
 
 type IndexedEventSource interface {
-	Max() (uint64, types.Error)
+	Max() uint64
 	Range(
 		user types.UserId,
 		userSet map[types.UserId]struct{},
 		roomSet map[types.RoomId]struct{},
 		from, to uint64,
-		limit int,
-	) ([]types.Event, types.Error)
+		limit uint,
+	) ([]types.IndexedEvent, types.Error)
 }
 
-type MessageEventSink interface {
-	Send(event *types.Message) (uint64, types.Error)
+type EventSink interface {
+	Send(event types.Event) (uint64, types.Error)
 }
 
 type EventStore interface {
-	Event(eventId types.EventId) (types.Event, types.Error)
+	Event(user types.UserId, eventId types.EventId) (types.Event, types.Error)
 }
 
 type PresenceEventSink interface {
@@ -131,8 +131,8 @@ type TypingStore interface {
 	Typing(room types.RoomId) ([]types.UserId, types.Error)
 }
 
-type MessageStream interface {
-	MessageEventSink
+type EventStream interface {
+	EventSink
 	EventStore
 	IndexedEventSource
 }

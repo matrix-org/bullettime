@@ -9,48 +9,56 @@ import (
 	"github.com/Rugvip/bullettime/types"
 )
 
-type indexedMessage struct {
-	event types.Message
+type indexedEvent struct {
+	event types.Event
 	index uint64
 }
 
-type messageSource struct {
+func (m *indexedEvent) Event() types.Event {
+	return m.event
+}
+
+func (m *indexedEvent) Index() uint64 {
+	return m.index
+}
+
+type messageStream struct {
 	lock           sync.RWMutex
 	list           *list.List
-	byId           map[types.EventId]indexedMessage
-	byIndex        []*indexedMessage
+	byId           map[types.EventId]indexedEvent
+	byIndex        []*indexedEvent
 	max            uint64
 	members        interfaces.MembershipStore
 	asyncEventSink interfaces.AsyncEventSink
 }
 
-func NewMessageSource(
+func NewMessageStream(
 	members interfaces.MembershipStore,
 	asyncEventSink interfaces.AsyncEventSink,
-) (interfaces.MessageStream, error) {
-	return &messageSource{
+) (interfaces.EventStream, error) {
+	return &messageStream{
 		list:           list.New(),
-		byId:           map[types.EventId]indexedMessage{},
-		byIndex:        []*indexedMessage{},
+		byId:           map[types.EventId]indexedEvent{},
+		byIndex:        []*indexedEvent{},
 		members:        members,
 		asyncEventSink: asyncEventSink,
 	}, nil
 }
 
-func (s *messageSource) Send(event *types.Message) (uint64, types.Error) {
+func (s *messageStream) Send(event types.Event) (uint64, types.Error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	index := atomic.AddUint64(&s.max, 1) - 1
-	item := indexedMessage{*event, index}
+	indexed := indexedEvent{event, index}
 
-	if currentItem, ok := s.byId[event.EventId]; ok {
+	if currentItem, ok := s.byId[*event.GetEventId()]; ok {
 		s.byIndex[currentItem.index] = nil
 	}
-	s.byIndex = append(s.byIndex, &item)
-	s.byId[event.EventId] = item
+	s.byIndex = append(s.byIndex, &indexed)
+	s.byId[*event.GetEventId()] = indexed
 
-	users, err := s.members.Users(event.RoomId)
+	users, err := s.members.Users(*event.GetRoomId())
 	if err != nil {
 		return 0, nil
 	}
@@ -61,73 +69,93 @@ func (s *messageSource) Send(event *types.Message) (uint64, types.Error) {
 		allUsers[l] = *extraUser
 		users = allUsers
 	}
-	s.asyncEventSink.Send(users, event, index)
+	s.asyncEventSink.Send(users, &indexed)
 	return index, nil
 }
 
-func extraUserForEvent(event *types.Message) *types.UserId {
-	if event.EventType == types.EventTypeMembership {
-		switch event.Content.(types.MembershipEventContent).Membership {
+func extraUserForEvent(event types.Event) *types.UserId {
+	if event.GetEventType() == types.EventTypeMembership {
+		switch event.GetContent().(*types.MembershipEventContent).Membership {
 		case types.MembershipInvited:
-			return &event.UserId
+			return event.GetUserId()
 		case types.MembershipKnocking:
-			return &event.UserId
+			return event.GetUserId()
 		case types.MembershipBanned:
-			return &event.UserId
+			return event.GetUserId()
 		}
 	}
 	return nil
 }
 
-func (s *messageSource) Event(eventId types.EventId) (types.Event, types.Error) {
+func (s *messageStream) Event(
+	user types.UserId,
+	eventId types.EventId,
+) (types.Event, types.Error) {
 	s.lock.RLock()
-	defer s.lock.RUnlock()
-	event := s.byId[eventId].event
-	return &event, nil
+	indexed := s.byId[eventId]
+	s.lock.RUnlock()
+	extraUser := extraUserForEvent(indexed.event)
+	if extraUser != nil && *extraUser == user {
+		return indexed.event, nil
+	}
+	rooms, err := s.members.Rooms(user)
+	if err != nil {
+		return nil, err
+	}
+	for _, room := range rooms {
+		if room == *indexed.event.GetRoomId() {
+			return indexed.event, nil
+		}
+	}
+	return nil, nil
 }
 
 // ignores userSet
-func (s *messageSource) Range(
+func (s *messageStream) Range(
 	user types.UserId,
 	userSet map[types.UserId]struct{},
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
-	limit int,
-) ([]types.Event, types.Error) {
+	limit uint,
+) ([]types.IndexedEvent, types.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	result := make([]types.Event, 0, limit)
+	result := make([]types.IndexedEvent, 0, limit)
+	reverse := to < from
 
-	if from == to {
-		return result, nil
-	}
 	max := atomic.LoadUint64(&s.max)
-	if to < from && from >= max {
-		from = max - 1
+	if reverse {
+		if from >= max {
+			from = max
+		}
+		from -= 1
+		if from < to {
+			return result, nil
+		}
+	} else {
+		if from == to {
+			return result, nil
+		}
 	}
 	i := from
-	for len(result) < limit && i < max && i >= 0 {
-		item := s.byIndex[i]
-		if item != nil {
-			event := item.event
-			_, ok := roomSet[event.RoomId]
+	for uint(len(result)) < limit && i < max {
+		indexed := s.byIndex[i]
+		if indexed != nil {
+			_, ok := roomSet[*indexed.Event().GetRoomId()]
 			if ok {
-				result = append(result, &event)
-			} else if extra := extraUserForEvent(&event); extra != nil && *extra == user {
-				result = append(result, &event)
+				result = append(result, indexed)
+			} else if extra := extraUserForEvent(indexed.event); extra != nil && *extra == user {
+				result = append(result, indexed)
 			}
 		}
-		if to > from {
-			i += 1
-			if i >= to {
+		if reverse {
+			i -= 1
+			if i < to {
 				break
 			}
 		} else {
-			if i == 0 {
-				break
-			}
-			i -= 1
-			if i <= to {
+			i += 1
+			if i >= to {
 				break
 			}
 		}
@@ -135,6 +163,6 @@ func (s *messageSource) Range(
 	return result, nil
 }
 
-func (s *messageSource) Max() (index uint64, err types.Error) {
-	return atomic.LoadUint64(&s.max), nil
+func (s *messageStream) Max() uint64 {
+	return atomic.LoadUint64(&s.max)
 }

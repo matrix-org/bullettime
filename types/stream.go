@@ -30,10 +30,16 @@ type RoomInitialSync struct {
 	Presence PresenceEvent `json:"presence"`
 }
 
+type EventStreamChunk struct {
+	Events []Event     `json:"chunk"`
+	Start  StreamToken `json:"start"`
+	End    StreamToken `json:"end"`
+}
+
 type StreamToken struct {
-	MessageIndex  int64
-	PresenceIndex int64
-	TypingIndex   int64
+	MessageIndex  uint64
+	PresenceIndex uint64
+	TypingIndex   uint64
 }
 
 type TokenParseError string
@@ -46,8 +52,24 @@ func (t StreamToken) String() string {
 	return fmt.Sprintf("s%d_%d_%d", t.MessageIndex, t.PresenceIndex, t.TypingIndex)
 }
 
+func NewEventStreamChunk(events []Event, start StreamToken, end StreamToken) *EventStreamChunk {
+	return &EventStreamChunk{
+		Events: events,
+		Start:  start,
+		End:    end,
+	}
+}
+
+func NewStreamToken(messageIndex, presenceIndex, typingIndex uint64) StreamToken {
+	return StreamToken{
+		MessageIndex:  messageIndex,
+		PresenceIndex: presenceIndex,
+		TypingIndex:   typingIndex,
+	}
+}
+
 func ParseStreamToken(str string) (StreamToken, error) {
-	var message, presence, typing int64
+	var message, presence, typing uint64
 	count, err := fmt.Sscanf(str, "s%d_%d_%d", &message, &presence, &typing)
 	if err != nil {
 		return StreamToken{}, TokenParseError(err.Error())

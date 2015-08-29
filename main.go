@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/Rugvip/bullettime/db"
+	"github.com/Rugvip/bullettime/events"
 
 	"github.com/Rugvip/bullettime/service"
 	"github.com/Rugvip/bullettime/types"
@@ -31,16 +32,51 @@ func setupApiEndpoint() http.Handler {
 	if err != nil {
 		panic(err)
 	}
-
-	roomService, err := service.CreateRoomService(roomStore, aliasStore, memberStore)
+	streamMux, err := events.NewStreamMux()
 	if err != nil {
 		panic(err)
 	}
-	userService, err := service.CreateUserService(userStore)
+	messageStream, err := events.NewMessageStream(memberStore, streamMux)
+	if err != nil {
+		panic(err)
+	}
+	presenceStream, err := events.NewPresenceStream(memberStore, streamMux)
+	if err != nil {
+		panic(err)
+	}
+	typingStream, err := events.NewTypingStream(memberStore, streamMux)
+	if err != nil {
+		panic(err)
+	}
+
+	roomService, err := service.CreateRoomService(
+		roomStore,
+		aliasStore,
+		memberStore,
+		presenceStream,
+		messageStream,
+		typingStream,
+		typingStream,
+	)
+	if err != nil {
+		panic(err)
+	}
+	userService, err := service.CreateUserService(userStore, presenceStream, presenceStream)
 	if err != nil {
 		panic(err)
 	}
 	tokenService, err := service.CreateTokenService()
+	if err != nil {
+		panic(err)
+	}
+	eventService, err := service.NewEventService(
+		messageStream,
+		presenceStream,
+		typingStream,
+		streamMux,
+		messageStream,
+		memberStore,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -49,6 +85,7 @@ func setupApiEndpoint() http.Handler {
 	api.NewAuthEndpoint(userService, tokenService).Register(mux)
 	api.NewProfileEndpoint(userService, tokenService, roomService).Register(mux)
 	api.NewRoomsEndpoint(userService, tokenService, roomService).Register(mux)
+	api.NewEventsEndpoint(userService, tokenService, eventService).Register(mux)
 
 	mux.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		api.WriteJsonResponseWithStatus(rw, types.DefaultUnrecognizedError)
