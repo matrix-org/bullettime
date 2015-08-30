@@ -90,18 +90,39 @@ func setupApiEndpoint() http.Handler {
 	if err != nil {
 		panic(err)
 	}
+	syncService, err := service.NewSyncService(
+		messageStream,
+		presenceStream,
+		typingStream,
+		roomStore,
+		memberStore,
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	mux := httprouter.New()
 	api.NewAuthEndpoint(userService, tokenService).Register(mux)
 	api.NewProfileEndpoint(userService, tokenService, profileService).Register(mux)
 	api.NewRoomsEndpoint(userService, tokenService, roomService).Register(mux)
-	api.NewEventsEndpoint(userService, tokenService, eventService).Register(mux)
+	api.NewEventsEndpoint(userService, tokenService, eventService, syncService).Register(mux)
 
 	mux.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		api.WriteJsonResponseWithStatus(rw, types.DefaultUnrecognizedError)
 	})
 
-	return mux
+	mux.OPTIONS("/*path", func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	})
+
+	corsHandler := http.NewServeMux()
+	corsHandler.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("Access-Control-Allow-Origin", "*")
+		rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
+		rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
+		mux.ServeHTTP(rw, req)
+	})
+
+	return corsHandler
 }
 
 func main() {

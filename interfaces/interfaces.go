@@ -31,6 +31,11 @@ type RoomService interface {
 	) (*types.State, types.Error)
 }
 
+type SyncService interface {
+	FullSync(user types.UserId, limit uint) (*types.InitialSync, types.Error)
+	RoomSync(user types.UserId, room types.RoomId, limit uint) (*types.RoomInitialSync, types.Error)
+}
+
 type UserService interface {
 	CreateUser(types.UserId) types.Error
 	UserExists(user, caller types.UserId) types.Error
@@ -88,6 +93,7 @@ type RoomStore interface {
 	AddRoomMessage(types.RoomId, types.UserId, types.TypedContent) (*types.Message, types.Error)
 	SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error)
 	RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error)
+	EntireRoomState(roomId types.RoomId) ([]*types.State, types.Error)
 }
 
 type AliasStore interface {

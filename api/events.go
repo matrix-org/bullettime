@@ -110,7 +110,28 @@ func (e eventsEndpoint) getInitialSync(req *http.Request) interface{} {
 	if err != nil {
 		return err
 	}
-	return authedUser
+
+	query := req.URL.Query()
+	limitStr := query.Get("limit")
+
+	var limit uint64
+	if limitStr == "" {
+		limit = 10 //TODO: make configurable
+	} else {
+		limit, err = strconv.ParseUint(limitStr, 10, 32)
+		if err != nil {
+			return types.BadQueryError(err.Error())
+		}
+		if limit > 100 {
+			limit = 100 //TODO: make configurable
+		}
+	}
+
+	initialSync, err := e.syncService.FullSync(authedUser, uint(limit))
+	if err != nil {
+		return err
+	}
+	return initialSync
 }
 
 func (e eventsEndpoint) getPublicRooms(req *http.Request) interface{} {
@@ -132,16 +153,19 @@ type eventsEndpoint struct {
 	userService  interfaces.UserService
 	tokenService interfaces.TokenService
 	eventService interfaces.EventService
+	syncService  interfaces.SyncService
 }
 
 func NewEventsEndpoint(
 	userService interfaces.UserService,
 	tokenService interfaces.TokenService,
 	eventService interfaces.EventService,
+	syncService interfaces.SyncService,
 ) Endpoint {
 	return eventsEndpoint{
-		userService:  userService,
-		tokenService: tokenService,
-		eventService: eventService,
+		userService,
+		tokenService,
+		eventService,
+		syncService,
 	}
 }

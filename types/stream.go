@@ -13,21 +13,22 @@ type Pagination struct {
 }
 
 type InitialSync struct {
-	End      string          `json:"end"`
-	Presence []PresenceEvent `json:"presence"`
-	Rooms    []RoomSummary   `json:"rooms"`
+	End      StreamToken   `json:"end"`
+	Presence []Event       `json:"presence"`
+	Rooms    []RoomSummary `json:"rooms"`
 }
 
 type RoomSummary struct {
 	Membership Membership `json:"membership"`
 	RoomId     RoomId     `json:"room_id"`
 	Messages   []Event    `json:"messages"`
-	State      []State    `json:"state"`
+	State      []*State   `json:"state"`
+	Visibility Visibility `json:"visibility"`
 }
 
 type RoomInitialSync struct {
 	RoomSummary
-	Presence PresenceEvent `json:"presence"`
+	Presence []Event `json:"presence"`
 }
 
 type EventStreamChunk struct {

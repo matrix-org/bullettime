@@ -145,3 +145,19 @@ func (db *roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*t
 	state := room.states[stateId{eventType, stateKey}]
 	return state, nil
 }
+
+func (db *roomDb) EntireRoomState(roomId types.RoomId) ([]*types.State, types.Error) {
+	db.roomsLock.RLock()
+	defer db.roomsLock.RUnlock()
+	room := db.rooms[roomId]
+	if room == nil {
+		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
+	}
+	room.stateLock.RLock()
+	defer room.stateLock.RUnlock()
+	states := make([]*types.State, 0, len(room.states))
+	for _, state := range room.states {
+		states = append(states, state)
+	}
+	return states, nil
+}

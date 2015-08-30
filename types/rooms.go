@@ -62,6 +62,14 @@ func (v *Visibility) UnmarshalJSON(bytes []byte) error {
 	return errors.New("invalid visibility: " + str)
 }
 
+func (j JoinRule) ToVisibility() Visibility {
+	if j == JoinRulePublic {
+		return VisibilityPublic
+	} else {
+		return VisibilityPrivate
+	}
+}
+
 func (j *JoinRule) UnmarshalJSON(bytes []byte) error {
 	str := string(bytes)
 	switch str {
