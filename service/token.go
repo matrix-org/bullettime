@@ -21,8 +21,7 @@ type tokenInfo struct {
 }
 
 func (t tokenInfo) String() string {
-	encodedUserId := base64.URLEncoding.EncodeToString([]byte(t.userId.String()))
-	encodedUserId = strings.TrimRight(encodedUserId, "=")
+	encodedUserId := base64.RawURLEncoding.EncodeToString([]byte(t.userId.String()))
 	return fmt.Sprintf("%s..%s", encodedUserId, utils.RandomString(16))
 }
 
@@ -39,7 +38,7 @@ func (t tokenService) ParseAccessToken(token string) (interfaces.Token, types.Er
 	if len(splits) != 2 {
 		return nil, types.DefaultUnknownTokenError
 	}
-	userIdStr, err := base64.URLEncoding.DecodeString(splits[0])
+	userIdStr, err := base64.RawURLEncoding.DecodeString(splits[0])
 	if err != nil {
 		return nil, types.DefaultUnknownTokenError
 	}
