@@ -6,6 +6,7 @@ import (
 
 	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
+	"github.com/Rugvip/bullettime/utils"
 	"github.com/julienschmidt/httprouter"
 
 	"net/http"
@@ -59,7 +60,7 @@ var defaultLoginFlows = AuthFlows{
 
 func (e authEndpoint) registerWithPassword(hostname string, body *authRequest) interface{} {
 	if body.Username == "" {
-		return types.BadJsonError("Missing or invalid user")
+		body.Username = utils.RandomString(24)
 	}
 	if body.Password == "" {
 		return types.BadJsonError("Missing or invalid password")
@@ -82,7 +83,7 @@ func (e authEndpoint) registerWithPassword(hostname string, body *authRequest) i
 	}
 }
 
-func (e authEndpoint) postRegister(req *http.Request, params httprouter.Params, body *authRequest) interface{} {
+func (e authEndpoint) postRegister(req *http.Request, body *authRequest) interface{} {
 	switch body.Type {
 	case LoginTypePassword:
 		hostname := strings.Split(req.Host, ":")[0]
@@ -91,8 +92,38 @@ func (e authEndpoint) postRegister(req *http.Request, params httprouter.Params, 
 	return types.BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
 }
 
-func (e authEndpoint) postLogin() interface{} {
-	return "login"
+func (e authEndpoint) loginWithPassword(hostname string, body *authRequest) interface{} {
+	if body.Username == "" {
+		return types.BadJsonError("Missing or invalid user")
+	}
+	if body.Password == "" {
+		return types.BadJsonError("Missing or invalid password")
+	}
+	user := types.NewUserId(body.Username, hostname)
+	err := e.userService.UserExists(user, user)
+	if err != nil {
+		return err
+	}
+	if err := e.userService.VerifyPassword(user, body.Password); err != nil {
+		return err
+	}
+	accessToken, err := e.tokenService.NewAccessToken(user)
+	if err != nil {
+		return err
+	}
+	return authResponse{
+		UserId:      user,
+		AccessToken: accessToken.String(),
+	}
+}
+
+func (e authEndpoint) postLogin(req *http.Request, body *authRequest) interface{} {
+	switch body.Type {
+	case LoginTypePassword:
+		hostname := strings.Split(req.Host, ":")[0]
+		return e.loginWithPassword(hostname, body)
+	}
+	return types.BadJsonError(fmt.Sprintf("Missing or invalid login type: '%s'", body.Type))
 }
 
 func (e authEndpoint) Register(mux *httprouter.Router) {
