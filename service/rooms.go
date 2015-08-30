@@ -50,6 +50,17 @@ func (s roomService) RoomExists(id types.RoomId, caller types.UserId) types.Erro
 	return nil
 }
 
+func (s roomService) LookupAlias(alias types.Alias) (types.RoomId, types.Error) {
+	room, err := s.aliases.Room(alias)
+	if err != nil {
+		return types.RoomId{}, err
+	}
+	if room == nil {
+		return types.RoomId{}, types.NotFoundError("room alias '" + alias.String() + "' doesn't exist")
+	}
+	return *room, nil
+}
+
 func (s roomService) CreateRoom(
 	domain string,
 	creator types.UserId,

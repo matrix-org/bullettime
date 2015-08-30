@@ -45,6 +45,32 @@ func (e roomsEndpoint) createRoom(req *http.Request, body *types.RoomDescription
 	return CreateRoomResponse{room, alias}
 }
 
+func (e roomsEndpoint) doWildcardJoin(req *http.Request, params httprouter.Params) interface{} {
+	user, err := readAccessToken(e.userService, e.tokenService, req)
+	if err != nil {
+		return err
+	}
+	roomIdOrAlias := params[0].Value
+	room, parseErr := types.ParseRoomId(roomIdOrAlias)
+	if parseErr != nil {
+		alias, parseErr := types.ParseAlias(roomIdOrAlias)
+		if parseErr != nil {
+			return types.BadParamError("invalid room id or alias: " + roomIdOrAlias)
+		}
+		room, err = e.roomService.LookupAlias(alias)
+		if err != nil {
+			return err
+		}
+	}
+	content := types.MembershipEventContent{}
+	content.Membership = types.MembershipMember
+	_, err = e.roomService.SetState(room, user, &content, user.String())
+	if err != nil {
+		return err
+	}
+	return struct{}{}
+}
+
 func (e roomsEndpoint) sendMessage(req *http.Request, params httprouter.Params, content *map[string]interface{}) interface{} {
 	user, err := readAccessToken(e.userService, e.tokenService, req)
 	if err != nil {
@@ -208,7 +234,7 @@ func (e roomsEndpoint) handlePutState(rw http.ResponseWriter, req *http.Request,
 	} else {
 		genericContent := types.NewGenericContent(map[string]interface{}{}, eventType)
 		content = genericContent
-		jsonErr = json.NewDecoder(req.Body).Decode(genericContent.Content)
+		jsonErr = json.NewDecoder(req.Body).Decode(&genericContent.Content)
 	}
 	if jsonErr != nil {
 		switch err := jsonErr.(type) {
@@ -305,6 +331,7 @@ func (e roomsEndpoint) getRoomAndUser(req *http.Request, params httprouter.Param
 
 func (e roomsEndpoint) Register(mux *httprouter.Router) {
 	mux.POST("/rooms/:roomId/send/:eventType", jsonHandler(e.sendMessage))
+	mux.PUT("/rooms/:roomId/send/:eventType/:txn", jsonHandler(e.sendMessage))
 	// mux.GET("/rooms/:roomId/state/:eventType", jsonHandler(dummy))
 	mux.PUT("/rooms/:roomId/state/:eventType", e.handlePutState)
 	mux.PUT("/rooms/:roomId/state/:eventType/:stateKey", e.handlePutState)
@@ -320,7 +347,7 @@ func (e roomsEndpoint) Register(mux *httprouter.Router) {
 	// mux.GET("/rooms/:roomId/state", jsonHandler(dummy))
 	// mux.PUT("/rooms/:roomId/typing/:userId", jsonHandler(dummy))
 	mux.GET("/rooms/:roomId/initialSync", jsonHandler(e.doInitialSync))
-	// mux.POST("/join/:roomAliasOrId", jsonHandler(dummy))
+	mux.POST("/join/:roomAliasOrId", jsonHandler(e.doWildcardJoin))
 	mux.POST("/createRoom", jsonHandler(e.createRoom))
 }
 

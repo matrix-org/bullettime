@@ -82,6 +82,18 @@ func (e profileEndpoint) setAvatarUrl(req *http.Request, params httprouter.Param
 	return struct{}{}
 }
 
+func (e profileEndpoint) getProfile(params httprouter.Params) interface{} {
+	user, err := e.userFromParams(params)
+	if err != nil {
+		return err
+	}
+	profile, err := e.profiles.Profile(user, user)
+	if err != nil {
+		return err
+	}
+	return profile
+}
+
 func (e profileEndpoint) userFromParams(params httprouter.Params) (types.UserId, types.Error) {
 	user, err := types.ParseUserId(params[0].Value)
 	if err != nil {
@@ -98,6 +110,7 @@ func (e profileEndpoint) Register(mux *httprouter.Router) {
 	mux.PUT("/profile/:userId/displayname", jsonHandler(e.setDisplayName))
 	mux.GET("/profile/:userId/avatar_url", jsonHandler(e.getAvatarUrl))
 	mux.PUT("/profile/:userId/avatar_url", jsonHandler(e.setAvatarUrl))
+	mux.GET("/profile/:userId", jsonHandler(e.getProfile))
 }
 
 type profileEndpoint struct {

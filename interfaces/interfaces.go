@@ -13,6 +13,7 @@ type RoomService interface {
 		desc *types.RoomDescription,
 	) (types.RoomId, *types.Alias, types.Error)
 	RoomExists(room types.RoomId, caller types.UserId) types.Error
+	LookupAlias(alias types.Alias) (types.RoomId, types.Error)
 	AddMessage(
 		room types.RoomId,
 		caller types.UserId,
