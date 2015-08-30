@@ -1,9 +1,7 @@
 package api
 
 import (
-	"log"
 	"net/http"
-	"time"
 
 	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
@@ -100,53 +98,6 @@ func (e profileEndpoint) Register(mux *httprouter.Router) {
 	mux.PUT("/profile/:userId/displayname", jsonHandler(e.setDisplayName))
 	mux.GET("/profile/:userId/avatar_url", jsonHandler(e.getAvatarUrl))
 	mux.PUT("/profile/:userId/avatar_url", jsonHandler(e.setAvatarUrl))
-	mux.GET("/event", jsonHandler(func() interface{} {
-		event := new(types.Message)
-		event.EventId = types.NewEventId("dkjfhg", "localhost")
-		event.RoomId = types.NewRoomId("dkfghu", "localhost")
-		event.UserId = types.NewUserId("test", "localhost")
-		event.EventType = "m.test"
-		event.Timestamp = types.Timestamp{time.Now()}
-		event.Content = types.TestContent{
-			Name: "test",
-		}
-		return event
-	}))
-	mux.POST("/event/:eventType/:stateKey", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
-		event := new(types.State)
-		event.EventId = types.NewEventId("123", "localhost")
-		event.RoomId = types.NewRoomId("abc", "localhost")
-		event.UserId = types.NewUserId("test", "localhost")
-		event.EventType = params[0].Value
-		event.Timestamp = types.Timestamp{time.Now()}
-		event.Content = content
-		event.StateKey = params[1].Value
-		log.Println("got state: ", event)
-		return event
-	}))
-	mux.POST("/event/:eventType/", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
-		event := new(types.State)
-		event.EventId = types.NewEventId("123", "localhost")
-		event.RoomId = types.NewRoomId("abc", "localhost")
-		event.UserId = types.NewUserId("test", "localhost")
-		event.EventType = params[0].Value
-		event.Timestamp = types.Timestamp{time.Now()}
-		event.Content = content
-		event.StateKey = ""
-		log.Println("got state: ", event)
-		return event
-	}))
-	mux.POST("/event/:eventType", jsonHandler(func(params httprouter.Params, content *types.TestContent) interface{} {
-		event := new(types.Message)
-		event.EventId = types.NewEventId("123", "localhost")
-		event.RoomId = types.NewRoomId("abc", "localhost")
-		event.UserId = types.NewUserId("test", "localhost")
-		event.Content = content
-		event.EventType = params[0].Value
-		event.Timestamp = types.Timestamp{time.Now()}
-		log.Println("got event: ", event)
-		return event
-	}))
 }
 
 type profileEndpoint struct {
