@@ -80,6 +80,14 @@ func BadJsonError(message string) Error {
 	}
 }
 
+func BadParamError(message string) Error {
+	return apiError{
+		ErrorCode:    "M_BAD_PARAM",
+		ErrorMessage: message,
+		status:       400,
+	}
+}
+
 func BadQueryError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_BAD_QUERY",

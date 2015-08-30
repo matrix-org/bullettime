@@ -84,7 +84,7 @@ func (e profileEndpoint) setAvatarUrl(req *http.Request, params httprouter.Param
 	return struct{}{}
 }
 
-func (e profileEndpoint) userFromParams(params httprouter.Params) (types.UserId, error) {
+func (e profileEndpoint) userFromParams(params httprouter.Params) (types.UserId, types.Error) {
 	user, err := types.ParseUserId(params[0].Value)
 	if err != nil {
 		return types.UserId{}, types.BadJsonError(err.Error())

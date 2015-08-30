@@ -162,6 +162,10 @@ func (ts Timestamp) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.FormatInt(ms, 10)), nil
 }
 
+func NewGenericContent(content map[string]interface{}, eventType string) *GenericContent {
+	return &GenericContent{content, eventType}
+}
+
 type GenericContent struct {
 	Content   map[string]interface{}
 	eventType string

@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/Rugvip/bullettime/interfaces"
@@ -263,6 +264,7 @@ func (s roomService) setState(
 	content types.TypedContent,
 	stateKey string,
 ) (*types.State, types.Error) {
+	log.Printf("Setting state: %#v, %#v, %#v, %#v", room, user, content, stateKey)
 	state, err := s.rooms.SetRoomState(room, user, content, stateKey)
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package events
 
 import (
 	"container/list"
+	"log"
 	"sync"
 	"sync/atomic"
 
@@ -75,13 +76,22 @@ func (s *messageStream) Send(event types.Event) (uint64, types.Error) {
 
 func extraUserForEvent(event types.Event) *types.UserId {
 	if event.GetEventType() == types.EventTypeMembership {
-		switch event.GetContent().(*types.MembershipEventContent).Membership {
-		case types.MembershipInvited:
-			return event.GetUserId()
-		case types.MembershipKnocking:
-			return event.GetUserId()
-		case types.MembershipBanned:
-			return event.GetUserId()
+		membership := event.GetContent().(*types.MembershipEventContent).Membership
+		isInvited := membership == types.MembershipInvited
+		isKnocking := membership == types.MembershipKnocking
+		isBanned := membership == types.MembershipBanned
+		if isInvited || isKnocking || isBanned {
+			state, ok := event.(*types.State)
+			if !ok {
+				log.Println("membership event was not a state event:", event)
+				return nil
+			}
+			user, err := types.ParseUserId(state.StateKey)
+			if err != nil {
+				log.Println("failed to parse user id state key:", state.StateKey)
+				return nil
+			}
+			return &user
 		}
 	}
 	return nil

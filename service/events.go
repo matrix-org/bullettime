@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log"
+
 	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
 )
@@ -68,8 +70,17 @@ func (s eventService) Range(
 
 	if from != nil {
 		fromMessage = from.MessageIndex
+		if fromMessage > maxMessage {
+			fromMessage = maxMessage
+		}
 		fromPresence = from.PresenceIndex
+		if fromPresence > maxPresence {
+			fromPresence = maxPresence
+		}
 		fromTyping = from.TypingIndex
+		if fromTyping > maxTyping {
+			fromTyping = maxTyping
+		}
 	} else {
 		fromMessage = maxMessage
 		fromPresence = maxPresence
@@ -117,6 +128,8 @@ func (s eventService) Range(
 		return nil, err
 	}
 
+	log.Printf("getting events from %d to %d, max %d, %#v", fromMessage, toMessage, maxMessage, eventCh)
+
 	if eventCh != nil {
 		blocking := true
 		if to != nil && toMessage <= maxMessage && toPresence <= maxPresence && toTyping <= maxTyping {
@@ -133,6 +146,7 @@ func (s eventService) Range(
 			default:
 			}
 		}
+		log.Printf("async event: %#v blocking: %#v len: %#v", event, blocking, len(messages)+len(presences)+len(typings))
 
 		if gotEvent && uint(len(messages)) < limit {
 			eventType := event.Event().GetEventType()
@@ -190,6 +204,7 @@ func (s eventService) Range(
 			}
 		}
 	}
+	log.Printf("got events from %d to %d: %#v", fromMessage, messageIndex, events)
 
 	chunk = types.NewEventStreamChunk(events, start, end)
 

@@ -53,7 +53,7 @@ func (e eventsEndpoint) getEvents(req *http.Request) interface{} {
 	if limitStr == "" {
 		limit = 10 //TODO: make configurable
 	} else {
-		limit, err = strconv.ParseUint(limitStr, 10, 32)
+		limit, err := strconv.ParseUint(limitStr, 10, 32)
 		if err != nil {
 			return types.BadQueryError(err.Error())
 		}
@@ -65,21 +65,25 @@ func (e eventsEndpoint) getEvents(req *http.Request) interface{} {
 	if timeoutStr == "" {
 		timeout = 5000 //TODO: make configurable
 	} else {
-		timeout, err = strconv.ParseUint(timeoutStr, 10, 32)
-		if err != nil {
-			return types.BadQueryError(err.Error())
+		var parseErr error
+		timeout, parseErr = strconv.ParseUint(timeoutStr, 10, 32)
+		if parseErr != nil {
+			return types.BadQueryError(parseErr.Error())
 		}
 		if timeout > 60000 {
 			timeout = 60000 //TODO: make configurable
+		}
+		if timeout < 100 {
+			timeout = 100
 		}
 	}
 
 	cancel := make(chan struct{})
 
-	go func() {
-		time.Sleep(time.Millisecond * time.Duration(timeout))
+	go func(timeout time.Duration) {
+		time.Sleep(timeout)
 		close(cancel)
-	}()
+	}(time.Millisecond * time.Duration(timeout))
 
 	chunk, err := e.eventService.Range(authedUser, from, to, uint(limit), cancel)
 	if err != nil {
@@ -94,9 +98,9 @@ func (e eventsEndpoint) getSingleEvent(req *http.Request, params httprouter.Para
 	if err != nil {
 		return err
 	}
-	eventId, err := types.ParseEventId(params[0].Value)
-	if err != nil {
-		return types.BadJsonError(err.Error())
+	eventId, parseErr := types.ParseEventId(params[0].Value)
+	if parseErr != nil {
+		return types.BadJsonError(parseErr.Error())
 	}
 	event, err := e.eventService.Event(authedUser, eventId)
 	if err != nil {
@@ -118,7 +122,7 @@ func (e eventsEndpoint) getInitialSync(req *http.Request) interface{} {
 	if limitStr == "" {
 		limit = 10 //TODO: make configurable
 	} else {
-		limit, err = strconv.ParseUint(limitStr, 10, 32)
+		limit, err := strconv.ParseUint(limitStr, 10, 32)
 		if err != nil {
 			return types.BadQueryError(err.Error())
 		}

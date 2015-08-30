@@ -47,8 +47,9 @@ func jsonHandler(i interface{}) httprouter.Handle {
 		lastParamIsParams := t.In(argCount-1).String() == "httprouter.Params"
 		lastParamIsRequest := t.In(argCount-1).String() == "*http.Request"
 		if !lastParamIsParams && !lastParamIsRequest {
-			if t.In(argCount-1).Kind() != reflect.Ptr {
-				panic("jsonHandler: body argument must be a pointer type, was " + t.In(2).String())
+			kind := t.In(argCount - 1).Kind()
+			if kind != reflect.Ptr && kind != reflect.Map {
+				panic("jsonHandler: body argument must be a pointer type or map, was " + t.In(argCount-1).String())
 			}
 			jsonType = t.In(argCount - 1).Elem()
 		}
@@ -149,7 +150,7 @@ func readAccessToken(
 	userService interfaces.UserService,
 	tokenService interfaces.TokenService,
 	req *http.Request,
-) (types.UserId, error) {
+) (types.UserId, types.Error) {
 	token := req.URL.Query().Get("access_token")
 	if token == "" {
 		return types.UserId{}, types.DefaultMissingTokenError
