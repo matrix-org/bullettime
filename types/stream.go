@@ -6,12 +6,6 @@ import (
 	"github.com/Rugvip/bullettime/utils"
 )
 
-type Pagination struct {
-	Start string        `json:"start"`
-	End   string        `json:"end"`
-	Chunk []interface{} `json:"chunk"`
-}
-
 type InitialSync struct {
 	End      StreamToken   `json:"end"`
 	Presence []Event       `json:"presence"`
@@ -19,11 +13,11 @@ type InitialSync struct {
 }
 
 type RoomSummary struct {
-	Membership Membership `json:"membership"`
-	RoomId     RoomId     `json:"room_id"`
-	Messages   []Event    `json:"messages"`
-	State      []*State   `json:"state"`
-	Visibility Visibility `json:"visibility"`
+	Membership Membership        `json:"membership"`
+	RoomId     RoomId            `json:"room_id"`
+	Messages   *EventStreamRange `json:"messages"`
+	State      []*State          `json:"state"`
+	Visibility Visibility        `json:"visibility"`
 }
 
 type RoomInitialSync struct {
@@ -31,7 +25,7 @@ type RoomInitialSync struct {
 	Presence []Event `json:"presence"`
 }
 
-type EventStreamChunk struct {
+type EventStreamRange struct {
 	Events []Event     `json:"chunk"`
 	Start  StreamToken `json:"start"`
 	End    StreamToken `json:"end"`
@@ -53,8 +47,8 @@ func (t StreamToken) String() string {
 	return fmt.Sprintf("s%d_%d_%d", t.MessageIndex, t.PresenceIndex, t.TypingIndex)
 }
 
-func NewEventStreamChunk(events []Event, start StreamToken, end StreamToken) *EventStreamChunk {
-	return &EventStreamChunk{
+func NewEventStreamRange(events []Event, start StreamToken, end StreamToken) *EventStreamRange {
+	return &EventStreamRange{
 		Events: events,
 		Start:  start,
 		End:    end,

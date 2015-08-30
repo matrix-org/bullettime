@@ -50,12 +50,13 @@ func (e eventsEndpoint) getEvents(req *http.Request) interface{} {
 	var limit uint64
 	var timeout uint64
 
+	var parseErr error
 	if limitStr == "" {
 		limit = 10 //TODO: make configurable
 	} else {
-		limit, err := strconv.ParseUint(limitStr, 10, 32)
-		if err != nil {
-			return types.BadQueryError(err.Error())
+		limit, parseErr = strconv.ParseUint(limitStr, 10, 32)
+		if parseErr != nil {
+			return types.BadQueryError(parseErr.Error())
 		}
 		if limit > 100 {
 			limit = 100 //TODO: make configurable
@@ -65,7 +66,6 @@ func (e eventsEndpoint) getEvents(req *http.Request) interface{} {
 	if timeoutStr == "" {
 		timeout = 5000 //TODO: make configurable
 	} else {
-		var parseErr error
 		timeout, parseErr = strconv.ParseUint(timeoutStr, 10, 32)
 		if parseErr != nil {
 			return types.BadQueryError(parseErr.Error())
@@ -119,12 +119,13 @@ func (e eventsEndpoint) getInitialSync(req *http.Request) interface{} {
 	limitStr := query.Get("limit")
 
 	var limit uint64
+	var parseErr error
 	if limitStr == "" {
 		limit = 10 //TODO: make configurable
 	} else {
-		limit, err := strconv.ParseUint(limitStr, 10, 32)
-		if err != nil {
-			return types.BadQueryError(err.Error())
+		limit, parseErr = strconv.ParseUint(limitStr, 10, 32)
+		if parseErr != nil {
+			return types.BadQueryError(parseErr.Error())
 		}
 		if limit > 100 {
 			limit = 100 //TODO: make configurable

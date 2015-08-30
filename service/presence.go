@@ -5,7 +5,7 @@ import (
 	"github.com/Rugvip/bullettime/types"
 )
 
-func NewStatusService(
+func NewPresenceService(
 	presenceProvider interfaces.PresenceProvider,
 	presenceEventSink interfaces.PresenceEventSink,
 ) (interfaces.PresenceService, error) {

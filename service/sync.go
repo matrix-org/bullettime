@@ -46,7 +46,7 @@ func (s syncService) FullSync(user types.UserId, limit uint) (*types.InitialSync
 	if err != nil {
 		return nil, err
 	}
-	indexedPresences, err := s.presenceSource.Range(user, userSet, nil, 0, maxPresence, limit)
+	indexedPresences, err := s.presenceSource.Range(&user, userSet, nil, 0, maxPresence, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +57,14 @@ func (s syncService) FullSync(user types.UserId, limit uint) (*types.InitialSync
 	if err != nil {
 		return nil, err
 	}
+	end := types.NewStreamToken(maxMessage, maxPresence, maxTyping)
+
 	for i, room := range rooms {
-		if err := s.roomSummary(&summaries[i], user, room, maxMessage, limit); err != nil {
+		if err := s.roomSummary(&summaries[i], user, room, end, limit); err != nil {
 			return nil, err
 		}
 	}
 
-	end := types.NewStreamToken(maxMessage, maxPresence, maxTyping)
 	initialSync := types.InitialSync{end, presences, summaries}
 
 	return &initialSync, nil
@@ -72,6 +73,7 @@ func (s syncService) FullSync(user types.UserId, limit uint) (*types.InitialSync
 func (s syncService) RoomSync(user types.UserId, room types.RoomId, limit uint) (*types.RoomInitialSync, types.Error) {
 	maxMessage := s.messageSource.Max()
 	maxPresence := s.presenceSource.Max()
+	maxTyping := s.typingSource.Max()
 
 	userSet := map[types.UserId]struct{}{}
 	users, err := s.membershipStore.Users(room)
@@ -82,7 +84,7 @@ func (s syncService) RoomSync(user types.UserId, room types.RoomId, limit uint) 
 		userSet[user] = struct{}{}
 	}
 
-	indexedPresences, err := s.presenceSource.Range(user, userSet, nil, 0, maxPresence, limit)
+	indexedPresences, err := s.presenceSource.Range(&user, userSet, nil, 0, maxPresence, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +94,8 @@ func (s syncService) RoomSync(user types.UserId, room types.RoomId, limit uint) 
 		Presence: presences,
 	}
 
-	if err := s.roomSummary(&sync.RoomSummary, user, room, maxMessage, limit); err != nil {
+	end := types.NewStreamToken(maxMessage, maxPresence, maxTyping)
+	if err := s.roomSummary(&sync.RoomSummary, user, room, end, limit); err != nil {
 		return nil, err
 	}
 	return &sync, nil
@@ -102,16 +105,22 @@ func (s syncService) roomSummary(
 	summary *types.RoomSummary,
 	user types.UserId,
 	room types.RoomId,
-	maxMessage uint64,
+	end types.StreamToken,
 	limit uint,
 ) types.Error {
 	roomSet := map[types.RoomId]struct{}{
 		room: struct{}{},
 	}
-	messages, err := s.messageSource.Range(user, nil, roomSet, maxMessage, 0, limit)
+	messages, err := s.messageSource.Range(nil, nil, roomSet, end.MessageIndex, 0, limit)
 	if err != nil {
 		return err
 	}
+	startIndex := end.MessageIndex
+	if len(messages) > 0 {
+		startIndex = messages[0].Index()
+	}
+	start := types.NewStreamToken(startIndex, end.PresenceIndex, end.TypingIndex)
+	eventRange := types.NewEventStreamRange(indexedToEvents(messages), start, end)
 	states, err := s.rooms.EntireRoomState(room)
 	if err != nil {
 		return err
@@ -120,16 +129,16 @@ func (s syncService) roomSummary(
 	if err != nil {
 		return err
 	}
-	membership := membershipState.Content.(types.MembershipEventContent).Membership
-	joinRuleState, err := s.rooms.RoomState(room, types.EventTypeJoinRules, user.String())
+	membership := membershipState.Content.(*types.MembershipEventContent).Membership
+	joinRuleState, err := s.rooms.RoomState(room, types.EventTypeJoinRules, "")
 	if err != nil {
 		return err
 	}
-	joinRule := joinRuleState.Content.(types.JoinRulesEventContent).JoinRule
+	joinRule := joinRuleState.Content.(*types.JoinRulesEventContent).JoinRule
 	visibility := joinRule.ToVisibility()
 	summary.Membership = membership
 	summary.RoomId = room
-	summary.Messages = indexedToEvents(messages)
+	summary.Messages = eventRange
 	summary.State = states
 	summary.Visibility = visibility
 	return nil

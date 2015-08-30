@@ -103,7 +103,7 @@ func (s *presenceStream) Max() uint64 {
 
 // Ignores user, roomSet, and limit
 func (s *presenceStream) Range(
-	user types.UserId,
+	_ *types.UserId,
 	userSet map[types.UserId]struct{},
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,

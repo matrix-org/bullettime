@@ -60,6 +60,7 @@ func (s profileService) UpdateProfile(
 	if err != nil {
 		return types.UserProfile{}, err
 	}
+	log.Printf("GOT LE STUFF %s, %#v", user, rooms)
 	for _, room := range rooms {
 		membership, err := s.rooms.RoomState(room, types.EventTypeMembership, user.String())
 		if err != nil {

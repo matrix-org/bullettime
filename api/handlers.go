@@ -47,11 +47,11 @@ func jsonHandler(i interface{}) httprouter.Handle {
 		lastParamIsParams := t.In(argCount-1).String() == "httprouter.Params"
 		lastParamIsRequest := t.In(argCount-1).String() == "*http.Request"
 		if !lastParamIsParams && !lastParamIsRequest {
-			kind := t.In(argCount - 1).Kind()
-			if kind != reflect.Ptr && kind != reflect.Map {
-				panic("jsonHandler: body argument must be a pointer type or map, was " + t.In(argCount-1).String())
+			typ := t.In(argCount - 1)
+			if typ.Kind() != reflect.Ptr {
+				panic("jsonHandler: body argument must be a pointer type, was " + typ.String())
 			}
-			jsonType = t.In(argCount - 1).Elem()
+			jsonType = typ.Elem()
 		}
 	}
 	if jsonType == nil {

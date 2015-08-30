@@ -50,7 +50,7 @@ func (s eventService) Range(
 	from, to *types.StreamToken,
 	limit uint,
 	cancel chan struct{},
-) (chunk *types.EventStreamChunk, err types.Error) {
+) (chunk *types.EventStreamRange, err types.Error) {
 	var eventCh chan types.IndexedEvent
 
 	if from == nil || to == nil || from.MessageIndex > to.MessageIndex {
@@ -115,15 +115,15 @@ func (s eventService) Range(
 		roomSet[room] = struct{}{}
 	}
 
-	messages, err := s.messageSource.Range(user, userSet, roomSet, fromMessage, toMessage, limit)
+	messages, err := s.messageSource.Range(&user, userSet, roomSet, fromMessage, toMessage, limit)
 	if err != nil {
 		return nil, err
 	}
-	presences, err := s.presenceSource.Range(user, userSet, roomSet, fromPresence, toPresence, limit)
+	presences, err := s.presenceSource.Range(&user, userSet, roomSet, fromPresence, toPresence, limit)
 	if err != nil {
 		return nil, err
 	}
-	typings, err := s.typingSource.Range(user, userSet, roomSet, fromTyping, toTyping, limit)
+	typings, err := s.typingSource.Range(&user, userSet, roomSet, fromTyping, toTyping, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (s eventService) Range(
 	}
 	log.Printf("got events from %d to %d: %#v", fromMessage, messageIndex, events)
 
-	chunk = types.NewEventStreamChunk(events, start, end)
+	chunk = types.NewEventStreamRange(events, start, end)
 
 	return chunk, nil
 
@@ -235,4 +235,76 @@ func (s eventService) Range(
 	//		new = readAll(ch)
 
 	//	}
+}
+
+func (s eventService) Messages(
+	user types.UserId,
+	room types.RoomId,
+	from, to *types.StreamToken,
+	limit uint,
+) (eventRange *types.EventStreamRange, err types.Error) {
+	maxMessage := s.messageSource.Max()
+
+	var fromMessage uint64
+	var presenceIndex uint64
+	var typingIndex uint64
+
+	if from != nil {
+		fromMessage = from.MessageIndex
+		presenceIndex = from.PresenceIndex
+		typingIndex = from.TypingIndex
+		if fromMessage > maxMessage {
+			fromMessage = maxMessage
+		}
+	} else {
+		fromMessage = maxMessage
+		presenceIndex = s.presenceSource.Max()
+		typingIndex = s.typingSource.Max()
+	}
+
+	var toMessage uint64
+
+	if to != nil {
+		toMessage = to.MessageIndex
+	} else {
+		toMessage = maxMessage
+	}
+	log.Println("to message", toMessage, to)
+
+	roomSet := map[types.RoomId]struct{}{
+		room: struct{}{},
+	}
+
+	messages, err := s.messageSource.Range(nil, nil, roomSet, fromMessage, toMessage, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("getting messages from %d to %d, max %d", fromMessage, toMessage, maxMessage)
+
+	messagesStart := fromMessage
+	messagesEnd := fromMessage
+
+	if len(messages) > 0 {
+		messagesStart = messages[0].Index()
+		messagesEnd = messages[len(messages)-1].Index() + 1
+	}
+
+	if to != nil && to.MessageIndex < fromMessage {
+		messagesEnd, messagesStart = messagesStart, messagesEnd
+	}
+
+	start := types.NewStreamToken(messagesStart, presenceIndex, typingIndex)
+	end := types.NewStreamToken(messagesEnd, presenceIndex, typingIndex)
+
+	events := make([]types.Event, len(messages))
+
+	for i, _ := range events {
+		events[i] = messages[i].Event()
+	}
+	log.Printf("got messages from %d to %d: %#v", messagesStart, messagesEnd, events)
+
+	eventRange = types.NewEventStreamRange(events, start, end)
+
+	return eventRange, nil
 }

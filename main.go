@@ -75,6 +75,10 @@ func setupApiEndpoint() http.Handler {
 	if err != nil {
 		panic(err)
 	}
+	presenceService, err := service.NewPresenceService(presenceStream, presenceStream)
+	if err != nil {
+		panic(err)
+	}
 	tokenService, err := service.CreateTokenService()
 	if err != nil {
 		panic(err)
@@ -104,7 +108,8 @@ func setupApiEndpoint() http.Handler {
 	mux := httprouter.New()
 	api.NewAuthEndpoint(userService, tokenService).Register(mux)
 	api.NewProfileEndpoint(userService, tokenService, profileService).Register(mux)
-	api.NewRoomsEndpoint(userService, tokenService, roomService).Register(mux)
+	api.NewPresenceEndpoint(userService, tokenService, presenceService).Register(mux)
+	api.NewRoomsEndpoint(userService, tokenService, roomService, syncService, eventService).Register(mux)
 	api.NewEventsEndpoint(userService, tokenService, eventService, syncService).Register(mux)
 
 	mux.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

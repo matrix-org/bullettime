@@ -77,7 +77,13 @@ type EventService interface {
 		from, to *types.StreamToken,
 		limit uint,
 		cancel chan struct{},
-	) (*types.EventStreamChunk, types.Error)
+	) (*types.EventStreamRange, types.Error)
+	Messages(
+		user types.UserId,
+		room types.RoomId,
+		from, to *types.StreamToken,
+		limit uint,
+	) (*types.EventStreamRange, types.Error)
 }
 
 type UserStore interface {
@@ -124,7 +130,7 @@ type AsyncEventSource interface {
 type IndexedEventSource interface {
 	Max() uint64
 	Range(
-		user types.UserId,
+		user *types.UserId,
 		userSet map[types.UserId]struct{},
 		roomSet map[types.RoomId]struct{},
 		from, to uint64,

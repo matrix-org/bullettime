@@ -122,7 +122,7 @@ func (s *messageStream) Event(
 
 // ignores userSet
 func (s *messageStream) Range(
-	user types.UserId,
+	user *types.UserId,
 	userSet map[types.UserId]struct{},
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
@@ -154,8 +154,11 @@ func (s *messageStream) Range(
 			_, ok := roomSet[*indexed.Event().GetRoomId()]
 			if ok {
 				result = append(result, indexed)
-			} else if extra := extraUserForEvent(indexed.event); extra != nil && *extra == user {
-				result = append(result, indexed)
+			} else if user != nil {
+				extra := extraUserForEvent(indexed.event)
+				if extra != nil && *extra == *user {
+					result = append(result, indexed)
+				}
 			}
 		}
 		if reverse {

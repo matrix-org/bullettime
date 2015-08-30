@@ -65,6 +65,7 @@ func (db *memberDb) RemoveMember(roomId types.RoomId, userId types.UserId) types
 			rooms[i] = rooms[l-1]
 			rooms[l-1] = types.RoomId{}
 			rooms = rooms[:l-1]
+			db.rooms[userId] = rooms
 			break
 		}
 	}

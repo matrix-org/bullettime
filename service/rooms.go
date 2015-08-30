@@ -73,6 +73,11 @@ func (s roomService) CreateRoom(
 		}
 	}
 	s.members.AddMember(id, creator)
+
+	_, err = s.sendMessage(id, creator, &types.CreateEventContent{creator})
+	if err != nil {
+		return types.RoomId{}, nil, err
+	}
 	_, err = s.setState(id, creator, &types.CreateEventContent{creator}, "")
 	if err != nil {
 		return types.RoomId{}, nil, err
@@ -153,15 +158,7 @@ func (s roomService) AddMessage(
 		return nil, err
 	}
 
-	message, err := s.rooms.AddRoomMessage(room, caller, content)
-	if err != nil {
-		return nil, err
-	}
-	_, err = s.eventSink.Send(message)
-	if err != nil {
-		return nil, err
-	}
-	return message, nil
+	return s.sendMessage(room, caller, content)
 }
 
 func (s roomService) State(
@@ -276,12 +273,30 @@ func (s roomService) setState(
 	return state, nil
 }
 
+func (s roomService) sendMessage(
+	room types.RoomId,
+	user types.UserId,
+	content types.TypedContent,
+) (*types.Message, types.Error) {
+	log.Printf("Sending message: %#v, %#v, %#v, %#v", room, user, content)
+	message, err := s.rooms.AddRoomMessage(room, user, content)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.eventSink.Send(message)
+	if err != nil {
+		return nil, err
+	}
+	return message, nil
+}
+
 func (s roomService) doMembershipChange(
 	room types.RoomId,
 	caller types.UserId,
 	user types.UserId,
 	membership *types.MembershipEventContent,
 ) (*types.State, types.Error) {
+	log.Printf("attempting membership change of %s in %s to %s, by %s", user, room, membership.Membership, caller)
 	currentMembership, err := s.userMembership(room, user)
 	if err != nil {
 		return nil, err
@@ -325,8 +340,35 @@ func (s roomService) doMembershipChange(
 		}
 
 	case types.MembershipMember:
-		if user != caller {
-			return nil, types.ForbiddenError("cannot force other users to join the room")
+		switch currentMembership {
+		case types.MembershipNone:
+			ok, err := s.allowsJoinRule(room, types.JoinRulePublic)
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				return nil, types.ForbiddenError("room does not allow join method: " + types.JoinRuleInvite.String())
+			}
+		case types.MembershipInvited:
+			if user != caller {
+				return nil, types.ForbiddenError("cannot force other users to join the room")
+			}
+		case types.MembershipKnocking:
+			if user == caller {
+				return nil, types.ForbiddenError("cannot let yourself in after knocking")
+			}
+			err = s.testPowerLevel(room, caller, func(pl *types.PowerLevelsEventContent) int {
+				return pl.Invite
+			})
+			if err != nil {
+				return nil, err
+			}
+		case types.MembershipBanned:
+			if user == caller {
+				return nil, types.ForbiddenError("you are banned from that room")
+			} else {
+				return nil, types.ForbiddenError("that user is banned from this room")
+			}
 		}
 		profile, err := s.profileProvider.Profile(caller)
 		if err != nil {

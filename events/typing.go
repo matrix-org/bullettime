@@ -95,7 +95,7 @@ func (s *typingStream) Max() uint64 {
 
 // ignores user, userSet, and limit
 func (s *typingStream) Range(
-	user types.UserId,
+	_ *types.UserId,
 	userSet map[types.UserId]struct{},
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
