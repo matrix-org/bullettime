@@ -27,7 +27,7 @@ func NewStreamMux() (*streamMux, types.Error) {
 }
 
 type streamMux struct {
-	lock     sync.RWMutex
+	lock     sync.Mutex
 	channels map[types.UserId]userChannels
 }
 
@@ -61,16 +61,15 @@ func (chs *userChannels) make() chan types.IndexedEvent {
 	return channel
 }
 
-func (s streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan types.IndexedEvent, types.Error) {
+func (s *streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan types.IndexedEvent, types.Error) {
 	s.lock.Lock()
-	defer s.lock.Unlock()
 	chs := s.channels[userId]
 	channel := chs.make()
 	s.channels[userId] = chs
+	s.lock.Unlock()
 	go func() {
 		<-cancel
 		s.lock.Lock()
-		defer s.lock.Unlock()
 		if chs2, ok := s.channels[userId]; ok {
 			chs2.close(channel)
 			if len(chs2) == 0 {
@@ -79,13 +78,14 @@ func (s streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan types
 				s.channels[userId] = chs2
 			}
 		}
+		s.lock.Unlock()
 	}()
 	return channel, nil
 }
 
-func (s streamMux) Send(userIds []types.UserId, event types.IndexedEvent) types.Error {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
+func (s *streamMux) Send(userIds []types.UserId, event types.IndexedEvent) types.Error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	for _, userId := range userIds {
 		if chs, ok := s.channels[userId]; ok {
 			if err := chs.send(event); err != nil {

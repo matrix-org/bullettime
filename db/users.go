@@ -28,7 +28,7 @@ type userDb struct {
 }
 
 func NewUserDb() (interfaces.UserStore, error) {
-	return userDb{
+	return &userDb{
 		users: map[types.UserId]*dbUser{},
 	}, nil
 }
@@ -40,7 +40,7 @@ type dbUser struct {
 	PasswordHash string `json:"-"`
 }
 
-func (db userDb) CreateUser(id types.UserId) types.Error {
+func (db *userDb) CreateUser(id types.UserId) types.Error {
 	db.Lock()
 	defer db.Unlock()
 	if db.users[id] != nil {
@@ -52,7 +52,7 @@ func (db userDb) CreateUser(id types.UserId) types.Error {
 	return nil
 }
 
-func (db userDb) UserExists(id types.UserId) (bool, types.Error) {
+func (db *userDb) UserExists(id types.UserId) (bool, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	if db.users[id] == nil {
@@ -61,7 +61,7 @@ func (db userDb) UserExists(id types.UserId) (bool, types.Error) {
 	return true, nil
 }
 
-func (db userDb) SetUserPasswordHash(id types.UserId, hash string) types.Error {
+func (db *userDb) SetUserPasswordHash(id types.UserId, hash string) types.Error {
 	db.RLock()
 	defer db.RUnlock()
 	user := db.users[id]
@@ -74,7 +74,7 @@ func (db userDb) SetUserPasswordHash(id types.UserId, hash string) types.Error {
 	return nil
 }
 
-func (db userDb) UserPasswordHash(id types.UserId) (string, types.Error) {
+func (db *userDb) UserPasswordHash(id types.UserId) (string, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	user := db.users[id]
