@@ -332,9 +332,9 @@ func (e roomsEndpoint) getRoomAndUser(req *http.Request, params httprouter.Param
 func (e roomsEndpoint) Register(mux *httprouter.Router) {
 	mux.POST("/rooms/:roomId/send/:eventType", jsonHandler(e.sendMessage))
 	mux.PUT("/rooms/:roomId/send/:eventType/:txn", jsonHandler(e.sendMessage))
-	// mux.GET("/rooms/:roomId/state/:eventType", jsonHandler(dummy))
 	mux.PUT("/rooms/:roomId/state/:eventType", e.handlePutState)
 	mux.PUT("/rooms/:roomId/state/:eventType/:stateKey", e.handlePutState)
+	// mux.GET("/rooms/:roomId/state/:eventType", jsonHandler(dummy))
 	// mux.GET("/rooms/:roomId/state/:eventType/:stateKey", jsonHandler(dummy))
 	mux.POST("/rooms/:roomId/invite", jsonHandler(e.doInvite))
 	mux.POST("/rooms/:roomId/kick", jsonHandler(e.doKick))
