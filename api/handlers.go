@@ -175,10 +175,43 @@ func readAccessToken(
 	if err != nil {
 		return types.UserId{}, types.DefaultUnknownTokenError
 	}
-	if err := userService.UserExists(info.UserId(), info.UserId()); err != nil {
+	exists, err := userService.UserExists(info.UserId(), info.UserId())
+	if err != nil {
+		return types.UserId{}, types.DefaultUnknownTokenError
+	}
+	if !exists {
 		return types.UserId{}, types.DefaultUnknownTokenError
 	}
 	return info.UserId(), nil
+}
+
+type urlParams struct {
+	params httprouter.Params
+}
+
+func (p urlParams) user(paramPosition int, users interfaces.UserService) (types.UserId, types.Error) {
+	user, err := types.ParseUserId(p.params[paramPosition].Value)
+	if err != nil {
+		return types.UserId{}, types.BadParamError(err.Error())
+	}
+	if users != nil {
+		exists, err := users.UserExists(user, user)
+		if err != nil {
+			return types.UserId{}, err
+		}
+		if !exists {
+			return types.UserId{}, types.NotFoundError("user '" + user.String() + "' doesn't exist")
+		}
+	}
+	return user, nil
+}
+
+func (p urlParams) room(paramPosition int) (types.RoomId, types.Error) {
+	room, parseErr := types.ParseRoomId(p.params[paramPosition].Value)
+	if parseErr != nil {
+		return types.RoomId{}, types.BadParamError(parseErr.Error())
+	}
+	return room, nil
 }
 
 type urlQuery struct {

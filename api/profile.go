@@ -37,7 +37,7 @@ type displayNameResponse struct {
 }
 
 func (e profileEndpoint) getDisplayName(params httprouter.Params) interface{} {
-	user, err := e.userFromParams(params)
+	user, err := urlParams{params}.user(0, e.users)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (e profileEndpoint) setDisplayName(req *http.Request, params httprouter.Par
 	if err != nil {
 		return err
 	}
-	user, err := e.userFromParams(params)
+	user, err := urlParams{params}.user(0, e.users)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (e profileEndpoint) setDisplayName(req *http.Request, params httprouter.Par
 }
 
 func (e profileEndpoint) getAvatarUrl(params httprouter.Params) interface{} {
-	user, err := e.userFromParams(params)
+	user, err := urlParams{params}.user(0, e.users)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (e profileEndpoint) setAvatarUrl(req *http.Request, params httprouter.Param
 	if err != nil {
 		return err
 	}
-	user, err := e.userFromParams(params)
+	user, err := urlParams{params}.user(0, e.users)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (e profileEndpoint) setAvatarUrl(req *http.Request, params httprouter.Param
 }
 
 func (e profileEndpoint) getProfile(params httprouter.Params) interface{} {
-	user, err := e.userFromParams(params)
+	user, err := urlParams{params}.user(0, e.users)
 	if err != nil {
 		return err
 	}
@@ -106,17 +106,6 @@ func (e profileEndpoint) getProfile(params httprouter.Params) interface{} {
 		return err
 	}
 	return profile
-}
-
-func (e profileEndpoint) userFromParams(params httprouter.Params) (types.UserId, types.Error) {
-	user, err := types.ParseUserId(params[0].Value)
-	if err != nil {
-		return types.UserId{}, types.BadJsonError(err.Error())
-	}
-	if err := e.users.UserExists(user, user); err != nil {
-		return types.UserId{}, err
-	}
-	return user, nil
 }
 
 func (e profileEndpoint) Register(mux *httprouter.Router) {

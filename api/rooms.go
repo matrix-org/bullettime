@@ -336,9 +336,9 @@ func (e roomsEndpoint) getRoomAndUser(req *http.Request, params httprouter.Param
 	if err != nil {
 		return types.RoomId{}, types.UserId{}, err
 	}
-	room, parseErr := types.ParseRoomId(params[0].Value)
-	if parseErr != nil {
-		return types.RoomId{}, types.UserId{}, types.BadParamError(parseErr.Error())
+	room, err := urlParams{params}.room(0)
+	if err != nil {
+		return types.RoomId{}, types.UserId{}, err
 	}
 	return room, user, nil
 }

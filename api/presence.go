@@ -33,7 +33,7 @@ func (e presenceEndpoint) getStatus(req *http.Request, params httprouter.Params)
 	if err != nil {
 		return err
 	}
-	user, err := e.userFromParams(params)
+	user, err := urlParams{params}.user(0, e.users)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (e presenceEndpoint) setStatus(req *http.Request, params httprouter.Params,
 	if err != nil {
 		return err
 	}
-	user, err := e.userFromParams(params)
+	user, err := urlParams{params}.user(0, e.users)
 	if err != nil {
 		return err
 	}
@@ -61,17 +61,6 @@ func (e presenceEndpoint) setStatus(req *http.Request, params httprouter.Params,
 		return err
 	}
 	return struct{}{}
-}
-
-func (e presenceEndpoint) userFromParams(params httprouter.Params) (types.UserId, types.Error) {
-	user, err := types.ParseUserId(params[0].Value)
-	if err != nil {
-		return types.UserId{}, types.BadJsonError(err.Error())
-	}
-	if err := e.users.UserExists(user, user); err != nil {
-		return types.UserId{}, err
-	}
-	return user, nil
 }
 
 func (e presenceEndpoint) Register(mux *httprouter.Router) {

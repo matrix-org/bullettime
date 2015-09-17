@@ -114,12 +114,19 @@ func (e authEndpoint) loginWithPassword(hostname string, body *authRequest) inte
 		return types.BadJsonError("Missing or invalid password")
 	}
 	user := types.NewUserId(body.Username, hostname)
-	err := e.userService.UserExists(user, user)
+	exists, err := e.userService.UserExists(user, user)
 	if err != nil {
 		return err
 	}
-	if err := e.userService.VerifyPassword(user, body.Password); err != nil {
+	if !exists {
+		return types.NotFoundError("user '" + user.String() + "' doesn't exist")
+	}
+	verified, err := e.userService.VerifyPassword(user, body.Password)
+	if err != nil {
 		return err
+	}
+	if !verified {
+		return types.ForbiddenError("invalid credentials")
 	}
 	accessToken, err := e.tokenService.NewAccessToken(user)
 	if err != nil {
