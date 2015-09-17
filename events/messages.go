@@ -40,7 +40,7 @@ func (m *indexedEvent) Index() uint64 {
 type messageStream struct {
 	lock           sync.RWMutex
 	list           *list.List
-	byId           map[types.EventId]indexedEvent
+	byId           map[types.Id]indexedEvent
 	byIndex        []*indexedEvent
 	max            uint64
 	members        interfaces.MembershipStore
@@ -53,7 +53,7 @@ func NewMessageStream(
 ) (interfaces.EventStream, error) {
 	return &messageStream{
 		list:           list.New(),
-		byId:           map[types.EventId]indexedEvent{},
+		byId:           map[types.Id]indexedEvent{},
 		byIndex:        []*indexedEvent{},
 		members:        members,
 		asyncEventSink: asyncEventSink,
@@ -67,11 +67,11 @@ func (s *messageStream) Send(event types.Event) (uint64, types.Error) {
 	index := atomic.AddUint64(&s.max, 1) - 1
 	indexed := indexedEvent{event, index}
 
-	if currentItem, ok := s.byId[*event.GetEventId()]; ok {
+	if currentItem, ok := s.byId[event.GetEventKey()]; ok {
 		s.byIndex[currentItem.index] = nil
 	}
 	s.byIndex = append(s.byIndex, &indexed)
-	s.byId[*event.GetEventId()] = indexed
+	s.byId[event.GetEventKey()] = indexed
 
 	users, err := s.members.Users(*event.GetRoomId())
 	if err != nil {
@@ -116,7 +116,7 @@ func (s *messageStream) Event(
 	eventId types.EventId,
 ) (types.Event, types.Error) {
 	s.lock.RLock()
-	indexed := s.byId[eventId]
+	indexed := s.byId[eventId.Id]
 	s.lock.RUnlock()
 	extraUser := extraUserForEvent(indexed.event)
 	if extraUser != nil && *extraUser == user {

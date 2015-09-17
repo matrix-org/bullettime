@@ -33,7 +33,7 @@ const (
 )
 
 type TypedContent interface {
-	EventType() string
+	GetEventType() string
 }
 
 type Content interface{}
@@ -45,10 +45,9 @@ type Timestamp struct {
 type Event interface {
 	GetContent() interface{}
 	GetEventType() string
-	GetEventId() *EventId
 	GetRoomId() *RoomId
 	GetUserId() *UserId
-	Id() Id
+	GetEventKey() Id
 }
 
 type IndexedEvent interface {
@@ -89,7 +88,7 @@ func (e *Message) GetUserId() *UserId {
 	return &e.UserId
 }
 
-func (e *Message) Id() Id {
+func (e *Message) GetEventKey() Id {
 	return e.EventId.Id
 }
 
@@ -106,10 +105,6 @@ func (e *PresenceEvent) GetContent() interface{} {
 	return e.Content
 }
 
-func (e *PresenceEvent) GetEventId() *EventId {
-	return nil
-}
-
 func (e *PresenceEvent) GetRoomId() *RoomId {
 	return nil
 }
@@ -118,18 +113,18 @@ func (e *PresenceEvent) GetUserId() *UserId {
 	return &e.Content.UserId
 }
 
-func (e *PresenceEvent) Id() Id {
+func (e *PresenceEvent) GetEventKey() Id {
 	return e.Content.UserId.Id
 }
 
-type TypingEventContent struct {
+type TypingUsers struct {
 	UserIds []UserId `json:"user_ids"`
 }
 
 type TypingEvent struct {
 	BaseEvent
-	Content TypingEventContent `json:"content"`
-	RoomId  RoomId             `json:"room_id"`
+	Content TypingUsers `json:"content"`
+	RoomId  RoomId      `json:"room_id"`
 }
 
 func (e *TypingEvent) GetEventType() string {
@@ -140,10 +135,6 @@ func (e *TypingEvent) GetContent() interface{} {
 	return e.Content
 }
 
-func (e *TypingEvent) GetEventId() *EventId {
-	return nil
-}
-
 func (e *TypingEvent) GetRoomId() *RoomId {
 	return &e.RoomId
 }
@@ -152,7 +143,7 @@ func (e *TypingEvent) GetUserId() *UserId {
 	return nil
 }
 
-func (e *TypingEvent) Id() Id {
+func (e *TypingEvent) GetEventKey() Id {
 	return e.RoomId.Id
 }
 
@@ -185,7 +176,7 @@ type GenericContent struct {
 	eventType string
 }
 
-func (c *GenericContent) EventType() string {
+func (c *GenericContent) GetEventType() string {
 	return c.eventType
 }
 
@@ -202,7 +193,7 @@ type MembershipEventContent struct {
 	Membership Membership `json:"membership"`
 }
 
-func (c *MembershipEventContent) EventType() string {
+func (c *MembershipEventContent) GetEventType() string {
 	return EventTypeMembership
 }
 
@@ -210,7 +201,7 @@ type CreateEventContent struct {
 	Creator UserId `json:"creator"`
 }
 
-func (c *CreateEventContent) EventType() string {
+func (c *CreateEventContent) GetEventType() string {
 	return EventTypeCreate
 }
 
@@ -218,7 +209,7 @@ type NameEventContent struct {
 	Name string `json:"name"`
 }
 
-func (c *NameEventContent) EventType() string {
+func (c *NameEventContent) GetEventType() string {
 	return EventTypeName
 }
 
@@ -226,7 +217,7 @@ type TopicEventContent struct {
 	Topic string `json:"topic"`
 }
 
-func (c *TopicEventContent) EventType() string {
+func (c *TopicEventContent) GetEventType() string {
 	return EventTypeTopic
 }
 
@@ -234,7 +225,7 @@ type AliasesEventContent struct {
 	Aliases []Alias `json:"aliases"`
 }
 
-func (c *AliasesEventContent) EventType() string {
+func (c *AliasesEventContent) GetEventType() string {
 	return EventTypeAliases
 }
 
@@ -286,7 +277,7 @@ func (m *UserPowerLevelMap) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-func (c *PowerLevelsEventContent) EventType() string {
+func (c *PowerLevelsEventContent) GetEventType() string {
 	return EventTypePowerLevels
 }
 
@@ -294,6 +285,6 @@ type JoinRulesEventContent struct {
 	JoinRule JoinRule `json:"join_rule"`
 }
 
-func (c *JoinRulesEventContent) EventType() string {
+func (c *JoinRulesEventContent) GetEventType() string {
 	return EventTypeJoinRules
 }

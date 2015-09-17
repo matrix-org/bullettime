@@ -168,7 +168,7 @@ func (s roomService) AddMessage(
 	caller types.UserId,
 	content types.TypedContent,
 ) (*types.Message, types.Error) {
-	eventType := content.EventType()
+	eventType := content.GetEventType()
 	if _, ok := disallowedMessageTypes[eventType]; ok {
 		return nil, types.ForbiddenError("sending a message event of the type " + eventType + " is not permitted")
 	}
@@ -214,7 +214,7 @@ func (s roomService) SetState(
 	userIdStateKey, parseErr := types.ParseUserId(stateKey)
 	isUserIdStateKey := parseErr == nil
 
-	eventType := content.EventType()
+	eventType := content.GetEventType()
 	switch eventType {
 	case types.EventTypeName:
 		if stateKey != "" {

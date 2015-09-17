@@ -54,7 +54,7 @@ func (s eventService) Event(user types.UserId, eventId types.EventId) (types.Eve
 		return nil, err
 	}
 	if event == nil {
-		return nil, types.NotFoundError("event not found: " + event.GetEventId().String())
+		return nil, types.NotFoundError("event not found: " + event.GetEventKey().String())
 	}
 	return event, nil
 }

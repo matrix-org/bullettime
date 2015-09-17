@@ -96,7 +96,7 @@ func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conte
 	event.EventId = eventId
 	event.RoomId = roomId
 	event.UserId = userId
-	event.EventType = content.EventType()
+	event.EventType = content.GetEventType()
 	event.Timestamp = types.Timestamp{time.Now()}
 	event.Content = content
 
@@ -124,13 +124,13 @@ func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content
 			break
 		}
 	}
-	stateId := stateId{content.EventType(), stateKey}
+	stateId := stateId{content.GetEventType(), stateKey}
 
 	state := new(types.State)
 	state.EventId = eventId
 	state.RoomId = roomId
 	state.UserId = userId
-	state.EventType = content.EventType()
+	state.EventType = content.GetEventType()
 	state.StateKey = stateKey
 	state.Timestamp = types.Timestamp{time.Now()}
 	state.Content = content
