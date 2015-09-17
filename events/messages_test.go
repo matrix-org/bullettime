@@ -20,11 +20,12 @@ import (
 	"time"
 
 	"github.com/Rugvip/bullettime/db"
+	"github.com/Rugvip/bullettime/interfaces"
 
 	"github.com/Rugvip/bullettime/types"
 )
 
-func TestMessageSource(t *testing.T) {
+func TestMessageStream(t *testing.T) {
 	members, err := db.NewMembershipDb()
 	if err != nil {
 		t.Fatal(err)
@@ -33,11 +34,11 @@ func TestMessageSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_es, err := NewMessageSource(members, streamMux)
+	_es, err := NewMessageStream(members, streamMux)
 	if err != nil {
 		t.Fatal(err)
 	}
-	es := MessageSourceTest{_es, t}
+	es := MessageStreamTest{_es, t}
 	es.push(message("event1", "user1"), 0)
 	es.push(message("event1", "user2"), 1)
 	es.push(message("event1", "user3"), 2)
@@ -62,12 +63,12 @@ func TestMessageSource(t *testing.T) {
 	es.check(3, 7, 5, "user6", "user7")
 }
 
-type MessageSourceTest struct {
-	*messageSource
+type MessageStreamTest struct {
+	interfaces.EventStream
 	t *testing.T
 }
 
-func (es MessageSourceTest) push(event *types.Message, expectedIndex uint64) {
+func (es MessageStreamTest) push(event *types.Message, expectedIndex uint64) {
 	index, err := es.Send(event)
 	if err != nil {
 		es.t.Fatal(err)
@@ -77,12 +78,12 @@ func (es MessageSourceTest) push(event *types.Message, expectedIndex uint64) {
 	}
 }
 
-func (es MessageSourceTest) check(from, to uint64, limit int, expect ...string) {
+func (es MessageStreamTest) check(from, to uint64, limit uint, expect ...string) {
 	user := types.NewUserId("test", "test")
 	roomSet := map[types.RoomId]struct{}{
 		types.NewRoomId("room", "test"): struct{}{},
 	}
-	result, err := es.Range(user, roomSet, from, to, limit)
+	result, err := es.Range(&user, nil, roomSet, from, to, limit)
 	if err != nil {
 		es.t.Fatal(err)
 	}
@@ -91,7 +92,7 @@ func (es MessageSourceTest) check(from, to uint64, limit int, expect ...string) 
 		es.t.Fatal(str+": result length should be", len(expect), "was", len(result))
 	}
 	for i := range result {
-		id := result[i].GetContent().(types.CreateEventContent).Creator.Id.Id
+		id := result[i].Event().GetContent().(types.CreateEventContent).Creator.Id.Id
 		if id != expect[i] {
 			es.t.Fatal(str+": result", i, "should be", expect[i], "was", id)
 		}
