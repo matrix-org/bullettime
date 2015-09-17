@@ -83,6 +83,10 @@ func (id Id) Domain() string {
 	return domainName(id.domain)
 }
 
+func (id Id) String() string {
+	return id.Id + ":" + id.Domain()
+}
+
 type UserId struct{ Id }
 type RoomId struct{ Id }
 type EventId struct{ Id }
