@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Rugvip/bullettime/interfaces"
@@ -16,66 +15,41 @@ func (e eventsEndpoint) getEvents(req *http.Request) interface{} {
 		return err
 	}
 
-	var from *types.StreamToken
-	var to *types.StreamToken
+	query := urlQuery{req.URL.Query()}
 
-	query := req.URL.Query()
-	fromStr := query.Get("from")
-	toStr := query.Get("to")
+	from, err := query.parseStreamToken("from")
+	if err != nil {
+		return err
+	}
+
+	to, err := query.parseStreamToken("to")
+	if err != nil {
+		return err
+	}
+
+	limit, err := query.parseUint("limit", 10)
+	if err != nil {
+		return err
+	}
+	if limit > 100 {
+		limit = 100 //TODO: make configurable
+	}
+
+	timeout, err := query.parseUint("timeout", 5000)
+	if err != nil {
+		return err
+	}
+	if timeout > 60000 {
+		timeout = 60000 //TODO: make configurable
+	}
+	if timeout < 100 {
+		timeout = 100
+	}
+
 	dir := query.Get("dir")
-	limitStr := query.Get("limit")
-	timeoutStr := query.Get("timeout")
-
-	if fromStr != "" {
-		token, err := types.ParseStreamToken(fromStr)
-		if err != nil {
-			return types.BadQueryError(err.Error())
-		}
-		from = &token
-	}
-
-	if toStr != "" {
-		token, err := types.ParseStreamToken(toStr)
-		if err != nil {
-			return types.BadQueryError(err.Error())
-		}
-		to = &token
-	}
-
 	if dir == "b" {
 		token := types.NewStreamToken(0, 0, 0)
 		to = &token
-	}
-
-	var limit uint64
-	var timeout uint64
-
-	var parseErr error
-	if limitStr == "" {
-		limit = 10 //TODO: make configurable
-	} else {
-		limit, parseErr = strconv.ParseUint(limitStr, 10, 32)
-		if parseErr != nil {
-			return types.BadQueryError(parseErr.Error())
-		}
-		if limit > 100 {
-			limit = 100 //TODO: make configurable
-		}
-	}
-
-	if timeoutStr == "" {
-		timeout = 5000 //TODO: make configurable
-	} else {
-		timeout, parseErr = strconv.ParseUint(timeoutStr, 10, 32)
-		if parseErr != nil {
-			return types.BadQueryError(parseErr.Error())
-		}
-		if timeout > 60000 {
-			timeout = 60000 //TODO: make configurable
-		}
-		if timeout < 100 {
-			timeout = 100
-		}
 	}
 
 	cancel := make(chan struct{})
@@ -115,21 +89,14 @@ func (e eventsEndpoint) getInitialSync(req *http.Request) interface{} {
 		return err
 	}
 
-	query := req.URL.Query()
-	limitStr := query.Get("limit")
+	query := urlQuery{req.URL.Query()}
 
-	var limit uint64
-	var parseErr error
-	if limitStr == "" {
-		limit = 10 //TODO: make configurable
-	} else {
-		limit, parseErr = strconv.ParseUint(limitStr, 10, 32)
-		if parseErr != nil {
-			return types.BadQueryError(parseErr.Error())
-		}
-		if limit > 100 {
-			limit = 100 //TODO: make configurable
-		}
+	limit, err := query.parseUint("limit", 10)
+	if err != nil {
+		return err
+	}
+	if limit > 100 {
+		limit = 100 //TODO: make configurable
 	}
 
 	initialSync, err := e.syncService.FullSync(authedUser, uint(limit))

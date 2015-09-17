@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"reflect"
+	"strconv"
 
 	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/types"
@@ -163,4 +165,34 @@ func readAccessToken(
 		return types.UserId{}, types.DefaultUnknownTokenError
 	}
 	return info.UserId(), nil
+}
+
+type urlQuery struct {
+	url.Values
+}
+
+func (q urlQuery) parseUint(name string, defaultValue uint64) (uint64, types.Error) {
+	str := q.Get(name)
+	if str == "" {
+		return defaultValue, nil
+	}
+
+	value, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		return 0, types.BadQueryError(err.Error())
+	}
+	return value, nil
+}
+
+func (q urlQuery) parseStreamToken(name string) (*types.StreamToken, types.Error) {
+	str := q.Get(name)
+	if str == "" {
+		return nil, nil
+	}
+
+	token, err := types.ParseStreamToken(str)
+	if err != nil {
+		return nil, types.BadQueryError(err.Error())
+	}
+	return &token, nil
 }
