@@ -53,8 +53,8 @@ type SyncService interface {
 
 type UserService interface {
 	CreateUser(types.UserId) types.Error
-	UserExists(user, caller types.UserId) types.Error
-	VerifyPassword(user types.UserId, password string) types.Error
+	UserExists(user, caller types.UserId) (bool, types.Error)
+	VerifyPassword(user types.UserId, password string) (bool, types.Error)
 	SetPassword(user, caller types.UserId, password string) types.Error
 }
 

@@ -32,30 +32,23 @@ type userService struct {
 	users interfaces.UserStore
 }
 
-func (s userService) UserExists(user, caller types.UserId) types.Error {
-	exists, err := s.users.UserExists(user)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return types.NotFoundError("user '" + user.String() + "' doesn't exist")
-	}
-	return nil
+func (s userService) UserExists(user, caller types.UserId) (bool, types.Error) {
+	return s.users.UserExists(user)
 }
 
 func (s userService) CreateUser(id types.UserId) types.Error {
 	return s.users.CreateUser(id)
 }
 
-func (s userService) VerifyPassword(user types.UserId, password string) types.Error {
+func (s userService) VerifyPassword(user types.UserId, password string) (bool, types.Error) {
 	hash, err := s.users.UserPasswordHash(user)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
-		return types.ForbiddenError("invalid credentials")
+		return false, nil
 	}
-	return nil
+	return true, nil
 }
 
 func (s userService) SetPassword(user, caller types.UserId, password string) types.Error {
