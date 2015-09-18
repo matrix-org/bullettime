@@ -43,7 +43,7 @@ func setup() services {
 	if err != nil {
 		panic(err)
 	}
-	aliasStore, err := db.NewAliasDb()
+	aliasStore, err := db.NewIdMapDb()
 	if err != nil {
 		panic(err)
 	}

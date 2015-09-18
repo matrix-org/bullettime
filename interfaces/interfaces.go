@@ -117,13 +117,13 @@ type RoomStore interface {
 	EntireRoomState(roomId types.RoomId) ([]*types.State, types.Error)
 }
 
-type AliasStore interface {
-	Reserve(alias types.Alias) types.Error
-	Claim(alias types.Alias, roomId types.RoomId) types.Error
-	AddAlias(types.Alias, types.RoomId) types.Error
-	RemoveAlias(types.Alias, types.RoomId) types.Error
-	Aliases(types.RoomId) ([]types.Alias, types.Error)
-	Room(types.Alias) (*types.RoomId, types.Error)
+type IdMapStore interface {
+	Reserve(from types.Id) types.Error
+	Claim(from types.Id, to types.Id) types.Error
+	Put(from types.Id, to types.Id) types.Error
+	Delete(from types.Id, to types.Id) types.Error
+	Lookup(from types.Id) (*types.Id, types.Error)
+	ReverseLookup(to types.Id) ([]types.Id, types.Error)
 }
 
 type MembershipStore interface {

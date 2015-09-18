@@ -25,7 +25,7 @@ import (
 
 func CreateRoomService(
 	roomStore interfaces.RoomStore,
-	aliasStore interfaces.AliasStore,
+	aliasStore interfaces.IdMapStore,
 	memberStore interfaces.MembershipStore,
 	eventSink interfaces.EventSink,
 	profileProvider interfaces.ProfileProvider,
@@ -45,7 +45,7 @@ func CreateRoomService(
 
 type roomService struct {
 	rooms           interfaces.RoomStore
-	aliases         interfaces.AliasStore
+	aliases         interfaces.IdMapStore
 	members         interfaces.MembershipStore
 	eventSink       interfaces.EventSink
 	profileProvider interfaces.ProfileProvider
@@ -65,14 +65,14 @@ func (s roomService) RoomExists(id types.RoomId, caller types.UserId) types.Erro
 }
 
 func (s roomService) LookupAlias(alias types.Alias) (types.RoomId, types.Error) {
-	room, err := s.aliases.Room(alias)
+	room, err := s.aliases.Lookup(types.Id(alias))
 	if err != nil {
 		return types.RoomId{}, err
 	}
 	if room == nil {
 		return types.RoomId{}, types.NotFoundError("room alias '" + alias.String() + "' doesn't exist")
 	}
-	return *room, nil
+	return types.RoomId(*room), nil
 }
 
 func (s roomService) CreateRoom(
@@ -84,7 +84,7 @@ func (s roomService) CreateRoom(
 	if desc.Alias != nil {
 		a := types.NewAlias(*desc.Alias, domain)
 		alias = &a
-		if err := s.aliases.Reserve(*alias); err != nil {
+		if err := s.aliases.Reserve(types.Id(*alias)); err != nil {
 			return types.RoomId{}, nil, err
 		}
 	}
@@ -93,7 +93,7 @@ func (s roomService) CreateRoom(
 		return types.RoomId{}, nil, err
 	}
 	if alias != nil {
-		if err := s.aliases.Claim(*alias, id); err != nil {
+		if err := s.aliases.Claim(types.Id(*alias), types.Id(id)); err != nil {
 			return types.RoomId{}, nil, err
 		}
 	}
