@@ -12,24 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package events
 
 import (
-	"log"
-	"net/http"
-	"os"
+	"testing"
 
 	"github.com/Rugvip/bullettime/db"
 	"github.com/Rugvip/bullettime/events"
-
+	"github.com/Rugvip/bullettime/interfaces"
 	"github.com/Rugvip/bullettime/service"
 	"github.com/Rugvip/bullettime/types"
-	"github.com/julienschmidt/httprouter"
-
-	"github.com/Rugvip/bullettime/api"
 )
 
-func setupApiEndpoint() http.Handler {
+type services struct {
+	room     interfaces.RoomService
+	user     interfaces.UserService
+	profile  interfaces.ProfileService
+	presence interfaces.PresenceService
+	token    interfaces.TokenService
+	event    interfaces.EventService
+	sync     interfaces.SyncService
+}
+
+func setup() services {
 	roomStore, err := db.NewRoomDb()
 	if err != nil {
 		panic(err)
@@ -118,46 +123,38 @@ func setupApiEndpoint() http.Handler {
 	if err != nil {
 		panic(err)
 	}
-
-	mux := httprouter.New()
-	api.NewAuthEndpoint(userService, tokenService).Register(mux)
-	api.NewProfileEndpoint(userService, tokenService, profileService).Register(mux)
-	api.NewPresenceEndpoint(userService, tokenService, presenceService).Register(mux)
-	api.NewRoomsEndpoint(userService, tokenService, roomService, syncService, eventService).Register(mux)
-	api.NewEventsEndpoint(userService, tokenService, eventService, syncService).Register(mux)
-
-	mux.NotFound = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		api.WriteJsonResponseWithStatus(rw, types.DefaultUnrecognizedError)
-	})
-
-	mux.OPTIONS("/*path", func(rw http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	})
-
-	corsHandler := http.NewServeMux()
-	corsHandler.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("Access-Control-Allow-Origin", "*")
-		rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
-		rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
-		mux.ServeHTTP(rw, req)
-	})
-
-	return corsHandler
+	return services{
+		roomService,
+		userService,
+		profileService,
+		presenceService,
+		tokenService,
+		eventService,
+		syncService,
+	}
 }
 
-func main() {
-	mux := http.NewServeMux()
-	mux.Handle("/_matrix/client/api/v1/", http.StripPrefix("/_matrix/client/api/v1", setupApiEndpoint()))
-
-	port := "4080"
-	if len(os.Args) > 1 {
-		port = os.Args[1]
+func TestUserCreation(t *testing.T) {
+	s := setup()
+	userId := types.NewUserId("test", "matrix.org")
+	if err := s.user.CreateUser(userId); err != nil {
+		t.Fatal(err)
 	}
-
-	server := &http.Server{
-		Addr:    ":" + port,
-		Handler: mux,
+	s.user.UserExists(userId, userId)
+	err := s.user.CreateUser(userId)
+	if err == nil {
+		t.Fatal("expected M_USER_IN_USE error")
+	} else if err.Code() != "M_USER_IN_USE" {
+		t.Error("expected M_USER_IN_USE error code but got ", err.Code())
 	}
-
-	log.Println("Listening on port " + port)
-	log.Fatal(server.ListenAndServe())
+	status, err := s.presence.Status(userId, userId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status.Presence != types.PresenceOffline {
+		t.Error("expected offline presence")
+	}
+	if status.StatusMessage != "" {
+		t.Error("expected empty status message")
+	}
 }
