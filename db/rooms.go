@@ -55,7 +55,7 @@ func (db *roomDb) CreateRoom(domain string) (types.RoomId, types.Error) {
 	defer db.roomsLock.Unlock()
 	id := types.NewRoomId("", domain)
 	for {
-		id.Id.Id = utils.RandomString(16)
+		id.Id = utils.RandomString(16)
 		if db.rooms[id] == nil {
 			break
 		}
@@ -85,9 +85,9 @@ func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conte
 	}
 	db.eventsLock.Lock()
 	defer db.eventsLock.Unlock()
-	var eventId = types.DeriveEventId("", userId.Id)
+	var eventId = types.DeriveEventId("", types.Id(userId))
 	for {
-		eventId.Id.Id = utils.RandomString(16)
+		eventId.Id = utils.RandomString(16)
 		if db.events[eventId] == nil {
 			break
 		}
@@ -117,9 +117,9 @@ func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content
 	}
 	db.eventsLock.Lock()
 	defer db.eventsLock.Unlock()
-	var eventId = types.DeriveEventId("", userId.Id)
+	var eventId = types.DeriveEventId("", types.Id(userId))
 	for {
-		eventId.Id.Id = utils.RandomString(16)
+		eventId.Id = utils.RandomString(16)
 		if db.events[eventId] == nil {
 			break
 		}

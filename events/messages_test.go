@@ -92,7 +92,7 @@ func (es MessageStreamTest) check(from, to uint64, limit uint, expect ...string)
 		es.t.Fatal(str+": result length should be", len(expect), "was", len(result))
 	}
 	for i := range result {
-		id := result[i].Event().GetContent().(types.CreateEventContent).Creator.Id.Id
+		id := result[i].Event().GetContent().(types.CreateEventContent).Creator.Id
 		if id != expect[i] {
 			es.t.Fatal(str+": result", i, "should be", expect[i], "was", id)
 		}

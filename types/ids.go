@@ -32,6 +32,7 @@ const (
 )
 
 type Id struct {
+	Prefix rune
 	Id     string
 	domain int
 }
@@ -42,7 +43,7 @@ func (e IdParseError) Error() string {
 	return "failed to parse id: " + string(e)
 }
 
-func parseId(id *Id, str string, prefix rune) error {
+func parseId(prefix rune, id *Id, str string) error {
 	if len(str) < 2 {
 		return IdParseError("too short")
 	}
@@ -63,91 +64,92 @@ func parseId(id *Id, str string, prefix rune) error {
 	if split[1] == "" {
 		return IdParseError("missing domain part")
 	}
+	id.Prefix = prefix
 	id.Id = split[0]
 	id.domain = domainId(split[1])
 	return nil
 }
 
-func stringifyId(id Id, prefix rune) string {
+func (id Id) String() string {
 	if !id.Valid() {
 		panic("tried to stringify invalid id: {" + id.Id + ", " + id.Domain() + "}")
 	}
-	return fmt.Sprintf("%c%s:%s", prefix, id.Id, id.Domain())
+	return fmt.Sprintf("%c%s:%s", id.Prefix, id.Id, id.Domain())
 }
 
 func (id Id) Valid() bool {
-	return id.Id != "" && id.Domain() != ""
+	return id.Prefix != 0 && id.Id != "" && id.Domain() != ""
 }
 
 func (id Id) Domain() string {
 	return domainName(id.domain)
 }
 
-func (id Id) String() string {
-	return id.Id + ":" + id.Domain()
-}
-
-type UserId struct{ Id }
-type RoomId struct{ Id }
-type EventId struct{ Id }
-type Alias struct{ Id }
+type UserId Id
+type RoomId Id
+type EventId Id
+type Alias Id
 
 func NewRoomId(id, domain string) RoomId {
-	return RoomId{Id{id, domainId(domain)}}
+	return RoomId{RoomIdPrefix, id, domainId(domain)}
 }
 
 func NewAlias(id, domain string) Alias {
-	return Alias{Id{id, domainId(domain)}}
+	return Alias{AliasPrefix, id, domainId(domain)}
 }
 
 func NewEventId(id, domain string) EventId {
-	return EventId{Id{id, domainId(domain)}}
+	return EventId{EventIdPrefix, id, domainId(domain)}
 }
 
 func NewUserId(id, domain string) UserId {
-	return UserId{Id{id, domainId(domain)}}
+	return UserId{UserIdPrefix, id, domainId(domain)}
+}
+
+func DeriveId(id string, from Id) Id {
+	return Id{from.Prefix, id, from.domain}
 }
 
 func DeriveRoomId(id string, from Id) RoomId {
-	return RoomId{Id{id, from.domain}}
+	return RoomId(Id{RoomIdPrefix, id, from.domain})
 }
 
 func DeriveAlias(id string, from Id) Alias {
-	return Alias{Id{id, from.domain}}
+	return Alias(Id{AliasPrefix, id, from.domain})
 }
 
 func DeriveEventId(id string, from Id) EventId {
-	return EventId{Id{id, from.domain}}
+	return EventId(Id{EventIdPrefix, id, from.domain})
 }
 
 func DeriveUserId(id string, from Id) UserId {
-	return UserId{Id{id, from.domain}}
+	return UserId(Id{UserIdPrefix, id, from.domain})
 }
 
 func ParseUserId(str string) (id UserId, err error) {
-	err = parseId(&id.Id, str, UserIdPrefix)
+	err = parseId(UserIdPrefix, (*Id)(&id), str)
 	return id, err
 }
 
 func ParseRoomId(str string) (id RoomId, err error) {
-	err = parseId(&id.Id, str, RoomIdPrefix)
+	err = parseId(RoomIdPrefix, (*Id)(&id), str)
 	return id, err
 }
 
 func ParseEventId(str string) (id EventId, err error) {
-	err = parseId(&id.Id, str, EventIdPrefix)
+	err = parseId(EventIdPrefix, (*Id)(&id), str)
 	return id, err
 }
 
 func ParseAlias(str string) (id Alias, err error) {
-	err = parseId(&id.Id, str, AliasPrefix)
+	err = parseId(AliasPrefix, (*Id)(&id), str)
 	return id, err
 }
 
-func (i UserId) String() string  { return stringifyId(i.Id, UserIdPrefix) }
-func (i RoomId) String() string  { return stringifyId(i.Id, RoomIdPrefix) }
-func (i EventId) String() string { return stringifyId(i.Id, EventIdPrefix) }
-func (i Alias) String() string   { return stringifyId(i.Id, AliasPrefix) }
+func (i UserId) String() string  { return Id(i).String() }
+func (i RoomId) String() string  { return Id(i).String() }
+func (i EventId) String() string { return Id(i).String() }
+func (i Alias) String() string   { return Id(i).String() }
 
 func (i *UserId) UnmarshalJSON(bytes []byte) (err error) {
 	*i, err = ParseUserId(utils.StripQuotes(string(bytes)))

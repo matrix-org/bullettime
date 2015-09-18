@@ -89,7 +89,7 @@ func (e *Message) GetUserId() *UserId {
 }
 
 func (e *Message) GetEventKey() Id {
-	return e.EventId.Id
+	return Id(e.EventId)
 }
 
 type PresenceEvent struct {
@@ -114,7 +114,7 @@ func (e *PresenceEvent) GetUserId() *UserId {
 }
 
 func (e *PresenceEvent) GetEventKey() Id {
-	return e.Content.UserId.Id
+	return Id(e.Content.UserId)
 }
 
 type TypingUsers struct {
@@ -144,7 +144,7 @@ func (e *TypingEvent) GetUserId() *UserId {
 }
 
 func (e *TypingEvent) GetEventKey() Id {
-	return e.RoomId.Id
+	return Id(e.RoomId)
 }
 
 type OldState State

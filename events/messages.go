@@ -116,7 +116,7 @@ func (s *messageStream) Event(
 	eventId types.EventId,
 ) (types.Event, types.Error) {
 	s.lock.RLock()
-	indexed := s.byId[eventId.Id]
+	indexed := s.byId[types.Id(eventId)]
 	s.lock.RUnlock()
 	extraUser := extraUserForEvent(indexed.event)
 	if extraUser != nil && *extraUser == user {

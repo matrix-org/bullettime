@@ -47,17 +47,17 @@ func TestEventStreamMux(t *testing.T) {
 	resE3 := <-streamE3
 	if resA == nil {
 		t.Error("resA (", resA, ") expected to be not nil")
-	} else if resA.Event().GetRoomId().Id.Id != "room1" {
+	} else if resA.Event().GetRoomId().Id != "room1" {
 		t.Error("resA roomId (", resA.Event().GetRoomId(), ") expected to be room1")
 	}
 	if resB == nil {
 		t.Error("resB (", resB, ") expected to be not nil")
-	} else if resB.Event().GetRoomId().Id.Id != "room2" {
+	} else if resB.Event().GetRoomId().Id != "room2" {
 		t.Error("resB roomId (", resB.Event().GetRoomId(), ") expected to be room2")
 	}
 	if resC == nil {
 		t.Error("resC (", resC, ") expected to be not nil")
-	} else if resC.Event().GetRoomId().Id.Id != "room2" {
+	} else if resC.Event().GetRoomId().Id != "room2" {
 		t.Error("resC roomId (", resC.Event().GetRoomId(), ") expected to be room3")
 	}
 	if resD != nil {
