@@ -17,7 +17,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/Rugvip/bullettime/utils"
+	"github.com/matrix-org/bullettime/utils"
 )
 
 type InitialSync struct {

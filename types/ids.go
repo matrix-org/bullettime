@@ -21,7 +21,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/Rugvip/bullettime/utils"
+	"github.com/matrix-org/bullettime/utils"
 )
 
 const (

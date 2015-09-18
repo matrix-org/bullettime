@@ -17,7 +17,7 @@ package interfaces
 import (
 	"fmt"
 
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/types"
 )
 
 type RoomService interface {

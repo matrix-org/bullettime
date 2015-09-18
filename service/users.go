@@ -15,8 +15,8 @@
 package service
 
 import (
-	"github.com/Rugvip/bullettime/interfaces"
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/interfaces"
+	"github.com/matrix-org/bullettime/types"
 	"golang.org/x/crypto/bcrypt"
 )
 

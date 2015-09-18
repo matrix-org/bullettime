@@ -17,7 +17,7 @@ package events
 import (
 	"sync"
 
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/types"
 )
 
 func NewStreamMux() (*streamMux, types.Error) {

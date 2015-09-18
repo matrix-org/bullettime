@@ -19,14 +19,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Rugvip/bullettime/db"
-	"github.com/Rugvip/bullettime/events"
+	"github.com/matrix-org/bullettime/db"
+	"github.com/matrix-org/bullettime/events"
 
-	"github.com/Rugvip/bullettime/service"
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/service"
+	"github.com/matrix-org/bullettime/types"
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/Rugvip/bullettime/api"
+	"github.com/matrix-org/bullettime/api"
 )
 
 func setupApiEndpoint() http.Handler {

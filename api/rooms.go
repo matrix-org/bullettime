@@ -22,9 +22,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Rugvip/bullettime/interfaces"
+	"github.com/matrix-org/bullettime/interfaces"
 
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/types"
 
 	"github.com/julienschmidt/httprouter"
 )

@@ -15,7 +15,7 @@
     {
         "translate_tabs_to_spaces": false,
         "GoOracle": {
-            "oracle_scope": ["github.com/Rugvip/bullettime"],
+            "oracle_scope": ["github.com/matrix-org/bullettime"],
             "output": "output_panel"
         }
     }

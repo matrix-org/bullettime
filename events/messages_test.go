@@ -19,10 +19,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Rugvip/bullettime/db"
-	"github.com/Rugvip/bullettime/interfaces"
+	"github.com/matrix-org/bullettime/db"
+	"github.com/matrix-org/bullettime/interfaces"
 
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/types"
 )
 
 func TestMessageStream(t *testing.T) {

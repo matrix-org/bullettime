@@ -18,9 +18,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Rugvip/bullettime/interfaces"
-	"github.com/Rugvip/bullettime/types"
-	"github.com/Rugvip/bullettime/utils"
+	"github.com/matrix-org/bullettime/interfaces"
+	"github.com/matrix-org/bullettime/types"
+	"github.com/matrix-org/bullettime/utils"
 )
 
 type roomDb struct { // always lock in the same order as below

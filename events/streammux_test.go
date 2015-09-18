@@ -17,7 +17,7 @@ package events
 import (
 	"testing"
 
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/types"
 )
 
 func TestEventStreamMux(t *testing.T) {

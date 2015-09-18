@@ -17,8 +17,8 @@ package service
 import (
 	"log"
 
-	"github.com/Rugvip/bullettime/interfaces"
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/interfaces"
+	"github.com/matrix-org/bullettime/types"
 )
 
 func NewEventService(

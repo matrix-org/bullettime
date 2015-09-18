@@ -17,11 +17,11 @@ package events
 import (
 	"testing"
 
-	"github.com/Rugvip/bullettime/db"
-	"github.com/Rugvip/bullettime/events"
-	"github.com/Rugvip/bullettime/interfaces"
-	"github.com/Rugvip/bullettime/service"
-	"github.com/Rugvip/bullettime/types"
+	"github.com/matrix-org/bullettime/db"
+	"github.com/matrix-org/bullettime/events"
+	"github.com/matrix-org/bullettime/interfaces"
+	"github.com/matrix-org/bullettime/service"
+	"github.com/matrix-org/bullettime/types"
 )
 
 type services struct {
