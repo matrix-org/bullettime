@@ -1,0 +1,22 @@
+{
+    "folders":
+    [
+        {
+            "folder_exclude_patterns":
+            [
+                ".*",
+            ],
+            "follow_symlinks": true,
+            "name": "BulletTime",
+            "path": "."
+        }
+    ],
+    "settings":
+    {
+        "translate_tabs_to_spaces": false,
+        "GoOracle": {
+            "oracle_scope": ["github.com/Rugvip/bullettime"],
+            "output": "output_panel"
+        }
+    }
+}
