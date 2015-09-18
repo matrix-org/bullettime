@@ -17,5 +17,5 @@ package main
 import "fmt"
 
 func main() {
-    fmt.Println("Welcome to ganglion. All your synapse are belong to us.")
+    fmt.Println("Welcome to bullettime. All your synapse are belong to us.")
 }
