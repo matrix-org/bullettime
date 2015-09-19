@@ -24,16 +24,13 @@ import (
 )
 
 type roomDb struct { // always lock in the same order as below
-	roomsLock  sync.RWMutex
-	rooms      map[types.RoomId]*dbRoom
-	eventsLock sync.RWMutex
-	events     map[types.EventId]types.Event
+	roomsLock sync.RWMutex
+	rooms     map[types.RoomId]*dbRoom
 }
 
 func NewRoomDb() (interfaces.RoomStore, error) {
 	return &roomDb{
-		events: map[types.EventId]types.Event{},
-		rooms:  map[types.RoomId]*dbRoom{},
+		rooms: map[types.RoomId]*dbRoom{},
 	}, nil
 }
 
@@ -83,15 +80,7 @@ func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conte
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
-	db.eventsLock.Lock()
-	defer db.eventsLock.Unlock()
-	var eventId = types.DeriveEventId("", types.Id(userId))
-	for {
-		eventId.Id = utils.RandomString(16)
-		if db.events[eventId] == nil {
-			break
-		}
-	}
+	var eventId = types.DeriveEventId(utils.RandomString(16), types.Id(userId))
 	event := new(types.Message)
 	event.EventId = eventId
 	event.RoomId = roomId
@@ -100,7 +89,6 @@ func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conte
 	event.Timestamp = types.Timestamp{time.Now()}
 	event.Content = content
 
-	db.events[eventId] = event
 	room.eventsLock.Lock()
 	defer room.eventsLock.Unlock()
 	room.events = append(room.events, event)
@@ -115,15 +103,7 @@ func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content
 	if room == nil {
 		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
 	}
-	db.eventsLock.Lock()
-	defer db.eventsLock.Unlock()
-	var eventId = types.DeriveEventId("", types.Id(userId))
-	for {
-		eventId.Id = utils.RandomString(16)
-		if db.events[eventId] == nil {
-			break
-		}
-	}
+	var eventId = types.DeriveEventId(utils.RandomString(16), types.Id(userId))
 	stateId := stateId{content.GetEventType(), stateKey}
 
 	state := new(types.State)
@@ -136,7 +116,6 @@ func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content
 	state.Content = content
 	state.OldState = (*types.OldState)(room.states[stateId])
 
-	db.events[eventId] = state
 	room.eventsLock.Lock()
 	defer room.eventsLock.Unlock()
 	room.events = append(room.events, state)
