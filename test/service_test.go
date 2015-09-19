@@ -35,11 +35,15 @@ type services struct {
 }
 
 func setup() services {
+	stateStore, err := db.NewStateStore()
+	if err != nil {
+		panic(err)
+	}
 	roomStore, err := db.NewRoomDb()
 	if err != nil {
 		panic(err)
 	}
-	userStore, err := db.NewUserDb()
+	userStore, err := db.NewUserDb(stateStore)
 	if err != nil {
 		panic(err)
 	}

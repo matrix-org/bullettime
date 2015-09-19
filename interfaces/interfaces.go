@@ -102,8 +102,8 @@ type EventService interface {
 }
 
 type UserStore interface {
-	CreateUser(types.UserId) types.Error
-	UserExists(types.UserId) (bool, types.Error)
+	CreateUser(types.UserId) (exists bool, types.Error)
+	UserExists(types.UserId) (exists bool, types.Error)
 	SetUserPasswordHash(id types.UserId, hash string) types.Error
 	UserPasswordHash(types.UserId) (string, types.Error)
 }

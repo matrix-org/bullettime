@@ -37,7 +37,14 @@ func (s userService) UserExists(user, caller types.UserId) (bool, types.Error) {
 }
 
 func (s userService) CreateUser(id types.UserId) types.Error {
-	return s.users.CreateUser(id)
+	exists, err := s.users.CreateUser(id)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return types.UserInUseError("user '" + id.String() + "' already exists")
+	}
+	return nil
 }
 
 func (s userService) VerifyPassword(user types.UserId, password string) (bool, types.Error) {

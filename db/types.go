@@ -22,8 +22,8 @@ type State interface {
 }
 
 type StateStore interface {
-	CreateBucket(types.Id) (bool, types.Error)
-	BucketExists(types.Id) (bool, types.Error)
+	CreateBucket(types.Id) (exists bool, err types.Error)
+	BucketExists(types.Id) (exists bool, err types.Error)
 	SetState(id types.Id, key string, value []byte) (oldValue []byte, err types.Error)
 	State(id types.Id, key string) (value []byte, err types.Error)
 	States(id types.Id) ([]State, types.Error)

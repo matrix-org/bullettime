@@ -22,19 +22,23 @@ import (
 	"github.com/matrix-org/bullettime/db"
 	"github.com/matrix-org/bullettime/events"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/matrix-org/bullettime/service"
 	"github.com/matrix-org/bullettime/types"
-	"github.com/julienschmidt/httprouter"
 
 	"github.com/matrix-org/bullettime/api"
 )
 
 func setupApiEndpoint() http.Handler {
+	stateStore, err := db.NewStateStore()
+	if err != nil {
+		panic(err)
+	}
 	roomStore, err := db.NewRoomDb()
 	if err != nil {
 		panic(err)
 	}
-	userStore, err := db.NewUserDb()
+	userStore, err := db.NewUserDb(stateStore)
 	if err != nil {
 		panic(err)
 	}

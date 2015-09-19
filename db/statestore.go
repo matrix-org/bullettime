@@ -52,12 +52,12 @@ func (db *stateStore) CreateBucket(id types.Id) (bool, types.Error) {
 	db.Lock()
 	defer db.Unlock()
 	if db.buckets[id] != nil {
-		return false, nil
+		return true, nil
 	}
 	db.buckets[id] = &bucket{
 		states: map[string][]byte{},
 	}
-	return true, nil
+	return false, nil
 }
 
 func (db *stateStore) BucketExists(id types.Id) (bool, types.Error) {
