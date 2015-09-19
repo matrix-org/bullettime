@@ -40,11 +40,9 @@ type stateId struct {
 }
 
 type dbRoom struct { // always lock in the same order as below
-	id         types.RoomId
-	stateLock  sync.RWMutex
-	states     map[stateId]*types.State
-	eventsLock sync.RWMutex
-	events     []types.Event
+	id        types.RoomId
+	stateLock sync.RWMutex
+	states    map[stateId]*types.State
 }
 
 func (db *roomDb) CreateRoom(domain string) (types.RoomId, types.Error) {
@@ -89,10 +87,6 @@ func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, conte
 	event.Timestamp = types.Timestamp{time.Now()}
 	event.Content = content
 
-	room.eventsLock.Lock()
-	defer room.eventsLock.Unlock()
-	room.events = append(room.events, event)
-
 	return event, nil
 }
 
@@ -116,9 +110,6 @@ func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content
 	state.Content = content
 	state.OldState = (*types.OldState)(room.states[stateId])
 
-	room.eventsLock.Lock()
-	defer room.eventsLock.Unlock()
-	room.events = append(room.events, state)
 	room.stateLock.Lock()
 	defer room.stateLock.Unlock()
 	room.states[stateId] = state
