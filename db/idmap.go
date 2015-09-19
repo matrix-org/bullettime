@@ -16,92 +16,62 @@ package db
 
 import (
 	"sync"
-	"time"
 
 	"github.com/matrix-org/bullettime/interfaces"
 	"github.com/matrix-org/bullettime/types"
 )
 
 type idMapDb struct { // always lock in the same order as below
-	reverseMappingLock sync.RWMutex
-	reverseMapping     map[types.Id][]types.Id
-
-	mappingLock sync.RWMutex
-	mapping     map[types.Id]types.Id
-	reserved    map[types.Id]struct{}
+	sync.RWMutex
+	mapping        map[types.Id]types.Id
+	reverseMapping map[types.Id][]types.Id
 }
 
 func NewIdMapDb() (interfaces.IdMapStore, error) {
 	return &idMapDb{
-		reverseMapping: map[types.Id][]types.Id{},
 		mapping:        map[types.Id]types.Id{},
-		reserved:       map[types.Id]struct{}{},
+		reverseMapping: map[types.Id][]types.Id{},
 	}, nil
 }
 
-func (db *idMapDb) Reserve(from types.Id) types.Error {
-	db.mappingLock.Lock()
-	defer db.mappingLock.Unlock()
+func (db *idMapDb) Insert(from types.Id, to types.Id) (inserted bool, err types.Error) {
+	db.Lock()
+	defer db.Unlock()
 	if _, ok := db.mapping[from]; ok {
-		return types.RoomInUseError("id from '" + from.String() + "' already exists")
+		return false, nil
 	}
-	if _, ok := db.reserved[from]; ok {
-		return types.RoomInUseError("id from '" + from.String() + "' already reserved")
-	}
-	db.reserved[from] = struct{}{}
-	go func() {
-		time.Sleep(time.Second * 10)
-		delete(db.reserved, from)
-	}()
-	return nil
+	db.mapping[from] = to
+	db.reverseMapping[to] = append(db.reverseMapping[to], from)
+	return true, nil
 }
 
-func (db *idMapDb) Claim(from types.Id, to types.Id) types.Error {
-	db.mappingLock.Lock()
-	defer db.mappingLock.Unlock()
-	if _, ok := db.mapping[from]; ok {
-		return types.RoomInUseError("id from '" + from.String() + "' already exists")
+func (db *idMapDb) Replace(from types.Id, to types.Id) (replaced bool, err types.Error) {
+	db.Lock()
+	defer db.Unlock()
+	if _, ok := db.mapping[from]; !ok {
+		return false, nil
 	}
-	if _, ok := db.reserved[from]; !ok {
-		return types.RoomInUseError("id from '" + from.String() + "' was not reserved")
-	}
-	delete(db.reserved, from)
 	db.mapping[from] = to
-
-	db.reverseMappingLock.Lock()
-	defer db.reverseMappingLock.Unlock()
-	db.reverseMapping[to] = append(db.reverseMapping[to], from)
-	return nil
+	return true, nil
 }
 
 func (db *idMapDb) Put(from types.Id, to types.Id) types.Error {
-	db.mappingLock.Lock()
-	defer db.mappingLock.Unlock()
+	db.Lock()
+	defer db.Unlock()
 	if _, ok := db.mapping[from]; ok {
-		return types.RoomInUseError("id from '" + from.String() + "' already exists")
-	}
-	if _, ok := db.reserved[from]; ok {
-		return types.RoomInUseError("id from '" + from.String() + "' is reserved")
+		db.reverseMapping[to] = append(db.reverseMapping[to], from)
 	}
 	db.mapping[from] = to
-
-	db.reverseMappingLock.Lock()
-	defer db.reverseMappingLock.Unlock()
-	db.reverseMapping[to] = append(db.reverseMapping[to], from)
-
 	return nil
 }
 
-func (db *idMapDb) Delete(from types.Id, to types.Id) types.Error {
-	db.mappingLock.Lock()
-	defer db.mappingLock.Unlock()
+func (db *idMapDb) Delete(from types.Id, to types.Id) (deleted bool, err types.Error) {
+	db.Lock()
+	defer db.Unlock()
 	if _, ok := db.mapping[from]; !ok {
-		return types.NotFoundError("id from '" + from.String() + "' doesn't exist")
+		return false, nil
 	}
 	delete(db.mapping, from)
-
-	db.reverseMappingLock.Lock()
-	defer db.reverseMappingLock.Unlock()
 
 	reverseMapping := db.reverseMapping[to]
 	l := len(reverseMapping)
@@ -114,12 +84,12 @@ func (db *idMapDb) Delete(from types.Id, to types.Id) types.Error {
 		}
 	}
 	db.reverseMapping[to] = reverseMapping
-	return nil
+	return true, nil
 }
 
 func (db *idMapDb) Lookup(from types.Id) (*types.Id, types.Error) {
-	db.mappingLock.RLock()
-	defer db.mappingLock.RUnlock()
+	db.RLock()
+	defer db.RUnlock()
 	if to, ok := db.mapping[from]; ok {
 		return &to, nil
 	}
@@ -127,7 +97,7 @@ func (db *idMapDb) Lookup(from types.Id) (*types.Id, types.Error) {
 }
 
 func (db *idMapDb) ReverseLookup(to types.Id) ([]types.Id, types.Error) {
-	db.reverseMappingLock.RLock()
-	defer db.reverseMappingLock.RUnlock()
+	db.RLock()
+	defer db.RUnlock()
 	return db.reverseMapping[to], nil
 }

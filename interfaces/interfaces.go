@@ -102,14 +102,14 @@ type EventService interface {
 }
 
 type UserStore interface {
-	CreateUser(types.UserId) (exists bool, types.Error)
-	UserExists(types.UserId) (exists bool, types.Error)
+	CreateUser(types.UserId) (exists bool, err types.Error)
+	UserExists(types.UserId) (exists bool, err types.Error)
 	SetUserPasswordHash(id types.UserId, hash string) types.Error
 	UserPasswordHash(types.UserId) (string, types.Error)
 }
 
 type RoomStore interface {
-	CreateRoom(domain string) (types.RoomId, types.Error)
+	CreateRoom(id types.RoomId) (exists bool, err types.Error)
 	RoomExists(types.RoomId) (bool, types.Error)
 	SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error)
 	RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error)
@@ -117,10 +117,14 @@ type RoomStore interface {
 }
 
 type IdMapStore interface {
-	Reserve(from types.Id) types.Error
-	Claim(from types.Id, to types.Id) types.Error
+	// Does nothing and returns false if the mapping already exists
+	Insert(from types.Id, to types.Id) (inserted bool, err types.Error)
+	// Does nothing and returns false if the mapping doesn't already exist
+	Replace(from types.Id, to types.Id) (replaced bool, err types.Error)
+	// Inserts or replaces as needed
 	Put(from types.Id, to types.Id) types.Error
-	Delete(from types.Id, to types.Id) types.Error
+	// Does noting and returns false if the mapping doesn't exist
+	Delete(from types.Id, to types.Id) (deleted bool, err types.Error)
 	Lookup(from types.Id) (*types.Id, types.Error)
 	ReverseLookup(to types.Id) ([]types.Id, types.Error)
 }

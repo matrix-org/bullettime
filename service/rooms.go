@@ -83,21 +83,25 @@ func (s roomService) CreateRoom(
 	desc *types.RoomDescription,
 ) (types.RoomId, *types.Alias, types.Error) {
 	var alias *types.Alias
+	id := types.NewRoomId(utils.RandomString(16), domain)
 	if desc.Alias != nil {
 		a := types.NewAlias(*desc.Alias, domain)
 		alias = &a
-		if err := s.aliases.Reserve(types.Id(*alias)); err != nil {
+		inserted, err := s.aliases.Insert(types.Id(id), types.Id(a))
+		if !inserted {
+			err := types.RoomInUseError("room alias '" + alias.String() + "' already exists")
+			return types.RoomId{}, nil, err
+		}
+		if err != nil {
 			return types.RoomId{}, nil, err
 		}
 	}
-	id, err := s.rooms.CreateRoom(domain)
+	exists, err := s.rooms.CreateRoom(id)
+	if exists {
+		return types.RoomId{}, nil, types.RoomInUseError("room '" + id.String() + "' already exists")
+	}
 	if err != nil {
 		return types.RoomId{}, nil, err
-	}
-	if alias != nil {
-		if err := s.aliases.Claim(types.Id(*alias), types.Id(id)); err != nil {
-			return types.RoomId{}, nil, err
-		}
 	}
 	s.members.AddMember(id, creator)
 

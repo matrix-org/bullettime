@@ -45,21 +45,17 @@ type dbRoom struct { // always lock in the same order as below
 	states    map[stateId]*types.State
 }
 
-func (db *roomDb) CreateRoom(domain string) (types.RoomId, types.Error) {
+func (db *roomDb) CreateRoom(id types.RoomId) (exists bool, err types.Error) {
 	db.roomsLock.Lock()
 	defer db.roomsLock.Unlock()
-	id := types.NewRoomId("", domain)
-	for {
-		id.Id = utils.RandomString(16)
-		if db.rooms[id] == nil {
-			break
-		}
+	if db.rooms[id] != nil {
+		return true, nil
 	}
 	db.rooms[id] = &dbRoom{
 		id:     id,
 		states: map[stateId]*types.State{},
 	}
-	return id, nil
+	return false, nil
 }
 
 func (db *roomDb) RoomExists(id types.RoomId) (bool, types.Error) {
