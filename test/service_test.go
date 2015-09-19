@@ -17,11 +17,12 @@ package events
 import (
 	"testing"
 
-	"github.com/matrix-org/bullettime/db"
-	"github.com/matrix-org/bullettime/events"
-	"github.com/matrix-org/bullettime/interfaces"
-	"github.com/matrix-org/bullettime/service"
-	"github.com/matrix-org/bullettime/types"
+	"github.com/matrix-org/bullettime/core/db"
+	"github.com/matrix-org/bullettime/core/events"
+	ct "github.com/matrix-org/bullettime/core/types"
+	"github.com/matrix-org/bullettime/matrix/interfaces"
+	"github.com/matrix-org/bullettime/matrix/service"
+	"github.com/matrix-org/bullettime/matrix/types"
 )
 
 type services struct {
@@ -140,7 +141,7 @@ func setup() services {
 
 func TestUserCreation(t *testing.T) {
 	s := setup()
-	userId := types.NewUserId("test", "matrix.org")
+	userId := ct.NewUserId("test", "matrix.org")
 	if err := s.user.CreateUser(userId); err != nil {
 		t.Fatal(err)
 	}
