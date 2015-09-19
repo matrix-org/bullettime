@@ -71,25 +71,6 @@ func (db *roomDb) RoomExists(id types.RoomId) (bool, types.Error) {
 	return true, nil
 }
 
-func (db *roomDb) AddRoomMessage(roomId types.RoomId, userId types.UserId, content types.TypedContent) (*types.Message, types.Error) {
-	db.roomsLock.RLock()
-	defer db.roomsLock.RUnlock()
-	room := db.rooms[roomId]
-	if room == nil {
-		return nil, types.NotFoundError("room '" + roomId.String() + "' doesn't exist")
-	}
-	var eventId = types.DeriveEventId(utils.RandomString(16), types.Id(userId))
-	event := new(types.Message)
-	event.EventId = eventId
-	event.RoomId = roomId
-	event.UserId = userId
-	event.EventType = content.GetEventType()
-	event.Timestamp = types.Timestamp{time.Now()}
-	event.Content = content
-
-	return event, nil
-}
-
 func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error) {
 	db.roomsLock.RLock()
 	defer db.roomsLock.RUnlock()

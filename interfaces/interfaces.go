@@ -111,7 +111,6 @@ type UserStore interface {
 type RoomStore interface {
 	CreateRoom(domain string) (types.RoomId, types.Error)
 	RoomExists(types.RoomId) (bool, types.Error)
-	AddRoomMessage(types.RoomId, types.UserId, types.TypedContent) (*types.Message, types.Error)
 	SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*types.State, types.Error)
 	RoomState(roomId types.RoomId, eventType, stateKey string) (*types.State, types.Error)
 	EntireRoomState(roomId types.RoomId) ([]*types.State, types.Error)

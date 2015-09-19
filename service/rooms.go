@@ -18,7 +18,9 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"time"
 
+	"github.com/Rugvip/bullettime/utils"
 	"github.com/matrix-org/bullettime/interfaces"
 	"github.com/matrix-org/bullettime/types"
 )
@@ -304,11 +306,16 @@ func (s roomService) sendMessage(
 	content types.TypedContent,
 ) (*types.Message, types.Error) {
 	log.Printf("Sending message: %#v, %#v, %#v, %#v", room, user, content)
-	message, err := s.rooms.AddRoomMessage(room, user, content)
-	if err != nil {
-		return nil, err
-	}
-	_, err = s.eventSink.Send(message)
+
+	message := new(types.Message)
+	message.EventId = types.DeriveEventId(utils.RandomString(16), types.Id(user))
+	message.RoomId = room
+	message.UserId = user
+	message.EventType = content.GetEventType()
+	message.Timestamp = types.Timestamp{time.Now()}
+	message.Content = content
+
+	_, err := s.eventSink.Send(message)
 	if err != nil {
 		return nil, err
 	}
