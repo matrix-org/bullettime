@@ -34,70 +34,70 @@ func NewIdMapDb() (interfaces.IdMapStore, error) {
 	}, nil
 }
 
-func (db *idMapDb) Insert(from types.Id, to types.Id) (inserted bool, err types.Error) {
+func (db *idMapDb) Insert(key types.Id, value types.Id) (inserted bool, err types.Error) {
 	db.Lock()
 	defer db.Unlock()
-	if _, ok := db.mapping[from]; ok {
+	if _, ok := db.mapping[key]; ok {
 		return false, nil
 	}
-	db.mapping[from] = to
-	db.reverseMapping[to] = append(db.reverseMapping[to], from)
+	db.mapping[key] = value
+	db.reverseMapping[value] = append(db.reverseMapping[value], key)
 	return true, nil
 }
 
-func (db *idMapDb) Replace(from types.Id, to types.Id) (replaced bool, err types.Error) {
+func (db *idMapDb) Replace(key types.Id, value types.Id) (replaced bool, err types.Error) {
 	db.Lock()
 	defer db.Unlock()
-	if _, ok := db.mapping[from]; !ok {
+	if _, ok := db.mapping[key]; !ok {
 		return false, nil
 	}
-	db.mapping[from] = to
+	db.mapping[key] = value
 	return true, nil
 }
 
-func (db *idMapDb) Put(from types.Id, to types.Id) types.Error {
+func (db *idMapDb) Put(key types.Id, value types.Id) types.Error {
 	db.Lock()
 	defer db.Unlock()
-	if _, ok := db.mapping[from]; ok {
-		db.reverseMapping[to] = append(db.reverseMapping[to], from)
+	if _, ok := db.mapping[key]; ok {
+		db.reverseMapping[value] = append(db.reverseMapping[value], key)
 	}
-	db.mapping[from] = to
+	db.mapping[key] = value
 	return nil
 }
 
-func (db *idMapDb) Delete(from types.Id, to types.Id) (deleted bool, err types.Error) {
+func (db *idMapDb) Delete(key types.Id, value types.Id) (deleted bool, err types.Error) {
 	db.Lock()
 	defer db.Unlock()
-	if _, ok := db.mapping[from]; !ok {
+	if _, ok := db.mapping[key]; !ok {
 		return false, nil
 	}
-	delete(db.mapping, from)
+	delete(db.mapping, key)
 
-	reverseMapping := db.reverseMapping[to]
+	reverseMapping := db.reverseMapping[value]
 	l := len(reverseMapping)
 	for i := 0; i < l; i += 1 {
-		if reverseMapping[i] == from {
+		if reverseMapping[i] == key {
 			reverseMapping[i] = reverseMapping[l-1]
 			reverseMapping[l-1] = types.Id{}
 			reverseMapping = reverseMapping[:l-1]
 			break
 		}
 	}
-	db.reverseMapping[to] = reverseMapping
+	db.reverseMapping[value] = reverseMapping
 	return true, nil
 }
 
-func (db *idMapDb) Lookup(from types.Id) (*types.Id, types.Error) {
+func (db *idMapDb) Lookup(key types.Id) (*types.Id, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
-	if to, ok := db.mapping[from]; ok {
-		return &to, nil
+	if value, ok := db.mapping[key]; ok {
+		return &value, nil
 	}
 	return nil, nil
 }
 
-func (db *idMapDb) ReverseLookup(to types.Id) ([]types.Id, types.Error) {
+func (db *idMapDb) ReverseLookup(value types.Id) ([]types.Id, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
-	return db.reverseMapping[to], nil
+	return db.reverseMapping[value], nil
 }

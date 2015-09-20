@@ -18,13 +18,13 @@ import "github.com/matrix-org/bullettime/core/types"
 
 type IdMapStore interface {
 	// Does nothing and returns false if the mapping already exists
-	Insert(from types.Id, to types.Id) (inserted bool, err types.Error)
+	Insert(key types.Id, value types.Id) (inserted bool, err types.Error)
 	// Does nothing and returns false if the mapping doesn't already exist
-	Replace(from types.Id, to types.Id) (replaced bool, err types.Error)
+	Replace(key types.Id, value types.Id) (replaced bool, err types.Error)
 	// Inserts or replaces as needed
-	Put(from types.Id, to types.Id) types.Error
+	Put(key types.Id, value types.Id) types.Error
 	// Does noting and returns false if the mapping doesn't exist
-	Delete(from types.Id, to types.Id) (deleted bool, err types.Error)
-	Lookup(from types.Id) (*types.Id, types.Error)
-	ReverseLookup(to types.Id) ([]types.Id, types.Error)
+	Delete(key types.Id, value types.Id) (deleted bool, err types.Error)
+	Lookup(key types.Id) (*types.Id, types.Error)
+	ReverseLookup(value types.Id) ([]types.Id, types.Error)
 }
