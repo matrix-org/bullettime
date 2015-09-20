@@ -22,11 +22,16 @@ import (
 	"github.com/matrix-org/bullettime/core/db"
 	"github.com/matrix-org/bullettime/core/types"
 	"github.com/matrix-org/bullettime/matrix/interfaces"
+	"github.com/matrix-org/bullettime/matrix/stores"
 	matrixTypes "github.com/matrix-org/bullettime/matrix/types"
 )
 
 func TestMessageStream(t *testing.T) {
-	members, err := db.NewMembershipDb()
+	memberCache, err := db.NewIdMultiMapStore()
+	if err != nil {
+		panic(err)
+	}
+	members, err := stores.NewMembershipStore(memberCache)
 	if err != nil {
 		t.Fatal(err)
 	}

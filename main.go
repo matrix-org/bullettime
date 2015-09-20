@@ -46,7 +46,11 @@ func setupApiEndpoint() http.Handler {
 	if err != nil {
 		panic(err)
 	}
-	memberStore, err := db.NewMembershipDb()
+	memberCache, err := db.NewIdMultiMapStore()
+	if err != nil {
+		panic(err)
+	}
+	memberStore, err := stores.NewMembershipStore(memberCache)
 	if err != nil {
 		panic(err)
 	}
