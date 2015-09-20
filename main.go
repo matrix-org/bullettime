@@ -42,7 +42,11 @@ func setupApiEndpoint() http.Handler {
 	if err != nil {
 		panic(err)
 	}
-	aliasStore, err := db.NewIdMapDb()
+	aliasCache, err := db.NewIdMap()
+	if err != nil {
+		panic(err)
+	}
+	aliasStore, err := stores.NewAliasStore(aliasCache)
 	if err != nil {
 		panic(err)
 	}

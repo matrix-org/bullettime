@@ -20,7 +20,6 @@ import (
 	"reflect"
 	"time"
 
-	ci "github.com/matrix-org/bullettime/core/interfaces"
 	ct "github.com/matrix-org/bullettime/core/types"
 	"github.com/matrix-org/bullettime/matrix/interfaces"
 	"github.com/matrix-org/bullettime/matrix/types"
@@ -29,7 +28,7 @@ import (
 
 func CreateRoomService(
 	roomStore interfaces.RoomStore,
-	aliasStore ci.IdMap,
+	aliasStore interfaces.AliasStore,
 	memberStore interfaces.MembershipStore,
 	eventSink interfaces.EventSink,
 	profileProvider interfaces.ProfileProvider,
@@ -49,7 +48,7 @@ func CreateRoomService(
 
 type roomService struct {
 	rooms           interfaces.RoomStore
-	aliases         ci.IdMap
+	aliases         interfaces.AliasStore
 	members         interfaces.MembershipStore
 	eventSink       interfaces.EventSink
 	profileProvider interfaces.ProfileProvider
@@ -69,14 +68,14 @@ func (s roomService) RoomExists(id ct.RoomId, caller ct.UserId) types.Error {
 }
 
 func (s roomService) LookupAlias(alias ct.Alias) (ct.RoomId, types.Error) {
-	room, err := s.aliases.Lookup(ct.Id(alias))
+	room, err := s.aliases.Room(alias)
 	if err != nil {
-		return ct.RoomId{}, types.InternalError(err)
+		return ct.RoomId{}, err
 	}
 	if room == nil {
 		return ct.RoomId{}, types.NotFoundError("room alias '" + alias.String() + "' doesn't exist")
 	}
-	return ct.RoomId(*room), nil
+	return *room, nil
 }
 
 func (s roomService) CreateRoom(
@@ -88,15 +87,11 @@ func (s roomService) CreateRoom(
 	id := ct.NewRoomId(utils.RandomString(16), domain)
 	if desc.Alias != nil {
 		a := ct.NewAlias(*desc.Alias, domain)
-		alias = &a
-		inserted, err := s.aliases.Insert(ct.Id(id), ct.Id(a))
-		if !inserted {
-			err := types.RoomInUseError("room alias '" + alias.String() + "' already exists")
+		err := s.aliases.AddAlias(a, id)
+		if err != nil {
 			return ct.RoomId{}, nil, err
 		}
-		if err != nil {
-			return ct.RoomId{}, nil, types.InternalError(err)
-		}
+		alias = &a
 	}
 	exists, err := s.rooms.CreateRoom(id)
 	if exists {

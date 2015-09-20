@@ -117,6 +117,13 @@ type RoomStore interface {
 	EntireRoomState(roomId ct.RoomId) ([]*types.State, types.Error)
 }
 
+type AliasStore interface {
+	AddAlias(ct.Alias, ct.RoomId) types.Error
+	RemoveAlias(ct.Alias, ct.RoomId) types.Error
+	Aliases(ct.RoomId) ([]ct.Alias, types.Error)
+	Room(ct.Alias) (*ct.RoomId, types.Error)
+}
+
 type MembershipStore interface {
 	AddMember(ct.RoomId, ct.UserId) types.Error
 	RemoveMember(ct.RoomId, ct.UserId) types.Error
