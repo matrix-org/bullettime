@@ -106,7 +106,7 @@ func (db *idMultiMap) ReverseLookup(value types.Id) ([]types.Id, types.Error) {
 	return db.reverseMapping[value], nil
 }
 
-func (db *idMultiMap) UnionLinkLookup(key types.Id) (map[types.Id]struct{}, types.Error) {
+func (db *idMultiMap) LinkUnionLookup(key types.Id) (map[types.Id]struct{}, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	resultSet := map[types.Id]struct{}{}
@@ -118,7 +118,7 @@ func (db *idMultiMap) UnionLinkLookup(key types.Id) (map[types.Id]struct{}, type
 	return resultSet, nil
 }
 
-func (db *idMultiMap) UnionLinkReverseLookup(value types.Id) (map[types.Id]struct{}, types.Error) {
+func (db *idMultiMap) ReverseLinkUnionLookup(value types.Id) (map[types.Id]struct{}, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	resultSet := map[types.Id]struct{}{}
