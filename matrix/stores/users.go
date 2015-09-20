@@ -18,6 +18,7 @@ import (
 	ci "github.com/matrix-org/bullettime/core/interfaces"
 	ct "github.com/matrix-org/bullettime/core/types"
 	"github.com/matrix-org/bullettime/matrix/interfaces"
+	"github.com/matrix-org/bullettime/matrix/types"
 )
 
 type userDb struct {
@@ -30,23 +31,25 @@ func NewUserDb(stateStore ci.StateStore) (interfaces.UserStore, error) {
 	return &userDb{stateStore}, nil
 }
 
-func (db *userDb) CreateUser(id ct.UserId) (bool, ct.Error) {
-	return db.CreateBucket(ct.Id(id))
+func (db *userDb) CreateUser(id ct.UserId) (bool, types.Error) {
+	exists, err := db.CreateBucket(ct.Id(id))
+	return exists, types.InternalError(err)
 }
 
-func (db *userDb) UserExists(id ct.UserId) (bool, ct.Error) {
-	return db.BucketExists(ct.Id(id))
+func (db *userDb) UserExists(id ct.UserId) (bool, types.Error) {
+	exists, err := db.BucketExists(ct.Id(id))
+	return exists, types.InternalError(err)
 }
 
-func (db *userDb) SetUserPasswordHash(id ct.UserId, hash string) ct.Error {
+func (db *userDb) SetUserPasswordHash(id ct.UserId, hash string) types.Error {
 	_, err := db.SetState(ct.Id(id), passwordHashKey, []byte(hash))
-	return err
+	return types.InternalError(err)
 }
 
-func (db *userDb) UserPasswordHash(id ct.UserId) (string, ct.Error) {
+func (db *userDb) UserPasswordHash(id ct.UserId) (string, types.Error) {
 	value, err := db.State(ct.Id(id), passwordHashKey)
 	if err != nil {
-		return "", err
+		return "", types.InternalError(err)
 	}
 	return string(value), nil
 }

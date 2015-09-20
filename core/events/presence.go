@@ -57,19 +57,19 @@ func NewPresenceStream(
 	}, nil
 }
 
-func (s *presenceStream) SetUserProfile(userId types.UserId, profile matrixTypes.UserProfile) (types.IndexedEvent, types.Error) {
+func (s *presenceStream) SetUserProfile(userId types.UserId, profile matrixTypes.UserProfile) (types.IndexedEvent, matrixTypes.Error) {
 	return s.update(userId, func(user *matrixTypes.User) {
 		user.UserProfile = profile
 	})
 }
 
-func (s *presenceStream) SetUserStatus(userId types.UserId, status matrixTypes.UserStatus) (types.IndexedEvent, types.Error) {
+func (s *presenceStream) SetUserStatus(userId types.UserId, status matrixTypes.UserStatus) (types.IndexedEvent, matrixTypes.Error) {
 	return s.update(userId, func(user *matrixTypes.User) {
 		user.UserStatus = status
 	})
 }
 
-func (s *presenceStream) update(userId types.UserId, updateFunc updateFunc) (types.IndexedEvent, types.Error) {
+func (s *presenceStream) update(userId types.UserId, updateFunc updateFunc) (types.IndexedEvent, matrixTypes.Error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	indexed, existed := s.events[userId]
@@ -93,7 +93,7 @@ func (s *presenceStream) update(userId types.UserId, updateFunc updateFunc) (typ
 	return &indexed, nil
 }
 
-func (s *presenceStream) Profile(user types.UserId) (matrixTypes.UserProfile, types.Error) {
+func (s *presenceStream) Profile(user types.UserId) (matrixTypes.UserProfile, matrixTypes.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	if indexed, ok := s.events[user]; ok {
@@ -102,7 +102,7 @@ func (s *presenceStream) Profile(user types.UserId) (matrixTypes.UserProfile, ty
 	return matrixTypes.UserProfile{}, nil
 }
 
-func (s *presenceStream) Status(user types.UserId) (matrixTypes.UserStatus, types.Error) {
+func (s *presenceStream) Status(user types.UserId) (matrixTypes.UserStatus, matrixTypes.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	if indexed, ok := s.events[user]; ok {
@@ -122,7 +122,7 @@ func (s *presenceStream) Range(
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
 	limit uint,
-) ([]types.IndexedEvent, types.Error) {
+) ([]types.IndexedEvent, matrixTypes.Error) {
 	var result []types.IndexedEvent
 	if len(userSet) == 0 || from >= to {
 		return result, nil

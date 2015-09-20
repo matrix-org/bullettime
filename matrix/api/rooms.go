@@ -330,7 +330,7 @@ func (e roomsEndpoint) getMessages(req *http.Request, params httprouter.Params) 
 	return eventRange
 }
 
-func (e roomsEndpoint) getRoomAndUser(req *http.Request, params httprouter.Params) (ct.RoomId, ct.UserId, ct.Error) {
+func (e roomsEndpoint) getRoomAndUser(req *http.Request, params httprouter.Params) (ct.RoomId, ct.UserId, types.Error) {
 	user, err := readAccessToken(e.userService, e.tokenService, req)
 	if err != nil {
 		return ct.RoomId{}, ct.UserId{}, err

@@ -52,7 +52,7 @@ func indexedToEvents(indexed []ct.IndexedEvent) []ct.Event {
 	return events
 }
 
-func (s syncService) FullSync(user ct.UserId, limit uint) (*types.InitialSync, ct.Error) {
+func (s syncService) FullSync(user ct.UserId, limit uint) (*types.InitialSync, types.Error) {
 	maxMessage := s.messageSource.Max()
 	maxPresence := s.presenceSource.Max()
 	maxTyping := s.typingSource.Max()
@@ -85,7 +85,7 @@ func (s syncService) FullSync(user ct.UserId, limit uint) (*types.InitialSync, c
 	return &initialSync, nil
 }
 
-func (s syncService) RoomSync(user ct.UserId, room ct.RoomId, limit uint) (*types.RoomInitialSync, ct.Error) {
+func (s syncService) RoomSync(user ct.UserId, room ct.RoomId, limit uint) (*types.RoomInitialSync, types.Error) {
 	maxMessage := s.messageSource.Max()
 	maxPresence := s.presenceSource.Max()
 	maxTyping := s.typingSource.Max()
@@ -122,7 +122,7 @@ func (s syncService) roomSummary(
 	room ct.RoomId,
 	end types.StreamToken,
 	limit uint,
-) ct.Error {
+) types.Error {
 	roomSet := map[ct.RoomId]struct{}{
 		room: struct{}{},
 	}

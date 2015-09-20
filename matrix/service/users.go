@@ -33,11 +33,11 @@ type userService struct {
 	users interfaces.UserStore
 }
 
-func (s userService) UserExists(user, caller ct.UserId) (bool, ct.Error) {
+func (s userService) UserExists(user, caller ct.UserId) (bool, types.Error) {
 	return s.users.UserExists(user)
 }
 
-func (s userService) CreateUser(id ct.UserId) ct.Error {
+func (s userService) CreateUser(id ct.UserId) types.Error {
 	exists, err := s.users.CreateUser(id)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (s userService) CreateUser(id ct.UserId) ct.Error {
 	return nil
 }
 
-func (s userService) VerifyPassword(user ct.UserId, password string) (bool, ct.Error) {
+func (s userService) VerifyPassword(user ct.UserId, password string) (bool, types.Error) {
 	hash, err := s.users.UserPasswordHash(user)
 	if err != nil {
 		return false, err
@@ -59,7 +59,7 @@ func (s userService) VerifyPassword(user ct.UserId, password string) (bool, ct.E
 	return true, nil
 }
 
-func (s userService) SetPassword(user, caller ct.UserId, password string) ct.Error {
+func (s userService) SetPassword(user, caller ct.UserId, password string) types.Error {
 	if user != caller {
 		return types.ForbiddenError("can't change the password of other users")
 	}

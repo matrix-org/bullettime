@@ -14,35 +14,27 @@
 
 package types
 
-import (
-	"strconv"
-	"time"
-)
-
-type Content interface{}
-
-type Timestamp struct {
-	time.Time
+type Error interface {
+	error
+	Code() string
 }
 
-type Event interface {
-	GetContent() interface{}
-	GetEventType() string
-	GetRoomId() *RoomId
-	GetUserId() *UserId
-	GetEventKey() Id
+type internalError struct {
+	code    string
+	message string
 }
 
-type IndexedEvent interface {
-	Event() Event
-	Index() uint64
+func (e internalError) Code() string {
+	return e.code
 }
 
-type TypedContent interface {
-	GetEventType() string
+func (e internalError) Error() string {
+	return e.message
 }
 
-func (ts Timestamp) MarshalJSON() ([]byte, error) {
-	ms := ts.UnixNano() / int64(time.Millisecond)
-	return []byte(strconv.FormatInt(ms, 10)), nil
+func InvalidStateError(message string) Error {
+	return internalError{
+		code:    "INVALID_STATE",
+		message: message,
+	}
 }

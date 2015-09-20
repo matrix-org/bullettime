@@ -43,7 +43,7 @@ func NewMembershipDb() (interfaces.MembershipStore, error) {
 	}, nil
 }
 
-func (db *memberDb) AddMember(roomId types.RoomId, userId types.UserId) types.Error {
+func (db *memberDb) AddMember(roomId types.RoomId, userId types.UserId) matrixTypes.Error {
 	db.Lock()
 	defer db.Unlock()
 	member := memberKey{roomId, userId}
@@ -57,7 +57,7 @@ func (db *memberDb) AddMember(roomId types.RoomId, userId types.UserId) types.Er
 	return nil
 }
 
-func (db *memberDb) RemoveMember(roomId types.RoomId, userId types.UserId) types.Error {
+func (db *memberDb) RemoveMember(roomId types.RoomId, userId types.UserId) matrixTypes.Error {
 	db.Lock()
 	defer db.Unlock()
 	member := memberKey{roomId, userId}
@@ -88,19 +88,19 @@ func (db *memberDb) RemoveMember(roomId types.RoomId, userId types.UserId) types
 	return nil
 }
 
-func (db *memberDb) Rooms(userId types.UserId) ([]types.RoomId, types.Error) {
+func (db *memberDb) Rooms(userId types.UserId) ([]types.RoomId, matrixTypes.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	return db.rooms[userId], nil
 }
 
-func (db *memberDb) Users(roomId types.RoomId) ([]types.UserId, types.Error) {
+func (db *memberDb) Users(roomId types.RoomId) ([]types.UserId, matrixTypes.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	return db.users[roomId], nil
 }
 
-func (db *memberDb) Peers(user types.UserId) (map[types.UserId]struct{}, types.Error) {
+func (db *memberDb) Peers(user types.UserId) (map[types.UserId]struct{}, matrixTypes.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	peerSet := map[types.UserId]struct{}{}

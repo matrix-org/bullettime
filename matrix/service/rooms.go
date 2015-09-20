@@ -57,7 +57,7 @@ type roomService struct {
 	typingProvider  interfaces.TypingProvider
 }
 
-func (s roomService) RoomExists(id ct.RoomId, caller ct.UserId) ct.Error {
+func (s roomService) RoomExists(id ct.RoomId, caller ct.UserId) types.Error {
 	exists, err := s.rooms.RoomExists(id)
 	if err != nil {
 		return err
@@ -68,10 +68,10 @@ func (s roomService) RoomExists(id ct.RoomId, caller ct.UserId) ct.Error {
 	return nil
 }
 
-func (s roomService) LookupAlias(alias ct.Alias) (ct.RoomId, ct.Error) {
+func (s roomService) LookupAlias(alias ct.Alias) (ct.RoomId, types.Error) {
 	room, err := s.aliases.Lookup(ct.Id(alias))
 	if err != nil {
-		return ct.RoomId{}, err
+		return ct.RoomId{}, types.InternalError(err)
 	}
 	if room == nil {
 		return ct.RoomId{}, types.NotFoundError("room alias '" + alias.String() + "' doesn't exist")
@@ -83,7 +83,7 @@ func (s roomService) CreateRoom(
 	domain string,
 	creator ct.UserId,
 	desc *types.RoomDescription,
-) (ct.RoomId, *ct.Alias, ct.Error) {
+) (ct.RoomId, *ct.Alias, types.Error) {
 	var alias *ct.Alias
 	id := ct.NewRoomId(utils.RandomString(16), domain)
 	if desc.Alias != nil {
@@ -95,7 +95,7 @@ func (s roomService) CreateRoom(
 			return ct.RoomId{}, nil, err
 		}
 		if err != nil {
-			return ct.RoomId{}, nil, err
+			return ct.RoomId{}, nil, types.InternalError(err)
 		}
 	}
 	exists, err := s.rooms.CreateRoom(id)
@@ -175,7 +175,7 @@ func (s roomService) AddMessage(
 	room ct.RoomId,
 	caller ct.UserId,
 	content ct.TypedContent,
-) (*types.Message, ct.Error) {
+) (*types.Message, types.Error) {
 	eventType := content.GetEventType()
 	if _, ok := disallowedMessageTypes[eventType]; ok {
 		return nil, types.ForbiddenError("sending a message event of the type " + eventType + " is not permitted")
@@ -198,7 +198,7 @@ func (s roomService) State(
 	room ct.RoomId,
 	caller ct.UserId,
 	eventType, stateKey string,
-) (*types.State, ct.Error) {
+) (*types.State, types.Error) {
 	membership, err := s.userMembership(room, caller)
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (s roomService) SetState(
 	caller ct.UserId,
 	content ct.TypedContent,
 	stateKey string,
-) (*types.State, ct.Error) {
+) (*types.State, types.Error) {
 	userIdStateKey, parseErr := ct.ParseUserId(stateKey)
 	isUserIdStateKey := parseErr == nil
 
@@ -293,7 +293,7 @@ func (s roomService) setState(
 	user ct.UserId,
 	content ct.TypedContent,
 	stateKey string,
-) (*types.State, ct.Error) {
+) (*types.State, types.Error) {
 	log.Printf("Setting state: %#v, %#v, %#v, %#v", room, user, content, stateKey)
 	state, err := s.rooms.SetRoomState(room, user, content, stateKey)
 	if err != nil {
@@ -310,7 +310,7 @@ func (s roomService) sendMessage(
 	room ct.RoomId,
 	user ct.UserId,
 	content ct.TypedContent,
-) (*types.Message, ct.Error) {
+) (*types.Message, types.Error) {
 	log.Printf("Sending message: %#v, %#v, %#v, %#v", room, user, content)
 
 	message := new(types.Message)
@@ -333,7 +333,7 @@ func (s roomService) doMembershipChange(
 	caller ct.UserId,
 	user ct.UserId,
 	membership *types.MembershipEventContent,
-) (*types.State, ct.Error) {
+) (*types.State, types.Error) {
 	log.Printf("attempting membership change of %s in %s to %s, by %s", user, room, membership.Membership, caller)
 	currentMembership, err := s.userMembership(room, user)
 	if err != nil {
@@ -472,7 +472,7 @@ func (s roomService) testPowerLevel(
 	room ct.RoomId,
 	user ct.UserId,
 	powerLevelFunc func(*types.PowerLevelsEventContent) int,
-) ct.Error {
+) types.Error {
 	powerLevels, err := s.powerLevels(room)
 	if err != nil {
 		return err
@@ -489,7 +489,7 @@ func (s roomService) testPowerLevel(
 	return nil
 }
 
-func (s roomService) userMembership(room ct.RoomId, user ct.UserId) (types.Membership, ct.Error) {
+func (s roomService) userMembership(room ct.RoomId, user ct.UserId) (types.Membership, types.Error) {
 	state, err := s.rooms.RoomState(room, types.EventTypeMembership, user.String())
 	if err != nil {
 		return types.MembershipNone, err
@@ -504,7 +504,7 @@ func (s roomService) userMembership(room ct.RoomId, user ct.UserId) (types.Membe
 	return membership.Membership, nil
 }
 
-func (s roomService) allowsJoinRule(room ct.RoomId, joinRule types.JoinRule) (bool, ct.Error) {
+func (s roomService) allowsJoinRule(room ct.RoomId, joinRule types.JoinRule) (bool, types.Error) {
 	state, err := s.rooms.RoomState(room, types.EventTypeJoinRules, "")
 	if err != nil {
 		return false, err
@@ -522,7 +522,7 @@ func (s roomService) allowsJoinRule(room ct.RoomId, joinRule types.JoinRule) (bo
 	return true, nil
 }
 
-func (s roomService) powerLevels(room ct.RoomId) (*types.PowerLevelsEventContent, ct.Error) {
+func (s roomService) powerLevels(room ct.RoomId) (*types.PowerLevelsEventContent, types.Error) {
 	state, err := s.rooms.RoomState(room, types.EventTypePowerLevels, "")
 	if err != nil {
 		return nil, err
@@ -537,7 +537,7 @@ func (s roomService) powerLevels(room ct.RoomId) (*types.PowerLevelsEventContent
 	return powerLevels, nil
 }
 
-func (s roomService) userPowerLevel(room ct.RoomId, user ct.UserId) (int, ct.Error) {
+func (s roomService) userPowerLevel(room ct.RoomId, user ct.UserId) (int, types.Error) {
 	powerLevels, err := s.powerLevels(room)
 	if err != nil {
 		return 0, err
@@ -548,7 +548,7 @@ func (s roomService) userPowerLevel(room ct.RoomId, user ct.UserId) (int, ct.Err
 	return powerLevels.UserDefault, nil
 }
 
-func (s roomService) eventPowerLevel(room ct.RoomId, eventType string) (int, ct.Error) {
+func (s roomService) eventPowerLevel(room ct.RoomId, eventType string) (int, types.Error) {
 	powerLevels, err := s.powerLevels(room)
 	if err != nil {
 		return 0, err

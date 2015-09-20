@@ -26,59 +26,59 @@ type RoomService interface {
 		hostname string,
 		creator ct.UserId,
 		desc *types.RoomDescription,
-	) (ct.RoomId, *ct.Alias, ct.Error)
-	RoomExists(room ct.RoomId, caller ct.UserId) ct.Error
-	LookupAlias(alias ct.Alias) (ct.RoomId, ct.Error)
+	) (ct.RoomId, *ct.Alias, types.Error)
+	RoomExists(room ct.RoomId, caller ct.UserId) types.Error
+	LookupAlias(alias ct.Alias) (ct.RoomId, types.Error)
 	AddMessage(
 		room ct.RoomId,
 		caller ct.UserId,
 		content ct.TypedContent,
-	) (*types.Message, ct.Error)
+	) (*types.Message, types.Error)
 	State(
 		room ct.RoomId,
 		caller ct.UserId,
 		eventType, stateKey string,
-	) (*types.State, ct.Error)
+	) (*types.State, types.Error)
 	SetState(
 		room ct.RoomId,
 		caller ct.UserId,
 		content ct.TypedContent,
 		stateKey string,
-	) (*types.State, ct.Error)
+	) (*types.State, types.Error)
 }
 
 type SyncService interface {
-	FullSync(user ct.UserId, limit uint) (*types.InitialSync, ct.Error)
-	RoomSync(user ct.UserId, room ct.RoomId, limit uint) (*types.RoomInitialSync, ct.Error)
+	FullSync(user ct.UserId, limit uint) (*types.InitialSync, types.Error)
+	RoomSync(user ct.UserId, room ct.RoomId, limit uint) (*types.RoomInitialSync, types.Error)
 }
 
 type UserService interface {
-	CreateUser(ct.UserId) ct.Error
-	UserExists(user, caller ct.UserId) (bool, ct.Error)
-	VerifyPassword(user ct.UserId, password string) (bool, ct.Error)
-	SetPassword(user, caller ct.UserId, password string) ct.Error
+	CreateUser(ct.UserId) types.Error
+	UserExists(user, caller ct.UserId) (bool, types.Error)
+	VerifyPassword(user ct.UserId, password string) (bool, types.Error)
+	SetPassword(user, caller ct.UserId, password string) types.Error
 }
 
 type ProfileService interface {
-	Profile(user, caller ct.UserId) (types.UserProfile, ct.Error)
+	Profile(user, caller ct.UserId) (types.UserProfile, types.Error)
 	UpdateProfile(
 		user, caller ct.UserId,
 		name, avatarUrl *string,
-	) (types.UserProfile, ct.Error)
+	) (types.UserProfile, types.Error)
 }
 
 type PresenceService interface {
-	Status(user, caller ct.UserId) (types.UserStatus, ct.Error)
+	Status(user, caller ct.UserId) (types.UserStatus, types.Error)
 	UpdateStatus(
 		user, caller ct.UserId,
 		presence *types.Presence,
 		statusMessage *string,
-	) (types.UserStatus, ct.Error)
+	) (types.UserStatus, types.Error)
 }
 
 type TokenService interface {
-	NewAccessToken(ct.UserId) (Token, ct.Error)
-	ParseAccessToken(token string) (Token, ct.Error)
+	NewAccessToken(ct.UserId) (Token, types.Error)
+	ParseAccessToken(token string) (Token, types.Error)
 }
 
 type Token interface {
@@ -87,50 +87,50 @@ type Token interface {
 }
 
 type EventService interface {
-	Event(caller ct.UserId, eventId ct.EventId) (ct.Event, ct.Error)
+	Event(caller ct.UserId, eventId ct.EventId) (ct.Event, types.Error)
 	Range(
 		caller ct.UserId,
 		from, to *types.StreamToken,
 		limit uint,
 		cancel chan struct{},
-	) (*types.EventStreamRange, ct.Error)
+	) (*types.EventStreamRange, types.Error)
 	Messages(
 		user ct.UserId,
 		room ct.RoomId,
 		from, to *types.StreamToken,
 		limit uint,
-	) (*types.EventStreamRange, ct.Error)
+	) (*types.EventStreamRange, types.Error)
 }
 
 type UserStore interface {
-	CreateUser(ct.UserId) (exists bool, err ct.Error)
-	UserExists(ct.UserId) (exists bool, err ct.Error)
-	SetUserPasswordHash(id ct.UserId, hash string) ct.Error
-	UserPasswordHash(ct.UserId) (string, ct.Error)
+	CreateUser(ct.UserId) (exists bool, err types.Error)
+	UserExists(ct.UserId) (exists bool, err types.Error)
+	SetUserPasswordHash(id ct.UserId, hash string) types.Error
+	UserPasswordHash(ct.UserId) (string, types.Error)
 }
 
 type RoomStore interface {
-	CreateRoom(id ct.RoomId) (exists bool, err ct.Error)
-	RoomExists(ct.RoomId) (bool, ct.Error)
-	SetRoomState(roomId ct.RoomId, userId ct.UserId, content ct.TypedContent, stateKey string) (*types.State, ct.Error)
-	RoomState(roomId ct.RoomId, eventType, stateKey string) (*types.State, ct.Error)
-	EntireRoomState(roomId ct.RoomId) ([]*types.State, ct.Error)
+	CreateRoom(id ct.RoomId) (exists bool, err types.Error)
+	RoomExists(ct.RoomId) (bool, types.Error)
+	SetRoomState(roomId ct.RoomId, userId ct.UserId, content ct.TypedContent, stateKey string) (*types.State, types.Error)
+	RoomState(roomId ct.RoomId, eventType, stateKey string) (*types.State, types.Error)
+	EntireRoomState(roomId ct.RoomId) ([]*types.State, types.Error)
 }
 
 type MembershipStore interface {
-	AddMember(ct.RoomId, ct.UserId) ct.Error
-	RemoveMember(ct.RoomId, ct.UserId) ct.Error
-	Rooms(ct.UserId) ([]ct.RoomId, ct.Error)
-	Users(ct.RoomId) ([]ct.UserId, ct.Error)
-	Peers(ct.UserId) (map[ct.UserId]struct{}, ct.Error)
+	AddMember(ct.RoomId, ct.UserId) types.Error
+	RemoveMember(ct.RoomId, ct.UserId) types.Error
+	Rooms(ct.UserId) ([]ct.RoomId, types.Error)
+	Users(ct.RoomId) ([]ct.UserId, types.Error)
+	Peers(ct.UserId) (map[ct.UserId]struct{}, types.Error)
 }
 
 type AsyncEventSink interface {
-	Send(userIds []ct.UserId, event ct.IndexedEvent) ct.Error
+	Send(userIds []ct.UserId, event ct.IndexedEvent) types.Error
 }
 
 type AsyncEventSource interface {
-	Listen(user ct.UserId, cancel chan struct{}) (chan ct.IndexedEvent, ct.Error)
+	Listen(user ct.UserId, cancel chan struct{}) (chan ct.IndexedEvent, types.Error)
 }
 
 type IndexedEventSource interface {
@@ -141,39 +141,39 @@ type IndexedEventSource interface {
 		roomSet map[ct.RoomId]struct{},
 		from, to uint64,
 		limit uint,
-	) ([]ct.IndexedEvent, ct.Error)
+	) ([]ct.IndexedEvent, types.Error)
 }
 
 type EventSink interface {
-	Send(event ct.Event) (uint64, ct.Error)
+	Send(event ct.Event) (uint64, types.Error)
 }
 
 type EventProvider interface {
-	Event(ct.UserId, ct.EventId) (ct.Event, ct.Error)
+	Event(ct.UserId, ct.EventId) (ct.Event, types.Error)
 }
 
 type ProfileEventSink interface {
-	SetUserProfile(ct.UserId, types.UserProfile) (ct.IndexedEvent, ct.Error)
+	SetUserProfile(ct.UserId, types.UserProfile) (ct.IndexedEvent, types.Error)
 }
 
 type PresenceEventSink interface {
-	SetUserStatus(ct.UserId, types.UserStatus) (ct.IndexedEvent, ct.Error)
+	SetUserStatus(ct.UserId, types.UserStatus) (ct.IndexedEvent, types.Error)
 }
 
 type ProfileProvider interface {
-	Profile(ct.UserId) (types.UserProfile, ct.Error)
+	Profile(ct.UserId) (types.UserProfile, types.Error)
 }
 
 type PresenceProvider interface {
-	Status(ct.UserId) (types.UserStatus, ct.Error)
+	Status(ct.UserId) (types.UserStatus, types.Error)
 }
 
 type TypingEventSink interface {
-	SetTyping(room ct.RoomId, user ct.UserId, typing bool) ct.Error
+	SetTyping(room ct.RoomId, user ct.UserId, typing bool) types.Error
 }
 
 type TypingProvider interface {
-	Typing(room ct.RoomId) ([]ct.UserId, ct.Error)
+	Typing(room ct.RoomId) ([]ct.UserId, types.Error)
 }
 
 type EventStream interface {

@@ -19,7 +19,6 @@ import (
 
 	"github.com/matrix-org/bullettime/core/interfaces"
 	"github.com/matrix-org/bullettime/core/types"
-	matrixTypes "github.com/matrix-org/bullettime/matrix/types"
 )
 
 type stateStore struct { // always lock in the same order as below
@@ -76,7 +75,7 @@ func (db *stateStore) SetState(id types.Id, key string, value []byte) ([]byte, t
 	defer db.RUnlock()
 	bucket := db.buckets[id]
 	if bucket == nil {
-		return nil, matrixTypes.NotFoundError("bucket '" + id.String() + "' doesn't exist")
+		return nil, types.InvalidStateError("bucket '" + id.String() + "' doesn't exist")
 	}
 	bucket.Lock()
 	defer bucket.Unlock()
@@ -95,7 +94,7 @@ func (db *stateStore) State(id types.Id, key string) ([]byte, types.Error) {
 	defer db.RUnlock()
 	bucket := db.buckets[id]
 	if bucket == nil {
-		return nil, matrixTypes.NotFoundError("bucket '" + id.String() + "' doesn't exist")
+		return nil, types.InvalidStateError("bucket '" + id.String() + "' doesn't exist")
 	}
 	bucket.RLock()
 	defer bucket.RUnlock()
@@ -108,7 +107,7 @@ func (db *stateStore) States(id types.Id) ([]interfaces.State, types.Error) {
 	defer db.RUnlock()
 	bucket := db.buckets[id]
 	if bucket == nil {
-		return nil, matrixTypes.NotFoundError("bucket '" + id.String() + "' doesn't exist")
+		return nil, types.InvalidStateError("bucket '" + id.String() + "' doesn't exist")
 	}
 	bucket.RLock()
 	defer bucket.RUnlock()

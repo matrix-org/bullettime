@@ -61,7 +61,7 @@ func NewMessageStream(
 	}, nil
 }
 
-func (s *messageStream) Send(event types.Event) (uint64, types.Error) {
+func (s *messageStream) Send(event types.Event) (uint64, matrixTypes.Error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -115,7 +115,7 @@ func extraUserForEvent(event types.Event) *types.UserId {
 func (s *messageStream) Event(
 	user types.UserId,
 	eventId types.EventId,
-) (types.Event, types.Error) {
+) (types.Event, matrixTypes.Error) {
 	s.lock.RLock()
 	indexed := s.byId[types.Id(eventId)]
 	s.lock.RUnlock()
@@ -142,7 +142,7 @@ func (s *messageStream) Range(
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
 	limit uint,
-) ([]types.IndexedEvent, types.Error) {
+) ([]types.IndexedEvent, matrixTypes.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	result := make([]types.IndexedEvent, 0, limit)

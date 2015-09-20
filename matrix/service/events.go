@@ -49,7 +49,7 @@ type eventService struct {
 	membershipStore  interfaces.MembershipStore
 }
 
-func (s eventService) Event(user ct.UserId, eventId ct.EventId) (ct.Event, ct.Error) {
+func (s eventService) Event(user ct.UserId, eventId ct.EventId) (ct.Event, types.Error) {
 	event, err := s.eventProvider.Event(user, eventId)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (s eventService) Range(
 	from, to *types.StreamToken,
 	limit uint,
 	cancel chan struct{},
-) (chunk *types.EventStreamRange, err ct.Error) {
+) (chunk *types.EventStreamRange, err types.Error) {
 	var eventCh chan ct.IndexedEvent
 
 	if from == nil || to == nil || from.MessageIndex > to.MessageIndex {
@@ -257,7 +257,7 @@ func (s eventService) Messages(
 	room ct.RoomId,
 	from, to *types.StreamToken,
 	limit uint,
-) (eventRange *types.EventStreamRange, err ct.Error) {
+) (eventRange *types.EventStreamRange, err types.Error) {
 	maxMessage := s.messageSource.Max()
 
 	var fromMessage uint64

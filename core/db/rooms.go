@@ -46,7 +46,7 @@ type dbRoom struct { // always lock in the same order as below
 	states    map[stateId]*matrixTypes.State
 }
 
-func (db *roomDb) CreateRoom(id types.RoomId) (exists bool, err types.Error) {
+func (db *roomDb) CreateRoom(id types.RoomId) (exists bool, err matrixTypes.Error) {
 	db.roomsLock.Lock()
 	defer db.roomsLock.Unlock()
 	if db.rooms[id] != nil {
@@ -59,7 +59,7 @@ func (db *roomDb) CreateRoom(id types.RoomId) (exists bool, err types.Error) {
 	return false, nil
 }
 
-func (db *roomDb) RoomExists(id types.RoomId) (bool, types.Error) {
+func (db *roomDb) RoomExists(id types.RoomId) (bool, matrixTypes.Error) {
 	db.roomsLock.RLock()
 	defer db.roomsLock.RUnlock()
 	if db.rooms[id] == nil {
@@ -68,7 +68,7 @@ func (db *roomDb) RoomExists(id types.RoomId) (bool, types.Error) {
 	return true, nil
 }
 
-func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*matrixTypes.State, types.Error) {
+func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content types.TypedContent, stateKey string) (*matrixTypes.State, matrixTypes.Error) {
 	db.roomsLock.RLock()
 	defer db.roomsLock.RUnlock()
 	room := db.rooms[roomId]
@@ -95,7 +95,7 @@ func (db *roomDb) SetRoomState(roomId types.RoomId, userId types.UserId, content
 	return state, nil
 }
 
-func (db *roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*matrixTypes.State, types.Error) {
+func (db *roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*matrixTypes.State, matrixTypes.Error) {
 	db.roomsLock.RLock()
 	defer db.roomsLock.RUnlock()
 	room := db.rooms[roomId]
@@ -108,7 +108,7 @@ func (db *roomDb) RoomState(roomId types.RoomId, eventType, stateKey string) (*m
 	return state, nil
 }
 
-func (db *roomDb) EntireRoomState(roomId types.RoomId) ([]*matrixTypes.State, types.Error) {
+func (db *roomDb) EntireRoomState(roomId types.RoomId) ([]*matrixTypes.State, matrixTypes.Error) {
 	db.roomsLock.RLock()
 	defer db.roomsLock.RUnlock()
 	room := db.rooms[roomId]

@@ -46,14 +46,14 @@ type profileService struct {
 	eventSink   interfaces.EventSink
 }
 
-func (s profileService) Profile(user, caller ct.UserId) (types.UserProfile, ct.Error) {
+func (s profileService) Profile(user, caller ct.UserId) (types.UserProfile, types.Error) {
 	return s.profiles.Profile(user)
 }
 
 func (s profileService) UpdateProfile(
 	user, caller ct.UserId,
 	name, avatarUrl *string,
-) (types.UserProfile, ct.Error) {
+) (types.UserProfile, types.Error) {
 	if user != caller {
 		return types.UserProfile{}, types.ForbiddenError("can't change the profile of other users")
 	}

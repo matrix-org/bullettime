@@ -44,11 +44,11 @@ func (t tokenInfo) UserId() ct.UserId {
 	return t.userId
 }
 
-func (t tokenService) NewAccessToken(userId ct.UserId) (interfaces.Token, ct.Error) {
+func (t tokenService) NewAccessToken(userId ct.UserId) (interfaces.Token, types.Error) {
 	return tokenInfo{userId}, nil
 }
 
-func (t tokenService) ParseAccessToken(token string) (interfaces.Token, ct.Error) {
+func (t tokenService) ParseAccessToken(token string) (interfaces.Token, types.Error) {
 	splits := strings.Split(token, "..")
 	if len(splits) != 2 {
 		return nil, types.DefaultUnknownTokenError

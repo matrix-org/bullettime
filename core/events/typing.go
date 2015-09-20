@@ -55,7 +55,7 @@ func NewTypingStream(
 	}, nil
 }
 
-func (s *typingStream) SetTyping(room types.RoomId, user types.UserId, typing bool) types.Error {
+func (s *typingStream) SetTyping(room types.RoomId, user types.UserId, typing bool) matrixTypes.Error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	state := s.states[room]
@@ -93,7 +93,7 @@ func (s *typingStream) SetTyping(room types.RoomId, user types.UserId, typing bo
 	return nil
 }
 
-func (s *typingStream) Typing(room types.RoomId) ([]types.UserId, types.Error) {
+func (s *typingStream) Typing(room types.RoomId) ([]types.UserId, matrixTypes.Error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	state := s.states[room]
@@ -114,7 +114,7 @@ func (s *typingStream) Range(
 	roomSet map[types.RoomId]struct{},
 	from, to uint64,
 	limit uint,
-) ([]types.IndexedEvent, types.Error) {
+) ([]types.IndexedEvent, matrixTypes.Error) {
 	var result []types.IndexedEvent
 	if len(roomSet) == 0 || from >= to {
 		return result, nil

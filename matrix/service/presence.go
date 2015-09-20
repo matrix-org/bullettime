@@ -35,7 +35,7 @@ type presenceService struct {
 	presenceEventSink interfaces.PresenceEventSink
 }
 
-func (s presenceService) Status(user, caller ct.UserId) (types.UserStatus, ct.Error) {
+func (s presenceService) Status(user, caller ct.UserId) (types.UserStatus, types.Error) {
 	return s.presenceProvider.Status(user)
 }
 
@@ -43,7 +43,7 @@ func (s presenceService) UpdateStatus(
 	user, caller ct.UserId,
 	presence *types.Presence,
 	statusMessage *string,
-) (types.UserStatus, ct.Error) {
+) (types.UserStatus, types.Error) {
 	if user != caller {
 		return types.UserStatus{}, types.ForbiddenError("can't change the presence of other users")
 	}

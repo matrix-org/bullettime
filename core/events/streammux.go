@@ -18,9 +18,10 @@ import (
 	"sync"
 
 	"github.com/matrix-org/bullettime/core/types"
+	matrixTypes "github.com/matrix-org/bullettime/matrix/types"
 )
 
-func NewStreamMux() (*streamMux, types.Error) {
+func NewStreamMux() (*streamMux, matrixTypes.Error) {
 	return &streamMux{
 		channels: map[types.UserId]userChannels{},
 	}, nil
@@ -33,7 +34,7 @@ type streamMux struct {
 
 type userChannels []chan types.IndexedEvent
 
-func (chs *userChannels) send(event types.IndexedEvent) types.Error {
+func (chs *userChannels) send(event types.IndexedEvent) matrixTypes.Error {
 	for _, ch := range *chs {
 		ch <- event
 		close(ch)
@@ -61,7 +62,7 @@ func (chs *userChannels) make() chan types.IndexedEvent {
 	return channel
 }
 
-func (s *streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan types.IndexedEvent, types.Error) {
+func (s *streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan types.IndexedEvent, matrixTypes.Error) {
 	s.lock.Lock()
 	chs := s.channels[userId]
 	channel := chs.make()
@@ -83,7 +84,7 @@ func (s *streamMux) Listen(userId types.UserId, cancel chan struct{}) (chan type
 	return channel, nil
 }
 
-func (s *streamMux) Send(userIds []types.UserId, event types.IndexedEvent) types.Error {
+func (s *streamMux) Send(userIds []types.UserId, event types.IndexedEvent) matrixTypes.Error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	for _, userId := range userIds {

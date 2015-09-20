@@ -16,6 +16,11 @@ package types
 
 import ct "github.com/matrix-org/bullettime/core/types"
 
+type Error interface {
+	ct.Error
+	Status() int
+}
+
 type apiError struct {
 	ErrorCode    string `json:"errcode"`
 	ErrorMessage string `json:"error"`
@@ -34,7 +39,18 @@ func (e apiError) Error() string {
 	return e.ErrorMessage
 }
 
-func UnrecognizedError(message string) ct.Error {
+func InternalError(err ct.Error) Error {
+	if err == nil {
+		return nil
+	}
+	return apiError{
+		ErrorCode:    err.Code(),
+		ErrorMessage: err.Error(),
+		status:       500,
+	}
+}
+
+func UnrecognizedError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_UNRECOGNIZED",
 		ErrorMessage: message,
@@ -42,7 +58,7 @@ func UnrecognizedError(message string) ct.Error {
 	}
 }
 
-func NotFoundError(message string) ct.Error {
+func NotFoundError(message string) Error {
 	return apiError{
 		ErrorCode:    "NOT_FOUND",
 		ErrorMessage: message,
@@ -50,7 +66,7 @@ func NotFoundError(message string) ct.Error {
 	}
 }
 
-func UserInUseError(message string) ct.Error {
+func UserInUseError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_USER_IN_USE",
 		ErrorMessage: message,
@@ -58,7 +74,7 @@ func UserInUseError(message string) ct.Error {
 	}
 }
 
-func RoomInUseError(message string) ct.Error {
+func RoomInUseError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_ROOM_IN_USE",
 		ErrorMessage: message,
@@ -66,7 +82,7 @@ func RoomInUseError(message string) ct.Error {
 	}
 }
 
-func ForbiddenError(message string) ct.Error {
+func ForbiddenError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_FORBIDDEN",
 		ErrorMessage: message,
@@ -74,7 +90,7 @@ func ForbiddenError(message string) ct.Error {
 	}
 }
 
-func UnknownTokenError(message string) ct.Error {
+func UnknownTokenError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_UNKNOWN_TOKEN",
 		ErrorMessage: message,
@@ -82,7 +98,7 @@ func UnknownTokenError(message string) ct.Error {
 	}
 }
 
-func BadJsonError(message string) ct.Error {
+func BadJsonError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_BAD_JSON",
 		ErrorMessage: message,
@@ -90,7 +106,7 @@ func BadJsonError(message string) ct.Error {
 	}
 }
 
-func BadParamError(message string) ct.Error {
+func BadParamError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_BAD_PARAM",
 		ErrorMessage: message,
@@ -98,7 +114,7 @@ func BadParamError(message string) ct.Error {
 	}
 }
 
-func BadQueryError(message string) ct.Error {
+func BadQueryError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_BAD_QUERY",
 		ErrorMessage: message,
@@ -106,7 +122,7 @@ func BadQueryError(message string) ct.Error {
 	}
 }
 
-func NotJsonError(message string) ct.Error {
+func NotJsonError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_NOT_JSON",
 		ErrorMessage: message,
@@ -114,7 +130,7 @@ func NotJsonError(message string) ct.Error {
 	}
 }
 
-func MissingTokenError(message string) ct.Error {
+func MissingTokenError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_MISSING_TOKEN",
 		ErrorMessage: message,
@@ -122,7 +138,7 @@ func MissingTokenError(message string) ct.Error {
 	}
 }
 
-func UnkownError(message string) ct.Error {
+func UnkownError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_UNKNOWN",
 		ErrorMessage: message,
@@ -130,7 +146,7 @@ func UnkownError(message string) ct.Error {
 	}
 }
 
-func ServerError(message string) ct.Error {
+func ServerError(message string) Error {
 	return apiError{
 		ErrorCode:    "M_SERVER_ERROR",
 		ErrorMessage: message,

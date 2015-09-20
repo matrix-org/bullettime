@@ -167,7 +167,7 @@ func readAccessToken(
 	userService interfaces.UserService,
 	tokenService interfaces.TokenService,
 	req *http.Request,
-) (ct.UserId, ct.Error) {
+) (ct.UserId, types.Error) {
 	token := req.URL.Query().Get("access_token")
 	if token == "" {
 		return ct.UserId{}, types.DefaultMissingTokenError
@@ -190,7 +190,7 @@ type urlParams struct {
 	params httprouter.Params
 }
 
-func (p urlParams) user(paramPosition int, users interfaces.UserService) (ct.UserId, ct.Error) {
+func (p urlParams) user(paramPosition int, users interfaces.UserService) (ct.UserId, types.Error) {
 	user, err := ct.ParseUserId(p.params[paramPosition].Value)
 	if err != nil {
 		return ct.UserId{}, types.BadParamError(err.Error())
@@ -207,7 +207,7 @@ func (p urlParams) user(paramPosition int, users interfaces.UserService) (ct.Use
 	return user, nil
 }
 
-func (p urlParams) room(paramPosition int) (ct.RoomId, ct.Error) {
+func (p urlParams) room(paramPosition int) (ct.RoomId, types.Error) {
 	room, parseErr := ct.ParseRoomId(p.params[paramPosition].Value)
 	if parseErr != nil {
 		return ct.RoomId{}, types.BadParamError(parseErr.Error())
@@ -219,7 +219,7 @@ type urlQuery struct {
 	url.Values
 }
 
-func (q urlQuery) parseUint(name string, defaultValue uint64) (uint64, ct.Error) {
+func (q urlQuery) parseUint(name string, defaultValue uint64) (uint64, types.Error) {
 	str := q.Get(name)
 	if str == "" {
 		return defaultValue, nil
@@ -232,7 +232,7 @@ func (q urlQuery) parseUint(name string, defaultValue uint64) (uint64, ct.Error)
 	return value, nil
 }
 
-func (q urlQuery) parseStreamToken(name string) (*types.StreamToken, ct.Error) {
+func (q urlQuery) parseStreamToken(name string) (*types.StreamToken, types.Error) {
 	str := q.Get(name)
 	if str == "" {
 		return nil, nil
