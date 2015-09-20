@@ -41,6 +41,14 @@ type IdMultiMap interface {
 	ReverseLookup(value types.Id) ([]types.Id, types.Error)
 }
 
+type DataTransformFunc func(data interface{}) interface{}
+
+type IdDataCache interface {
+	Put(id types.Id, fieldId int, data interface{})
+	LockedTransform(id types.Id, fieldId int, fun DataTransformFunc)
+	Lookup(id types.Id, fieldId int) interface{}
+}
+
 type State interface {
 	Key() string
 	Value() []byte
