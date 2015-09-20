@@ -69,7 +69,19 @@ func (db *memberStore) Users(roomId ct.RoomId) ([]ct.UserId, types.Error) {
 }
 
 func (db *memberStore) Peers(userId ct.UserId) (map[ct.UserId]struct{}, types.Error) {
-	idSet, err := db.idMap.ReverseLinkUnionLookup(ct.Id(userId))
-	peers := *(*map[ct.UserId]struct{})(unsafe.Pointer(&idSet))
-	return peers, types.InternalError(err)
+	peers := map[ct.UserId]struct{}{}
+	rooms, err := db.idMap.ReverseLookup(ct.Id(userId))
+	if err != nil {
+		return nil, types.InternalError(err)
+	}
+	for _, room := range rooms {
+		members, err := db.idMap.Lookup(room)
+		if err != nil {
+			return nil, types.InternalError(err)
+		}
+		for _, member := range members {
+			peers[ct.UserId(member)] = struct{}{}
+		}
+	}
+	return peers, nil
 }

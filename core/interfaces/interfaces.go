@@ -39,11 +39,6 @@ type IdMultiMapStore interface {
 
 	Lookup(key types.Id) ([]types.Id, types.Error)
 	ReverseLookup(value types.Id) ([]types.Id, types.Error)
-
-	// Does a lookup, and then does a reverse lookup with each value and returns a union of all resulting keys
-	LinkUnionLookup(key types.Id) (keys map[types.Id]struct{}, err types.Error)
-	// A reversed UnionLinkLookup, starting with the value and returning a set of values instead
-	ReverseLinkUnionLookup(value types.Id) (values map[types.Id]struct{}, err types.Error)
 }
 
 type State interface {
