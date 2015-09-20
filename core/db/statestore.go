@@ -17,6 +17,7 @@ package db
 import (
 	"sync"
 
+	"github.com/matrix-org/bullettime/core/interfaces"
 	"github.com/matrix-org/bullettime/core/types"
 	matrixTypes "github.com/matrix-org/bullettime/matrix/types"
 )
@@ -43,7 +44,7 @@ func (s state) Value() []byte {
 	return s.value
 }
 
-func NewStateStore() (StateStore, error) {
+func NewStateStore() (interfaces.StateStore, error) {
 	return &stateStore{
 		buckets: map[types.Id]*bucket{},
 	}, nil
@@ -102,7 +103,7 @@ func (db *stateStore) State(id types.Id, key string) ([]byte, types.Error) {
 	return value, nil
 }
 
-func (db *stateStore) States(id types.Id) ([]State, types.Error) {
+func (db *stateStore) States(id types.Id) ([]interfaces.State, types.Error) {
 	db.RLock()
 	defer db.RUnlock()
 	bucket := db.buckets[id]
@@ -111,7 +112,7 @@ func (db *stateStore) States(id types.Id) ([]State, types.Error) {
 	}
 	bucket.RLock()
 	defer bucket.RUnlock()
-	states := make([]State, 0, len(bucket.states))
+	states := make([]interfaces.State, 0, len(bucket.states))
 	for key, value := range bucket.states {
 		states = append(states, state{key, value})
 	}

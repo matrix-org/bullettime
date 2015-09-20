@@ -45,3 +45,16 @@ type IdMultiMapStore interface {
 	// A reversed UnionLinkLookup, starting with the value and returning a set of values instead
 	UnionLinkReverseLookup(value types.Id) (values map[types.Id]struct{}, err types.Error)
 }
+
+type State interface {
+	Key() string
+	Value() []byte
+}
+
+type StateStore interface {
+	CreateBucket(types.Id) (exists bool, err types.Error)
+	BucketExists(types.Id) (exists bool, err types.Error)
+	SetState(id types.Id, key string, value []byte) (oldValue []byte, err types.Error)
+	State(id types.Id, key string) (value []byte, err types.Error)
+	States(id types.Id) ([]State, types.Error)
+}

@@ -22,6 +22,7 @@ import (
 	ct "github.com/matrix-org/bullettime/core/types"
 	"github.com/matrix-org/bullettime/matrix/interfaces"
 	"github.com/matrix-org/bullettime/matrix/service"
+	"github.com/matrix-org/bullettime/matrix/stores"
 	"github.com/matrix-org/bullettime/matrix/types"
 )
 
@@ -44,7 +45,7 @@ func setup() services {
 	if err != nil {
 		panic(err)
 	}
-	userStore, err := db.NewUserDb(stateStore)
+	userStore, err := stores.NewUserDb(stateStore)
 	if err != nil {
 		panic(err)
 	}
