@@ -16,7 +16,7 @@ package interfaces
 
 import "github.com/matrix-org/bullettime/core/types"
 
-type IdMapStore interface {
+type IdMap interface {
 	// Does nothing and returns false if the mapping already exists
 	Insert(key types.Id, value types.Id) (inserted bool, err types.Error)
 	// Does nothing and returns false if the mapping doesn't already exist
@@ -29,7 +29,7 @@ type IdMapStore interface {
 	ReverseLookup(value types.Id) ([]types.Id, types.Error)
 }
 
-type IdMultiMapStore interface {
+type IdMultiMap interface {
 	// Stores a key-value pair in the map, returns true of the mapping didn't already exist
 	Put(key types.Id, value types.Id) (inserted bool, err types.Error)
 	// Removes a mapping from the map, returns true if the mapping existed

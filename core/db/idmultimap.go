@@ -33,7 +33,7 @@ type entryKey struct {
 	value types.Id
 }
 
-func NewIdMultiMapStore() (interfaces.IdMultiMapStore, error) {
+func NewIdMultiMap() (interfaces.IdMultiMap, error) {
 	return &idMultiMap{
 		mapping:        map[types.Id][]types.Id{},
 		reverseMapping: map[types.Id][]types.Id{},

@@ -25,11 +25,11 @@ import (
 )
 
 type memberStore struct {
-	idMap ci.IdMultiMapStore
+	idMap ci.IdMultiMap
 }
 
-func NewMembershipStore(idMultiMapStore ci.IdMultiMapStore) (interfaces.MembershipStore, error) {
-	return &memberStore{idMultiMapStore}, nil
+func NewMembershipStore(idMultiMap ci.IdMultiMap) (interfaces.MembershipStore, error) {
+	return &memberStore{idMultiMap}, nil
 }
 
 func (db *memberStore) AddMember(roomId ct.RoomId, userId ct.UserId) types.Error {

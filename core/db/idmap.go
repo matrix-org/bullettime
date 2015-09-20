@@ -27,7 +27,7 @@ type idMapDb struct { // always lock in the same order as below
 	reverseMapping map[types.Id][]types.Id
 }
 
-func NewIdMapDb() (interfaces.IdMapStore, error) {
+func NewIdMap() (interfaces.IdMap, error) {
 	return &idMapDb{
 		mapping:        map[types.Id]types.Id{},
 		reverseMapping: map[types.Id][]types.Id{},

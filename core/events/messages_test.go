@@ -27,7 +27,7 @@ import (
 )
 
 func TestMessageStream(t *testing.T) {
-	memberCache, err := db.NewIdMultiMapStore()
+	memberCache, err := db.NewIdMultiMap()
 	if err != nil {
 		panic(err)
 	}

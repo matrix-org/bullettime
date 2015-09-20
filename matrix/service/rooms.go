@@ -29,7 +29,7 @@ import (
 
 func CreateRoomService(
 	roomStore interfaces.RoomStore,
-	aliasStore ci.IdMapStore,
+	aliasStore ci.IdMap,
 	memberStore interfaces.MembershipStore,
 	eventSink interfaces.EventSink,
 	profileProvider interfaces.ProfileProvider,
@@ -49,7 +49,7 @@ func CreateRoomService(
 
 type roomService struct {
 	rooms           interfaces.RoomStore
-	aliases         ci.IdMapStore
+	aliases         ci.IdMap
 	members         interfaces.MembershipStore
 	eventSink       interfaces.EventSink
 	profileProvider interfaces.ProfileProvider
