@@ -17,11 +17,13 @@ package events
 import (
 	"testing"
 
-	"github.com/matrix-org/bullettime/db"
-	"github.com/matrix-org/bullettime/events"
-	"github.com/matrix-org/bullettime/interfaces"
-	"github.com/matrix-org/bullettime/service"
-	"github.com/matrix-org/bullettime/types"
+	"github.com/matrix-org/bullettime/core/db"
+	"github.com/matrix-org/bullettime/core/events"
+	ct "github.com/matrix-org/bullettime/core/types"
+	"github.com/matrix-org/bullettime/matrix/interfaces"
+	"github.com/matrix-org/bullettime/matrix/service"
+	"github.com/matrix-org/bullettime/matrix/stores"
+	"github.com/matrix-org/bullettime/matrix/types"
 )
 
 type services struct {
@@ -35,19 +37,31 @@ type services struct {
 }
 
 func setup() services {
+	stateStore, err := db.NewStateStore()
+	if err != nil {
+		panic(err)
+	}
 	roomStore, err := db.NewRoomDb()
 	if err != nil {
 		panic(err)
 	}
-	userStore, err := db.NewUserDb()
+	userStore, err := stores.NewUserDb(stateStore)
 	if err != nil {
 		panic(err)
 	}
-	aliasStore, err := db.NewAliasDb()
+	aliasCache, err := db.NewIdMap()
 	if err != nil {
 		panic(err)
 	}
-	memberStore, err := db.NewMembershipDb()
+	aliasStore, err := stores.NewAliasStore(aliasCache)
+	if err != nil {
+		panic(err)
+	}
+	memberCache, err := db.NewIdMultiMap()
+	if err != nil {
+		panic(err)
+	}
+	memberStore, err := stores.NewMembershipStore(memberCache)
 	if err != nil {
 		panic(err)
 	}
@@ -136,7 +150,7 @@ func setup() services {
 
 func TestUserCreation(t *testing.T) {
 	s := setup()
-	userId := types.NewUserId("test", "matrix.org")
+	userId := ct.NewUserId("test", "matrix.org")
 	if err := s.user.CreateUser(userId); err != nil {
 		t.Fatal(err)
 	}
